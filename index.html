@@ -128,7 +128,16 @@ select{padding:8px 10px; border:1px solid var(--trait); border-radius:var(--r); 
 #loupe{position:fixed; inset:0; z-index:2000; background:rgba(20,35,28,.88);
   display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;
   padding:24px; cursor:zoom-out}
-#loupe img{max-width:100%; max-height:80vh; object-fit:contain; border-radius:var(--r)}
+#loupe-bande{display:flex; overflow-x:auto; scroll-snap-type:x mandatory; width:100%;
+  scrollbar-width:none; border-radius:var(--r)}
+#loupe-bande::-webkit-scrollbar{display:none}
+#loupe-bande img{flex:0 0 100%; width:100%; max-height:78vh; object-fit:contain;
+  scroll-snap-align:center}
+#loupe .fleche{position:absolute; top:50%; transform:translateY(-50%); z-index:1;
+  border:0; background:rgba(251,252,249,.9); color:var(--encre); cursor:pointer;
+  width:38px; height:38px; border-radius:50%; font-size:22px; line-height:1; padding:0}
+#loupe-prec{left:16px} #loupe-suiv{right:16px}
+#loupe .fleche[hidden]{display:none !important}
 #loupe a{color:#fff; font-size:13px; border-bottom:1px dotted rgba(255,255,255,.6);
   text-decoration:none}
 .colonne .actions{display:flex; gap:3px; flex:none}
@@ -149,8 +158,19 @@ select{padding:8px 10px; border:1px solid var(--trait); border-radius:var(--r); 
 .colonne .entete .fr{font-weight:700; font-size:14px; line-height:1.3}
 .colonne .entete .sci{font-family:'Fraunces',serif; font-style:italic; font-size:13px; color:var(--encre-2)}
 .colonne .photos{display:grid; gap:1px; background:var(--trait)}
-.colonne .photos a{display:block; position:relative; background:#DDE4D9}
-.colonne .photos img{width:100%; aspect-ratio:1; object-fit:cover; display:block}
+.colonne .obs{position:relative; background:#DDE4D9}
+/* Défilement latéral par accrochage : glisser au doigt sur téléphone, à la molette ou au
+   pavé sur ordinateur, sans aucun script. */
+.colonne .defile{display:flex; overflow-x:auto; scroll-snap-type:x mandatory;
+  scrollbar-width:none}
+.colonne .defile::-webkit-scrollbar{display:none}
+.colonne .defile img{flex:0 0 100%; width:100%; aspect-ratio:1; object-fit:cover; display:block;
+  scroll-snap-align:start; cursor:zoom-in}
+.colonne .pages{position:absolute; left:0; right:0; bottom:16px; display:flex;
+  justify-content:center; gap:4px; pointer-events:none}
+.colonne .pages i{width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,.5);
+  box-shadow:0 0 0 1px rgba(20,35,28,.35)}
+.colonne .pages i.on{background:#fff; box-shadow:0 0 0 1px rgba(20,35,28,.55)}
 .colonne .photos .credit{position:absolute; left:0; right:0; bottom:0; font-size:8.5px;
   color:#fff; background:rgba(20,35,28,.55); padding:2px 5px; line-height:1.25;
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
@@ -172,7 +192,7 @@ select{padding:8px 10px; border:1px solid var(--trait); border-radius:var(--r); 
 .fiche .img img{width:100%; height:100%; object-fit:cover; display:block}
 .fiche .num{position:absolute; top:6px; left:6px; background:rgba(20,35,28,.72); color:#fff;
   font-family:'IBM Plex Mono',monospace; font-size:10px; padding:2px 6px; border-radius:2px}
-.fiche .statut{position:absolute; top:6px; right:6px}
+.fiche .statut{position:absolute; bottom:6px; right:6px}
 .fiche .statut .iucn{font-size:10px; padding:2px 6px 2px 4px}
 .fiche{position:relative}
 .fiche .corps{padding:10px 11px 11px; display:flex; flex-direction:column; gap:3px; flex:1}
@@ -217,7 +237,7 @@ select{padding:8px 10px; border:1px solid var(--trait); border-radius:var(--r); 
   .fiche .sci{font-size:11px; line-height:1.25}
   .fiche .n{font-size:10.5px; padding-top:5px}
   .fiche .num{font-size:9px; padding:1px 4px; top:4px; left:4px}
-    .fiche .statut{top:4px; right:4px}
+    .fiche .statut{bottom:4px; right:4px}
   .fiche .statut .iucn{font-size:9px; padding:1px 4px 1px 3px; gap:3px}
   .fiche .credit{font-size:8.5px; padding:0 8px 7px; white-space:normal;
     max-height:2.6em; line-height:1.3}
@@ -484,7 +504,9 @@ footer{border-top:1px solid var(--trait); margin-top:60px; padding:22px 0 44px;
   </section>
 
   <div id="loupe" hidden>
-    <img id="loupe-img" alt="">
+    <button class="fleche" id="loupe-prec" aria-label="←">‹</button>
+    <div id="loupe-bande"></div>
+    <button class="fleche" id="loupe-suiv" aria-label="→">›</button>
     <a id="loupe-lien" target="_blank" rel="noopener"></a>
   </div>
 
@@ -564,7 +586,7 @@ const TEXTES = {
     menacees: "menacées",
     exclusives: "exclusives",
     debordeRef: "Certaines espèces dépassent 100 % : la zone d'étude n'est pas entièrement contenue dans {0}. Choisis un territoire de référence qui l'englobe.",
-    noteFloutage: "Les coordonnées des espèces menacées sont floutées par iNaturalist dans un rayon d'environ 30 km. Ce sont précisément les espèces à enjeu : leur rattachement au lieu peut être faux.",
+    noteFloutage: "Les coordonnées des espèces sensibles sont floutées par iNaturalist : leur rattachement au lieu peut être erroné.",
     calculCours: "Calcul en cours",
     effectifsCharg: "Les effectifs de référence se chargent, lot par lot.",
     recomptage: "Recomptage en cours",
@@ -683,7 +705,7 @@ const TEXTES = {
     menacees: "threatened",
     exclusives: "exclusive",
     debordeRef: "Some species exceed 100%: the study area is not fully contained in {0}. Pick a reference territory that encloses it.",
-    noteFloutage: "iNaturalist obscures the coordinates of threatened species within roughly 30 km. Those are precisely the species that matter here: their assignment to the place may be wrong.",
+    noteFloutage: "Coordinates of sensitive species are obscured by iNaturalist: their assignment to the place may be wrong.",
     calculCours: "Calculating",
     effectifsCharg: "Reference counts are loading, batch by batch.",
     recomptage: "Recounting",
@@ -802,7 +824,7 @@ const TEXTES = {
     menacees: "amenazadas",
     exclusives: "exclusivas",
     debordeRef: "Algunas especies superan el 100 %: la zona de estudio no está totalmente contenida en {0}. Elige un territorio de referencia que la englobe.",
-    noteFloutage: "iNaturalist difumina las coordenadas de las especies amenazadas en un radio de unos 30 km. Son justamente las especies clave: su asignación al lugar puede ser errónea.",
+    noteFloutage: "Las coordenadas de las especies sensibles son difuminadas por iNaturalist: su asignación al lugar puede ser errónea.",
     calculCours: "Calculando",
     effectifsCharg: "Los efectivos de referencia se cargan por lotes.",
     recomptage: "Recuento en curso",
@@ -921,7 +943,7 @@ const TEXTES = {
     menacees: "minacciate",
     exclusives: "esclusive",
     debordeRef: "Alcune specie superano il 100%: l'area di studio non è interamente contenuta in {0}. Scegli un territorio di riferimento che la comprenda.",
-    noteFloutage: "iNaturalist offusca le coordinate delle specie minacciate entro circa 30 km. Sono proprio le specie che contano: la loro assegnazione al luogo può essere errata.",
+    noteFloutage: "Le coordinate delle specie sensibili sono offuscate da iNaturalist: la loro attribuzione al luogo può essere errata.",
     calculCours: "Calcolo in corso",
     effectifsCharg: "I conteggi di riferimento si caricano a lotti.",
     recomptage: "Riconteggio in corso",
@@ -1040,7 +1062,7 @@ const TEXTES = {
     menacees: "gefährdet",
     exclusives: "exklusiv",
     debordeRef: "Einige Arten übersteigen 100 %: Das Untersuchungsgebiet liegt nicht vollständig in {0}. Wähle ein umfassenderes Bezugsgebiet.",
-    noteFloutage: "iNaturalist verschleiert die Koordinaten gefährdeter Arten in einem Umkreis von etwa 30 km. Genau diese Arten zählen hier: Ihre Zuordnung zum Ort kann falsch sein.",
+    noteFloutage: "Koordinaten sensibler Arten werden von iNaturalist verschleiert: Ihre Zuordnung zum Ort kann falsch sein.",
     calculCours: "Berechnung läuft",
     effectifsCharg: "Die Referenzzahlen laden schubweise.",
     recomptage: "Neuzählung läuft",
@@ -1160,7 +1182,7 @@ const TEXTES = {
     menacees: "ameaçadas",
     exclusives: "exclusivas",
     debordeRef: "Algumas espécies passam de 100 %: a zona de estudo não está inteiramente contida em {0}. Escolhe um território de referência que a englobe.",
-    noteFloutage: "As coordenadas das espécies ameaçadas são ocultadas pelo iNaturalist num raio de cerca de 30 km. São justamente as espécies sensíveis: a sua atribuição ao lugar pode estar errada.",
+    noteFloutage: "As coordenadas das espécies sensíveis são ocultadas pelo iNaturalist: a sua atribuição ao lugar pode estar errada.",
     calculCours: "Cálculo em curso",
     effectifsCharg: "Os efetivos de referência estão a ser carregados, lote a lote.",
     recomptage: "Recontagem em curso",
@@ -1229,7 +1251,7 @@ Object.entries({
   decVide:{fr:"Aucune espèce nouvelle sur cette période.",en:"No new species over this period.",es:"Ninguna especie nueva en este periodo.",it:"Nessuna specie nuova in questo periodo.",de:"Keine neue Art in diesem Zeitraum.",pt:"Nenhuma espécie nova neste período."},
   decMondiale:{fr:"Première mondiale",en:"World first",es:"Primera mundial",it:"Prima mondiale",de:"Weltweit erstmals",pt:"Primeira mundial"},
   decNb:{fr:"{0} espèces nouvelles",en:"{0} new species",es:"{0} especies nuevas",it:"{0} specie nuove",de:"{0} neue Arten",pt:"{0} espécies novas"},
-  decNote:{fr:"Nouvelle veut dire nouvelle pour iNaturalist dans cette zone, pas nouvelle pour la science.",en:"New means new to iNaturalist in this area, not new to science.",es:"Nueva significa nueva para iNaturalist en esta zona, no nueva para la ciencia: muchas de estas especies se conocían allí desde hace tiempo, es solo la primera vez que alguien las fotografió. La fecha es la del primer registro; al hacer clic se abre en iNaturalist.",it:"Nuova significa nuova per iNaturalist in questa zona, non nuova per la scienza: molte di queste specie vi erano note da tempo, è semplicemente la prima volta che qualcuno le ha fotografate. La data è quella della prima segnalazione; cliccando si apre su iNaturalist.",de:"Neu heißt neu für iNaturalist in diesem Gebiet, nicht neu für die Wissenschaft: Viele dieser Arten waren dort längst bekannt, nur hat sie noch niemand fotografiert. Das Datum ist das des ersten Nachweises; ein Klick öffnet ihn auf iNaturalist.",pt:"Nova significa nova para o iNaturalist nesta zona, não nova para a ciência. Uma primeira mundial indica apenas que nenhuma observação anterior foi registada na plataforma. A data é a do primeiro registo; clicando abre-se no iNaturalist."},
+  decNote:{fr:"Nouvelle ici, pas nouvelle pour la science : aucune observation antérieure n'avait été enregistrée dans la zone.",en:"New here, not new to science: no earlier observation had been recorded in the area.",es:"Nueva aquí, no nueva para la ciencia: no había registros anteriores en la zona.",pt:"Nova aqui, não nova para a ciência: não havia registos anteriores na zona.",it:"Nuova qui, non nuova per la scienza: nessuna segnalazione anteriore nella zona.",de:"Neu hier, nicht neu für die Wissenschaft: kein früherer Nachweis im Gebiet."},
   divergent:{fr:"estimations divergentes",en:"estimates disagree",es:"estimaciones divergentes",it:"stime divergenti",de:"Schätzungen weichen ab",pt:"estimativas divergentes"},
   aideDivergent:{fr:"Les deux estimations s'écartent de plus de 15 %. Lis une fourchette, pas un chiffre : il manque des observations.",en:"The two estimates differ by over 15%. Read a range, not a figure: more observations are needed.",es:"Las dos estimaciones difieren en más del 15 %. Lee un intervalo, no una cifra: faltan observaciones.",it:"Le due stime divergono di oltre il 15%. Leggi un intervallo, non una cifra: mancano osservazioni.",de:"Die Schätzungen weichen um über 15 % ab. Lies eine Spanne, keine Zahl: Es fehlen Beobachtungen.",pt:"As duas estimativas diferem em mais de 15 %. Lê um intervalo, não um número: faltam observações."},
   observateurs:{fr:"Observateurs",en:"Observers",es:"Observadores",it:"Osservatori",de:"Beobachtende",pt:"Observadores"},
@@ -1237,9 +1259,10 @@ Object.entries({
   retirerRef:{fr:"Revenir au monde entier",en:"Back to the whole world",es:"Volver al mundo entero",it:"Torna al mondo intero",de:"Zurück zur ganzen Welt",pt:"Voltar ao mundo inteiro"},
   pExclusive:{fr:"quasi exclusive",en:"near-exclusive",es:"casi exclusiva",it:"quasi esclusiva",de:"nahezu ausschließlich",pt:"quase exclusiva"},
   pTresForte:{fr:"très forte",en:"very high",es:"muy alta",it:"molto alta",de:"sehr hoch",pt:"muito alta"},
-  respIntro:{fr:"Quelle part des observations connues d'une espèce provient de cette zone. Plus elle est élevée, plus le territoire compte pour cette espèce.",en:"What share of a species' known records comes from this area. The higher it is, the more the territory matters for that species.",es:"Qué proporción de los registros conocidos de una especie procede de esta zona. Cuanto mayor sea, más importa el territorio para esa especie.",it:"Quale quota delle segnalazioni note di una specie proviene da questa zona. Più è alta, più il territorio conta per quella specie.",de:"Welcher Anteil der bekannten Nachweise einer Art aus diesem Gebiet stammt. Je höher, desto wichtiger ist das Gebiet für diese Art.",pt:"Que parcela dos registos conhecidos de uma espécie provém desta zona. Quanto maior, mais o território conta para essa espécie."},
-  aideChao1:{fr:"Estimation du nombre réel d'espèces, invisibles comprises, déduite de celles vues une ou deux fois.",en:"Estimate of the real number of species, unseen ones included, derived from those seen once or twice.",es:"Estimación del número real de especies, incluidas las no vistas, a partir de las vistas una o dos veces.",it:"Stima del numero reale di specie, comprese le non viste, dedotta da quelle viste una o due volte.",de:"Schätzung der tatsächlichen Artenzahl, ungesehene eingeschlossen, aus ein- oder zweimal gesehenen Arten.",pt:"Estimativa do número real de espécies, incluindo as nunca observadas, deduzida das vistas uma ou duas vezes."},
-  aideAce:{fr:"Même estimation, fondée sur toutes les espèces vues dix fois ou moins. Plus stable que Chao1.",en:"Same estimate, based on all species seen ten times or fewer. Steadier than Chao1.",es:"La misma estimación, basada en todas las especies vistas diez veces o menos. Más estable que Chao1.",it:"Stessa stima, basata su tutte le specie viste dieci volte o meno. Più stabile di Chao1.",de:"Dieselbe Schätzung, gestützt auf alle höchstens zehnmal gesehenen Arten. Stabiler als Chao1.",pt:"Mesma estimativa, baseada em todas as espécies vistas dez vezes ou menos. Mais estável que Chao1."},
+  respIntro:{fr:"Part des observations connues d'une espèce qui provient de cette zone. Attention au biais : une espèce peut y être davantage prospectée sans y être plus présente.",en:"Share of a species' known records that comes from this area. Mind the bias: a species may simply be better surveyed here, not more present.",es:"Proporción de los registros conocidos de una especie que procede de esta zona. Cuidado con el sesgo: una especie puede estar mejor prospectada aquí sin ser más abundante.",pt:"Parcela dos registos conhecidos de uma espécie que provém desta zona. Atenção ao viés: uma espécie pode ser mais prospetada aqui sem ser mais presente.",it:"Quota delle segnalazioni note di una specie proveniente da questa zona. Attenzione al bias: una specie può essere semplicemente più cercata qui, non più presente.",de:"Anteil der bekannten Nachweise einer Art aus diesem Gebiet. Vorsicht vor Verzerrung: Eine Art kann hier schlicht besser erfasst sein, nicht häufiger."},
+  videSaison:{fr:"Cet onglet montre la répartition des observations dans l'année.",en:"This tab shows how records are spread through the year.",es:"Esta pestaña muestra el reparto de las observaciones a lo largo del año.",pt:"Esta aba mostra a distribuição das observações ao longo do ano.",it:"Questa scheda mostra la distribuzione delle osservazioni nell'anno.",de:"Dieser Reiter zeigt die Verteilung der Nachweise über das Jahr."},
+  espEstimees:{fr:"Espèces estimées",en:"Estimated species",es:"Especies estimadas",pt:"Espécies estimadas",it:"Specie stimate",de:"Geschätzte Arten"},
+  aideEstim:{fr:"Nombre total d'espèces présentes, invisibles comprises, encadré par deux estimateurs : Chao1, déduit des espèces vues une ou deux fois, et ACE, plus stable. Un écart marqué signale qu'il manque des observations.",en:"Total number of species present, unseen ones included, bracketed by two estimators: Chao1, derived from species seen once or twice, and ACE, steadier. A wide gap means observations are missing.",es:"Número total de especies presentes, incluidas las no vistas, acotado por dos estimadores: Chao1, deducido de las especies vistas una o dos veces, y ACE, más estable. Una diferencia marcada indica que faltan observaciones.",pt:"Número total de espécies presentes, incluindo as não vistas, delimitado por dois estimadores: Chao1, deduzido das espécies vistas uma ou duas vezes, e ACE, mais estável. Uma diferença marcada indica que faltam observações.",it:"Numero totale di specie presenti, comprese le non viste, delimitato da due stimatori: Chao1, dedotto dalle specie viste una o due volte, e ACE, più stabile. Uno scarto marcato indica che mancano osservazioni.",de:"Gesamtzahl vorhandener Arten, ungesehene eingeschlossen, eingegrenzt von zwei Schätzern: Chao1, aus ein- oder zweimal gesehenen Arten, und ACE, stabiler. Ein großer Abstand zeigt fehlende Beobachtungen."},
   oDisparition:{fr:"Disparitions",en:"Disappearances",es:"Desapariciones",it:"Scomparse",de:"Verschwunden",pt:"Desaparecimentos"},
   videDisparition:{fr:"Cet onglet liste les espèces bien connues de la zone qui n'y ont plus été revues.",en:"This tab lists species once well recorded in the area that have not been seen since.",es:"Esta pestaña lista especies antes bien registradas en la zona que ya no se han vuelto a ver.",it:"Questa scheda elenca le specie un tempo ben documentate nella zona e non più riviste.",de:"Dieser Reiter listet einst gut belegte Arten, die im Gebiet nicht mehr gesehen wurden.",pt:"Esta aba lista espécies antes bem registadas na zona e não mais revistas."},
   uniteAn:{fr:"an",en:"year",es:"año",it:"anno",de:"Jahr",pt:"ano"},
@@ -1250,12 +1273,12 @@ Object.entries({
   disVide:{fr:"Aucune espèce bien documentée n'a cessé d'être observée.",en:"No well-documented species has stopped being recorded.",es:"Ninguna especie bien documentada ha dejado de observarse.",it:"Nessuna specie ben documentata ha smesso di essere osservata.",de:"Keine gut belegte Art ist ausgeblieben.",pt:"Nenhuma espécie bem documentada deixou de ser observada."},
   disNb:{fr:"{0} espèces non revues",en:"{0} species not seen since",es:"{0} especies no vistas",it:"{0} specie non riviste",de:"{0} nicht mehr gesehene Arten",pt:"{0} espécies não revistas"},
   disDerniere:{fr:"vue pour la dernière fois",en:"last seen",es:"vista por última vez",it:"vista l'ultima volta",de:"zuletzt gesehen",pt:"vista pela última vez"},
-  disNote:{fr:"Ces espèces n'ont plus été signalées dans la zone depuis au moins deux ans.",en:"These species have not been reported in the area for at least two years. ",es:"Estas especies no se han registrado en la zona desde hace al menos dos años.",it:"Queste specie non sono più state segnalate nella zona da almeno due anni.",de:"Diese Arten wurden im Gebiet seit mindestens zwei Jahren nicht mehr gemeldet.",pt:"Estas espécies não são registadas na zona há pelo menos dois anos."},
+  disNote:{fr:"Ces espèces n'ont plus été signalées dans la zone depuis au moins deux ans. Cela ne signifie pas pour autant qu'elles ont disparu : peut-être n'ont-elles simplement pas été recherchées.",en:"These species have not been reported in the area for at least two years. That does not mean they are gone: perhaps no one has looked for them.",es:"Estas especies no se registran en la zona desde hace al menos dos años. Eso no significa que hayan desaparecido: quizá simplemente nadie las haya buscado.",pt:"Estas espécies não são registadas na zona há pelo menos dois anos. Isso não significa que tenham desaparecido: talvez ninguém as tenha procurado.",it:"Queste specie non sono più state segnalate nella zona da almeno due anni. Ciò non significa che siano scomparse: forse nessuno le ha cercate.",de:"Diese Arten wurden im Gebiet seit mindestens zwei Jahren nicht mehr gemeldet. Das heißt nicht, dass sie verschwunden sind: vielleicht hat sie schlicht niemand gesucht."},
   avertFichier:{fr:"Page ouverte depuis un fichier local : le navigateur bloque alors les appels à iNaturalist. Mets le fichier en ligne, ou ouvre-le via un serveur local.",en:"Page opened from a local file: the browser then blocks calls to iNaturalist. Put the file online, or serve it from a local server.",es:"Página abierta desde un archivo local: el navegador bloquea las llamadas a iNaturalist. Publica el archivo en línea o ábrelo mediante un servidor local.",it:"Pagina aperta da un file locale: il browser blocca le chiamate a iNaturalist. Pubblica il file online oppure aprilo tramite un server locale.",de:"Seite aus einer lokalen Datei geöffnet: Der Browser blockiert dann Aufrufe an iNaturalist. Lade die Datei online hoch oder nutze einen lokalen Server.",pt:"Página aberta a partir de um ficheiro local: o navegador bloqueia então as chamadas ao iNaturalist. Publica o ficheiro online ou abre-o através de um servidor local."},
   erreurJs:{fr:"Erreur interne : {0}",en:"Internal error: {0}",es:"Error interno: {0}",it:"Errore interno: {0}",de:"Interner Fehler: {0}",pt:"Erro interno: {0}"},
   zoneVue:{fr:"Utiliser cette vue comme zone",en:"Use this view as the area",es:"Usar esta vista como zona",it:"Usa questa vista come zona",de:"Diesen Ausschnitt als Gebiet",pt:"Usar esta vista como zona"},
   zoneTracee:{fr:"Zone dessinée",en:"Drawn area",es:"Zona dibujada",it:"Zona disegnata",de:"Gezeichnetes Gebiet",pt:"Zona desenhada"},
-  cNoteCouleurs:{fr:"Une couleur par espèce dès que huit espèces ou moins sont affichées — en cochant la sélection, en cherchant une espèce, ou sur un inventaire restreint. Au-delà, toutes les observations partagent la même teinte.",en:"One colour per species as soon as eight species or fewer are shown — by ticking the selection, searching a species, or on a small inventory. Beyond that, all records share the same hue.",es:"Un color por especie en cuanto se muestran ocho especies o menos: marcando la selección, buscando una especie o con un inventario reducido. Más allá, todos los registros comparten el mismo tono.",it:"Un colore per specie non appena sono mostrate otto specie o meno — spuntando la selezione, cercando una specie o con un inventario ridotto. Oltre, tutte le osservazioni condividono la stessa tinta.",de:"Eine Farbe je Art, sobald höchstens acht Arten angezeigt werden — über die Auswahl, die Artensuche oder ein kleines Inventar. Darüber hinaus teilen sich alle Nachweise denselben Farbton.",pt:"Uma cor por espécie assim que oito espécies ou menos são exibidas — marcando a seleção, procurando uma espécie, ou num inventário reduzido. Acima disso, todos os registos partilham a mesma cor."},
+  cNoteCouleurs:{fr:"Une couleur par espèce dès que huit espèces ou moins sont affichées.",en:"One colour per species as soon as eight species or fewer are shown.",es:"Un color por especie cuando se muestran ocho especies o menos.",pt:"Uma cor por espécie quando são exibidas oito espécies ou menos.",it:"Un colore per specie quando sono mostrate otto specie o meno.",de:"Eine Farbe je Art, sobald höchstens acht Arten angezeigt werden."},
   cPanier:{fr:"Espèces sélectionnées",en:"Selected species",es:"Especies seleccionadas",it:"Specie selezionate",de:"Ausgewählte Arten",pt:"Espécies selecionadas"},
   mNoms:{fr:"Noms vernaculaires : {0} / {1}",en:"Common names: {0} / {1}",es:"Nombres comunes: {0} / {1}",it:"Nomi comuni: {0} / {1}",de:"Volkstümliche Namen: {0} / {1}",pt:"Nomes populares: {0} / {1}"},
   arreter:{fr:"Arrêter",en:"Stop",es:"Detener",it:"Ferma",de:"Anhalten",pt:"Parar"},
@@ -1283,7 +1306,7 @@ Object.entries({
   cpToutes:{fr:"Toutes les photos",en:"All photos",es:"Todas las fotos",it:"Tutte le foto",de:"Alle Fotos",pt:"Todas as fotos"},
   cpLocal:{fr:"De la zone seulement",en:"From the area only",es:"Solo de la zona",it:"Solo dalla zona",de:"Nur aus dem Gebiet",pt:"Apenas da zona"},
   cpAucune:{fr:"Aucune photo pour ce filtre",en:"No photo for this filter",es:"Ninguna foto para este filtro",it:"Nessuna foto per questo filtro",de:"Kein Foto für diesen Filter",pt:"Nenhuma foto para este filtro"},
-  cpNote:{fr:"Les annotations proviennent d'iNaturalist et ne sont renseignées que sur une partie des observations : un filtre peut donc vider une colonne sans que l'espèce soit en cause. Les photos sont classées par votes de la communauté.",en:"Annotations come from iNaturalist and are only filled in on some observations: a filter may empty a column without the species being at fault. Photos are ranked by community votes.",es:"Las anotaciones provienen de iNaturalist y solo constan en parte de las observaciones: un filtro puede vaciar una columna sin culpa de la especie. Las fotos se ordenan por votos de la comunidad.",it:"Le annotazioni provengono da iNaturalist e sono presenti solo su una parte delle osservazioni: un filtro può svuotare una colonna senza colpa della specie. Le foto sono ordinate per voti della comunità.",de:"Annotationen stammen von iNaturalist und sind nur bei einem Teil der Beobachtungen vorhanden: Ein Filter kann eine Spalte leeren, ohne dass die Art schuld ist. Fotos sind nach Community-Stimmen sortiert.",pt:"As anotações vêm do iNaturalist e só estão preenchidas numa parte das observações: um filtro pode esvaziar uma coluna sem culpa da espécie. As fotos são ordenadas por votos da comunidade."},
+  cpNote:{fr:"Les annotations ne sont renseignées que sur une partie des observations : un filtre peut vider une colonne sans que l'espèce soit en cause.",en:"Annotations are filled in on only some observations: a filter may empty a column without the species being at fault.",es:"Las anotaciones solo constan en parte de las observaciones: un filtro puede vaciar una columna sin culpa de la especie.",pt:"As anotações só estão preenchidas numa parte das observações: um filtro pode esvaziar uma coluna sem culpa da espécie.",it:"Le annotazioni sono presenti solo su una parte delle osservazioni: un filtro può svuotare una colonna senza colpa della specie.",de:"Annotationen sind nur bei einem Teil der Beobachtungen vorhanden: Ein Filter kann eine Spalte leeren, ohne dass die Art schuld ist."},
   choisirCarte:{fr:"Choisir sur une carte",en:"Pick on a map",es:"Elegir en un mapa",it:"Scegli su una mappa",de:"Auf der Karte wählen",pt:"Escolher num mapa"},
   fermerCarte:{fr:"Fermer la carte",en:"Close the map",es:"Cerrar el mapa",it:"Chiudi la mappa",de:"Karte schließen",pt:"Fechar o mapa"},
   lieuxIci:{fr:"Lieux couvrant cette vue",en:"Places covering this view",es:"Lugares que cubren esta vista",it:"Luoghi che coprono questa vista",de:"Orte in diesem Ausschnitt",pt:"Lugares nesta vista"},
@@ -3292,7 +3315,9 @@ $('#c-recadrer').addEventListener('click', cadrerSurLieux);
 const RANGS_ESPECE = new Set(['species', 'subspecies', 'variety', 'form', 'hybrid']);
 
 let seuilMin = 5, filtreRouge = false;
-let triResp = { col:'part', sens:-1 };   // -1 = décroissant
+let triResp = { col:'part', sens:-1 };
+const RESP_PAR_PAGE = 12;
+let respPage = 0;   // -1 = décroissant
 
 const COLONNES = {
   nom:  { titre:t('colEspece'), val:l => nomCourt(l.nom, l.nomFr).toLowerCase(), texte:true },
@@ -3396,7 +3421,7 @@ function dessinerResponsabilite() {
         return `<th data-col="${k}"${k === 'part' ? ' style="width:30%"' : ''}>${
           echap(col.titre || nomRef)} ${fleche}</th>`;
       }).join('')}</tr></thead>
-      <tbody>${lignes.slice(0, 300).map(l => {
+      <tbody>${lignes.slice(respPage * RESP_PAR_PAGE, (respPage + 1) * RESP_PAR_PAGE).map(l => {
         const pct = l.part * 100;
         const p = palier(pct);
         return `
@@ -3419,12 +3444,24 @@ function dessinerResponsabilite() {
       `<span><i style="background:${p.couleur}"></i>${p.nom} · ${p.etiquette}</span>`).join('')}</div>
     <p class="note">${t('noteFloutage')}</p>`;
 
+  const pages = Math.ceil(lignes.length / RESP_PAR_PAGE);
+  if (pages > 1) {
+    v.insertAdjacentHTML('beforeend', `<div class="outils" style="margin-top:16px">
+      <button class="discret" id="r-prec"${respPage === 0 ? ' disabled' : ''}>‹</button>
+      <span class="compte" style="margin-left:0">${respPage + 1} / ${nb(pages)}</span>
+      <button class="discret" id="r-suiv"${respPage + 1 >= pages ? ' disabled' : ''}>›</button>
+    </div>`);
+    $('#r-prec').addEventListener('click', () => { respPage--; dessinerResponsabilite(); });
+    $('#r-suiv').addEventListener('click', () => { respPage++; dessinerResponsabilite(); });
+  }
+
   v.querySelectorAll('th[data-col]').forEach(th => {
     th.addEventListener('click', () => {
       const k = th.dataset.col;
       // Même colonne : on inverse. Nouvelle colonne : décroissant, sauf pour les noms.
       if (triResp.col === k) triResp.sens = -triResp.sens;
       else triResp = { col:k, sens: k === 'nom' ? 1 : -1 };
+      respPage = 0;
       dessinerResponsabilite();
     });
   });
@@ -3483,13 +3520,16 @@ function bandeauChiffres() {
         <div class="v">${obsPers ? nb(obsPers) : '…'}</div>
         <div class="d">${obsPers && totalObs
           ? t('obsParPers', nb(Math.round(totalObs / obsPers))) : ''}</div></div>
-      <div class="chiffre aide" title="${echap(t('aideChao1'))}"><div class="k">Chao1</div>
-        <div class="v">${c1.fiable ? '≈ ' + nb(c1.est) : '—'}</div>
-        <div class="d">${c1.fiable ? t('completude', Math.round((c1.s / c1.est) * 100)) + marque
-          : t('nonCalculable')}</div></div>
-      <div class="chiffre aide" title="${echap(t('aideAce'))}"><div class="k">ACE</div>
-        <div class="v">${a ? '≈ ' + nb(a) : '—'}</div>
-        <div class="d">${a ? t('completude', Math.round((c1.s / a) * 100)) + marque
+      <div class="chiffre aide" title="${echap(t('aideEstim'))}">
+        <div class="k">${t('espEstimees')}</div>
+        <div class="v">${c1.fiable || a
+          ? '≈ ' + nb(Math.min(...[c1.fiable ? c1.est : null, a].filter(Boolean)))
+            + (c1.fiable && a && Math.abs(a - c1.est) > 1
+               ? '–' + nb(Math.max(c1.est, a)) : '')
+          : '…'}</div>
+        <div class="d">${c1.fiable || a
+          ? t('completude', Math.round((c1.s / Math.max(...[c1.fiable ? c1.est : null, a]
+              .filter(Boolean))) * 100)) + marque
           : t('nonCalculable')}</div></div>
     </div>`;
 }
@@ -3814,7 +3854,9 @@ async function photosEspece(id) {
   /* Toujours en qualité recherche : une photo mal déterminée n'aide pas à comparer.
      On ne desserre que si la sélection est trop pauvre pour donner trois images. */
   const p = { taxon_id:id, photos:'true', captive:'false', verifiable:'true',
-              quality_grade:'research', order_by:'votes', per_page:3, locale:langue };
+              quality_grade:'research', order_by:'observed_on', order:'desc',
+              per_page:5, locale:langue };
+  // Diagnostic : combien de photos par observation reviennent réellement ?
   if (cpLocal) {
     if (etat.lieux.length) p.place_id = etat.lieux.map(l => l.id).join(',');
     if (etat.zone) Object.assign(p, etat.zone);
@@ -3826,19 +3868,20 @@ async function photosEspece(id) {
 
   let res = [];
   const chercher = async p2 => {
-    let d = null;
-    if (await testerV2()) {
-      try {
-        d = await appel('/observations',
-          { ...p2, fields:'(id:!t,photos:(url:!t,attribution:!t))' }, true, true);
-      } catch (e) { d = null; }
-    }
-    if (!d) d = await appel('/observations', p2, false, true);
+    /* En v1 exclusivement : la sélection de champs de la v2 ne garantit pas de recevoir
+       toutes les photos d'une observation, or c'est précisément ce qui permet de la
+       feuilleter. Cinq observations pèsent peu, et l'appel est prioritaire. */
+    const d = await appel('/observations', p2, false, true);
+    /* Une entrée par observation, donc par individu, avec toutes ses photos : la comparaison
+       porte sur cinq individus distincts, et chacun se feuillette latéralement si son auteur
+       l'a photographié sous plusieurs angles. */
     return (d.results || []).map(o => {
-      const ph = o.photos && o.photos[0];
-      if (!ph) return null;
-      const u = ph.medium_url || String(ph.url || '').replace('/square.', '/medium.');
-      return u ? { obs:o.id, url:u, credit:ph.attribution || '' } : null;
+      const urls = (o.photos || [])
+        .map(ph => ph.medium_url || String(ph.url || '').replace('/square.', '/medium.'))
+        .filter(Boolean);
+      if (!urls.length) return null;
+      const ph = o.photos[0];
+      return { obs:o.id, urls, credit:(ph && ph.attribution) || '' };
     }).filter(Boolean);
   };
 
@@ -3852,6 +3895,7 @@ async function photosEspece(id) {
     }
   } catch (e) { res = []; }
 
+  console.info('Photos de ' + id + ' :', res.map(o => o.urls.length).join(', ') || 'aucune');
   cachePhotos.set(cle, res);
   return res;
 }
@@ -3976,24 +4020,58 @@ async function dessinerComparaison() {
     const cible = $('#cp-' + e.id);
     if (!cible) return;                 // la vue a changé entre-temps
     cible.innerHTML = photos.length
-      ? photos.map(ph => `<a data-loupe="${ph.url}" data-obs="${ph.obs}">
-          <img src="${ph.url}" loading="lazy" alt="">
-          <span class="credit">${echap(ph.credit)}</span></a>`).join('')
+      ? photos.map(o => `<div class="obs">
+          <div class="defile">${o.urls.map(u =>
+            `<img src="${u}" loading="lazy" alt="" data-loupe="${u}" data-obs="${o.obs}">`).join('')}</div>
+          ${o.urls.length > 1
+            ? `<span class="pages">${o.urls.map((_, i) =>
+                `<i${i ? '' : ' class="on"'}></i>`).join('')}</span>` : ''}
+          <span class="credit">${echap(o.credit)}</span>
+        </div>`).join('')
       : `<div class="vide" style="padding:18px">${t('cpAucune')}</div>`;
-    cible.querySelectorAll('[data-loupe]').forEach(a =>
-      a.addEventListener('click', () => ouvrirLoupe(a.dataset.loupe, a.dataset.obs)));
+    cible.querySelectorAll('.obs').forEach((bloc, k) => {
+      const o = photos[k];
+      if (!o) return;
+      bloc.querySelectorAll('.defile img').forEach((img, i) =>
+        img.addEventListener('click', () => ouvrirLoupe(o.urls, i, o.obs)));
+    });
+
+    // Les points suivent la photo affichée pendant le défilement.
+    cible.querySelectorAll('.obs').forEach(o => {
+      const bande = o.querySelector('.defile');
+      const points = o.querySelectorAll('.pages i');
+      if (!bande || points.length < 2) return;
+      bande.addEventListener('scroll', () => {
+        const i = Math.round(bande.scrollLeft / bande.clientWidth);
+        points.forEach((p, j) => p.classList.toggle('on', j === i));
+      });
+    });
   }
 }
 
-/* Agrandissement par-dessus la page : hésiter entre deux espèces ne doit pas obliger à
-   quitter la comparaison. Le lien vers l'observation reste accessible sous l'image. */
-function ouvrirLoupe(url, obs) {
-  const l = $('#loupe');
-  $('#loupe-img').src = String(url).replace('/medium.', '/large.');
+/* Agrandissement par-dessus la page. La loupe reçoit toute la série de l'observation : les
+   vignettes sont trop petites pour qu'on y feuillette confortablement, et le clic ouvre de
+   toute façon l'agrandissement. Flèches, glissement et touches du clavier y fonctionnent. */
+function ouvrirLoupe(urls, index, obs) {
+  const l = $('#loupe'), bande = $('#loupe-bande');
+  bande.innerHTML = urls.map(u =>
+    `<img src="${String(u).replace('/medium.', '/large.')}" alt="">`).join('');
+
   const lien = $('#loupe-lien');
   lien.href = 'https://www.inaturalist.org/observations/' + obs;
   lien.textContent = t('cpVoir');
+
+  const seule = urls.length < 2;
+  $('#loupe-prec').hidden = seule;
+  $('#loupe-suiv').hidden = seule;
   l.hidden = false;
+  // La largeur n'est connue qu'une fois la loupe affichée.
+  requestAnimationFrame(() => { bande.scrollLeft = index * bande.clientWidth; });
+}
+
+function loupeDefiler(sens) {
+  const bande = $('#loupe-bande');
+  if (bande) bande.scrollBy({ left: sens * bande.clientWidth, behavior:'smooth' });
 }
 
 
@@ -4543,8 +4621,19 @@ for (const etape of [
   },
   () => {
     const l = $('#loupe');
-    l.addEventListener('click', ev => { if (ev.target.id !== 'loupe-lien') l.hidden = true; });
-    document.addEventListener('keydown', ev => { if (ev.key === 'Escape') l.hidden = true; });
+    l.addEventListener('click', ev => {
+      /* Tout clic referme, sauf sur les commandes. Viser le seul fond serait illusoire :
+         une image en « contain » occupe tout son emplacement, bandes vides comprises. */
+      if (!ev.target.closest('.fleche') && ev.target.id !== 'loupe-lien') l.hidden = true;
+    });
+    $('#loupe-prec').addEventListener('click', () => loupeDefiler(-1));
+    $('#loupe-suiv').addEventListener('click', () => loupeDefiler(1));
+    document.addEventListener('keydown', ev => {
+      if (l.hidden) return;
+      if (ev.key === 'Escape') l.hidden = true;
+      if (ev.key === 'ArrowLeft') loupeDefiler(-1);
+      if (ev.key === 'ArrowRight') loupeDefiler(1);
+    });
   },
   () => dessinerJetons(),
   () => {
