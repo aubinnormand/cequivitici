@@ -12,7 +12,7 @@
 <style>
 :root{
   --papier:#E9EDE5; --carte:#FBFCF9; --encre:#14231C; --encre-2:#5D6E63; --encre-3:#8B9990;
-  --trait:#C6CEC1; --vert:#2F6B4F; --ocre:#A87C14; --prune:#7B3B52; --r:3px;
+  --trait:#C6CEC1; --vert:#2F6B4F; --ocre:#A87C14; --prune:#7B3B52; --brique:#B4553A; --r:3px;
 }
 *{box-sizing:border-box}
 /* Un sélecteur d'identifiant l'emporte sur la règle par défaut du navigateur : sans cette
@@ -30,7 +30,22 @@ h1{font-size:clamp(30px,4.4vw,46px); letter-spacing:-.015em}
 h1 em{font-style:italic; color:var(--vert)}
 .sub{color:var(--encre-2); max-width:60ch; margin-top:10px}
 
-.panneau{background:var(--carte); border:1px solid var(--trait); border-radius:var(--r); padding:20px 22px}
+.panneau{background:var(--carte); border:1px solid var(--trait); border-radius:var(--r);
+  padding:20px 22px; transition:border-color .5s, box-shadow .5s}
+
+/* Tant qu'aucun inventaire n'est chargé, la zone de sélection s'affirme : c'est la seule
+   action possible, et rien d'autre sur la page ne demande d'attention. Une teinte brique
+   plutôt qu'un rouge d'alerte — il s'agit d'inviter, pas de signaler une erreur. */
+body.attente .panneau{border-color:var(--brique); box-shadow:0 0 0 3px rgba(180,85,58,.10)}
+body.attente .champs .tit{color:var(--brique)}
+body.attente .saisie input{border-color:#D9A995}
+body.attente #lancer:not(:disabled){background:var(--brique);
+  animation:respire 2.4s ease-in-out infinite}
+@keyframes respire{
+  0%,100%{box-shadow:0 0 0 0 rgba(180,85,58,.34)}
+  50%{box-shadow:0 0 0 7px rgba(180,85,58,0)}
+}
+@media(prefers-reduced-motion:reduce){body.attente #lancer{animation:none}}
 .champs{display:grid; grid-template-columns:1fr 1fr; gap:22px}
 @media(max-width:720px){.champs{grid-template-columns:1fr}}
 label.tit{display:block; font-family:'IBM Plex Mono',monospace; font-size:11px;
@@ -338,7 +353,7 @@ footer{border-top:1px solid var(--trait); margin-top:60px; padding:22px 0 44px;
   font-size:12.5px; color:var(--encre-3)}
 </style>
 </head>
-<body>
+<body class="attente">
 
 <header>
   <div class="wrap">
@@ -1285,6 +1300,7 @@ Object.entries({
   cNoteCouleurs:{fr:"Une couleur par espèce dès que huit espèces ou moins sont affichées.",en:"One colour per species as soon as eight species or fewer are shown.",es:"Un color por especie cuando se muestran ocho especies o menos.",pt:"Uma cor por espécie quando são exibidas oito espécies ou menos.",it:"Un colore per specie quando sono mostrate otto specie o meno.",de:"Eine Farbe je Art, sobald höchstens acht Arten angezeigt werden."},
   cPanier:{fr:"Espèces sélectionnées",en:"Selected species",es:"Especies seleccionadas",it:"Specie selezionate",de:"Ausgewählte Arten",pt:"Espécies selecionadas"},
   mNoms:{fr:"Noms vernaculaires : {0} / {1}",en:"Common names: {0} / {1}",es:"Nombres comunes: {0} / {1}",it:"Nomi comuni: {0} / {1}",de:"Volkstümliche Namen: {0} / {1}",pt:"Nomes populares: {0} / {1}"},
+  horsLigne:{fr:"Hors ligne : seuls les inventaires déjà en mémoire sont consultables.",en:"Offline: only inventories already in memory can be opened.",es:"Sin conexión: solo se pueden abrir los inventarios ya en memoria.",pt:"Sem ligação: apenas os inventários já em memória podem ser abertos.",it:"Non in linea: solo gli inventari già in memoria sono consultabili.",de:"Offline: Nur bereits gespeicherte Inventare sind abrufbar."},
   arreter:{fr:"Arrêter",en:"Stop",es:"Detener",it:"Ferma",de:"Anhalten",pt:"Parar"},
   mArret:{fr:"Chargement interrompu.",en:"Loading stopped.",es:"Carga interrumpida.",it:"Caricamento interrotto.",de:"Laden abgebrochen.",pt:"Carregamento interrompido."},
   memTitre:{fr:"Inventaires en mémoire",en:"Saved inventories",es:"Inventarios en memoria",it:"Inventari in memoria",de:"Gespeicherte Inventare",pt:"Inventários em memória"},
@@ -1413,6 +1429,24 @@ async function changerLangue(l) {
   MOIS = MOIS_L[l] || MOIS_L.en;
   MOIS_C = MOIS_C_L[l] || MOIS_C_L.en;
   traduire();
+
+/* Fonctionnement hors ligne. Le service worker est un fichier séparé, sw.js, à déposer à
+   côté de index.html : un navigateur refuse d'en enregistrer un depuis une page. Son absence
+   n'empêche rien, le site fonctionne simplement comme avant. */
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  navigator.serviceWorker.register('./sw.js').catch(() => { /* hébergement sans sw.js */ });
+}
+
+/* Une coupure réseau se signale d'elle-même : les inventaires en mémoire restent lisibles,
+   mais aucun nouveau chargement n'aboutira. */
+function majConnexion() {
+  const e = $('#etat');
+  if (!navigator.onLine && e) { e.textContent = t('horsLigne'); e.style.color = 'var(--brique)'; }
+  else if (e) { e.style.color = ''; }
+}
+window.addEventListener('online', majConnexion);
+window.addEventListener('offline', majConnexion);
+majConnexion();
   majURL();
 
   // Les réponses en cache portent l'ancienne langue dans leur adresse : elles sont caduques.
@@ -1920,6 +1954,7 @@ async function viderMemoire() {
   etat.lieux = []; etat.taxons = []; etat.zone = null; etat.reference = null;
   etat.panier = []; cachePhotos.clear(); vocabulaire = null; vocabulairePour = null;
   etat.charge = false;
+  document.body.classList.add('attente');
   apiV2 = null; especesV2 = null;
   etat.ancetres.clear();
   reinitialiser();
@@ -2049,6 +2084,16 @@ function lienTaxon(id, avecLieu) {
 /* Les observations d'une espèce, soit dans la zone d'étude, soit dans le territoire de
    référence — exactement le périmètre des deux colonnes chiffrées. Les filtres transmis sont
    ceux du site, ce qui permet de vérifier d'un clic d'où sort un effectif surprenant. */
+/* Observations d'une espèce dans le disque interrogé : le lien reprend le point et le rayon
+   du clic, et non le lieu entier — sans quoi il ramènerait des observations situées à des
+   dizaines de kilomètres du point examiné. */
+function lienDisque(id, lat, lng, rayonKm) {
+  const p = new URLSearchParams({ taxon_id:id, captive:'false', verifiable:'true',
+    lat:(+lat).toFixed(5), lng:(+lng).toFixed(5), radius:(+rayonKm).toFixed(3) });
+  if (etat.qualite === 'research') p.set('quality_grade', 'research');
+  return 'https://www.inaturalist.org/observations?' + p.toString() + '&view=map';
+}
+
 function lienPortee(id, portee) {
   const p = new URLSearchParams({ taxon_id:id, captive:'false', verifiable:'true' });
   if (etat.qualite === 'research') p.set('quality_grade', 'research');
@@ -2188,6 +2233,7 @@ function dessinerJetons() {
   }
   rendre(etat.taxons, '#j-taxon', 'taxon');
   $('#lancer').disabled = !etat.lieux.length && !etat.taxons.length && !etat.zone;
+  document.body.classList.toggle('attente', !etat.charge);
   if (!etat.charge) $('#etat').textContent = t((etat.lieux.length || etat.taxons.length || etat.zone) ? 'pret' : 'choisirLieu');
 }
 
@@ -2278,6 +2324,7 @@ async function chargerMaintenant() {
   const gen = ++generation;          // toute exécution antérieure devient caduque
   $('#lancer').disabled = true;
   etat.charge = true;
+  document.body.classList.remove('attente');
   reinitialiser();
   majURL(true);
 
@@ -3223,7 +3270,8 @@ async function interrogerPoint(ev) {
       <div class="pop-sous">${t('cPlusObs')} · ${t('cRayon', dist)}</div>
       <ul class="pop-liste">${d.results.map(x => {
         const t = x.taxon;
-        return `<li><a href="${lienINat(t.id)}" target="_blank" rel="noopener"
+        return `<li><a href="${lienDisque(t.id, ev.latlng.lat, ev.latlng.lng, r)}"
+          target="_blank" rel="noopener"
           style="text-decoration:none"><span>${echap(nomCourt(t.name, t.preferred_common_name))}
           </span></a><b>${nb(x.count)}</b></li>`;
       }).join('')}</ul>`);
