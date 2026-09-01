@@ -1251,6 +1251,10 @@ Object.entries({
   decVide:{fr:"Aucune espèce nouvelle sur cette période.",en:"No new species over this period.",es:"Ninguna especie nueva en este periodo.",it:"Nessuna specie nuova in questo periodo.",de:"Keine neue Art in diesem Zeitraum.",pt:"Nenhuma espécie nova neste período."},
   decMondiale:{fr:"Première mondiale",en:"World first",es:"Primera mundial",it:"Prima mondiale",de:"Weltweit erstmals",pt:"Primeira mundial"},
   decNb:{fr:"{0} espèces nouvelles",en:"{0} new species",es:"{0} especies nuevas",it:"{0} specie nuove",de:"{0} neue Arten",pt:"{0} espécies novas"},
+  decFiltreTout:{fr:"Toutes les nouveautés",en:"All new species",es:"Todas las novedades",pt:"Todas as novidades",it:"Tutte le novità",de:"Alle Neuzugänge"},
+  decFiltreMond:{fr:"Premières mondiales",en:"World firsts",es:"Primeras mundiales",pt:"Primeiras mundiais",it:"Prime mondiali",de:"Welterstnachweise"},
+  disFiltreTout:{fr:"Toutes les espèces",en:"All species",es:"Todas las especies",pt:"Todas as espécies",it:"Tutte le specie",de:"Alle Arten"},
+  disFiltreRouge:{fr:"Menacées seulement",en:"Threatened only",es:"Solo amenazadas",pt:"Apenas ameaçadas",it:"Solo minacciate",de:"Nur gefährdete"},
   decNote:{fr:"Nouvelle ici, pas nouvelle pour la science : aucune observation antérieure n'avait été enregistrée dans la zone.",en:"New here, not new to science: no earlier observation had been recorded in the area.",es:"Nueva aquí, no nueva para la ciencia: no había registros anteriores en la zona.",pt:"Nova aqui, não nova para a ciência: não havia registos anteriores na zona.",it:"Nuova qui, non nuova per la scienza: nessuna segnalazione anteriore nella zona.",de:"Neu hier, nicht neu für die Wissenschaft: kein früherer Nachweis im Gebiet."},
   divergent:{fr:"estimations divergentes",en:"estimates disagree",es:"estimaciones divergentes",it:"stime divergenti",de:"Schätzungen weichen ab",pt:"estimativas divergentes"},
   aideDivergent:{fr:"Les deux estimations s'écartent de plus de 15 %. Lis une fourchette, pas un chiffre : il manque des observations.",en:"The two estimates differ by over 15%. Read a range, not a figure: more observations are needed.",es:"Las dos estimaciones difieren en más del 15 %. Lee un intervalo, no una cifra: faltan observaciones.",it:"Le due stime divergono di oltre il 15%. Leggi un intervallo, non una cifra: mancano osservazioni.",de:"Die Schätzungen weichen um über 15 % ab. Lies eine Spanne, keine Zahl: Es fehlen Beobachtungen.",pt:"As duas estimativas diferem em mais de 15 %. Lê um intervalo, não um número: faltam observações."},
@@ -3549,6 +3553,7 @@ function bandeauChiffres() {
    Le seuil de cinq signalements est essentiel : sans lui la liste se remplirait d'espèces vues
    une seule fois il y a dix ans, dont l'absence ne veut rien dire. */
 let disparitions = null, disEnCours = false;
+let disRouge = false;       // n'afficher que les espèces menacées
 let disMin = 1;              // signalements minimum ; à 1, rien n'est écarté
 let disMois = 24;            // durée d'absence effectivement retenue
 const DIS_PAR_PAGE = 12;     // fiches par page
@@ -3664,10 +3669,16 @@ async function chargerDisparitions() {
 function dessinerDisparitions() {
   const v = $('#v-disparition');
   if (!etat.especes.length) return;
-  const liste = disparitions || [];
+  const toutes = disparitions || [];
+  // Vulnérable, en danger, en danger critique, éteinte à l'état sauvage ou éteinte.
+  const liste = disRouge ? toutes.filter(x => x.e.iucn >= 30) : toutes;
 
   v.innerHTML = `
     <div class="outils">
+      ${toutes.some(x => x.e.iucn >= 30) ? `<select id="d-rouge">
+        <option value=""${disRouge ? '' : ' selected'}>${t('disFiltreTout')}</option>
+        <option value="1"${disRouge ? ' selected' : ''}>${t('disFiltreRouge')}</option>
+      </select>` : ''}
       <select id="d-seuil">${[1, 2, 5, 10, 20].map(v =>
         `<option value="${v}"${v === disMin ? ' selected' : ''}>${t('seuilObs', v)}</option>`).join('')}</select>
       <span class="compte">${liste.length ? t('disNb', nb(liste.length))
@@ -3698,6 +3709,10 @@ function dessinerDisparitions() {
     <p class="note">${t('disNote')}</p>`;
 
   brancherPanier(v, dessinerDisparitions);
+  const dr = $('#d-rouge');
+  if (dr) dr.addEventListener('change', e => {
+    disRouge = !!e.target.value; disPage = 0; dessinerDisparitions();
+  });
   const prec = $('#d-prec'), suiv = $('#d-suiv');
   if (prec) prec.addEventListener('click', () => { disPage--; dessinerDisparitions(); });
   if (suiv) suiv.addEventListener('click', () => { disPage++; dessinerDisparitions(); });
@@ -4175,6 +4190,7 @@ async function chercherLieux() {
    requête triée par date croissante et restreinte à ces espèces suffit : on retient la
    première venue de chacune. Six requêtes en tout. */
 let decouvertes = null, decEnCours = false, decMois = 60;
+let decMondiales = false;   // n'afficher que les premières mondiales
 /* Les paliers sont pris en entier : couper au milieu d'une tranche reviendrait à écarter des
    espèces de même ancienneté que celles conservées, au hasard de l'ordre de la liste. On
    accumule donc jusqu'à dépasser un seuil, puis on s'arrête net. */
@@ -4326,11 +4342,16 @@ async function chargerDecouvertes() {
 function dessinerDecouvertes() {
   const v = $('#v-decouverte');
   if (!etat.especes.length) return;
-  const liste = decouvertes || [];
+  const toutes = decouvertes || [];
+  const liste = decMondiales ? toutes.filter(x => x.mondiale) : toutes;
 
   v.innerHTML = `
     <div class="outils">
-      <span class="compte" style="margin-left:0">${liste.length ? t('decNb', nb(liste.length))
+      ${toutes.some(x => x.mondiale) ? `<select id="d-mondiale">
+        <option value=""${decMondiales ? '' : ' selected'}>${t('decFiltreTout')}</option>
+        <option value="1"${decMondiales ? ' selected' : ''}>${t('decFiltreMond')}</option>
+      </select>` : ''}
+      <span class="compte">${liste.length ? t('decNb', nb(liste.length))
         : (decEnCours ? t('decCharge') : '')}${liste.length
           ? ' · ' + t('decFenetre', dureeTexte(decMois)) : ''}</span>
     </div>
@@ -4356,6 +4377,10 @@ function dessinerDecouvertes() {
     <p class="note">${t('decNote')}</p>`;
 
   brancherPanier(v, dessinerDecouvertes);
+  const dm = $('#d-mondiale');
+  if (dm) dm.addEventListener('change', e => {
+    decMondiales = !!e.target.value; decPage = 0; dessinerDecouvertes();
+  });
   const dp = $('#dec-prec'), ds = $('#dec-suiv');
   if (dp) dp.addEventListener('click', () => { decPage--; dessinerDecouvertes(); });
   if (ds) ds.addEventListener('click', () => { decPage++; dessinerDecouvertes(); });
