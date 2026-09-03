@@ -3,14 +3,16 @@
    navigateur n'accepte d'enregistrer un service worker que depuis un fichier servi à part.
 
    Trois caches distincts, aux règles différentes :
-   — la coquille (page, feuilles de style, polices, Leaflet) est servie depuis le cache et
-     rafraîchie en arrière-plan, pour démarrer instantanément et rester à jour ;
+   — la page elle-même est demandée au réseau d'abord, le cache ne servant qu'en secours :
+     servie depuis le cache, une version publiée n'apparaissait qu'au second rechargement,
+     ce qui donne l'impression tenace qu'une correction n'a pas été appliquée ;
+   — les dépendances figées (Leaflet, polices) restent servies depuis le cache ;
    — les réponses de l'API sont conservées telles quelles, ce qui rend un inventaire déjà
      consulté disponible sans réseau ;
    — les tuiles de carte sont gardées au fil de la navigation, dans la limite d'un plafond,
      de sorte que les zones déjà regardées restent visibles hors ligne. */
 
-const VERSION = 'v1';
+const VERSION = 'v2';
 const COQUILLE = 'coquille-' + VERSION;
 const DONNEES = 'donnees-' + VERSION;
 const TUILES = 'tuiles-' + VERSION;
@@ -90,6 +92,12 @@ self.addEventListener('fetch', ev => {
     return;
   }
 
-  // Page, polices, Leaflet : affichage immédiat, mise à jour en arrière-plan.
+  /* La page : réseau d'abord. Elle pèse peu, et la voir à jour importe plus que d'économiser
+     quelques centaines de millisecondes au démarrage. Hors ligne, le cache prend le relais. */
+  const estPage = req.mode === 'navigate'
+    || url.pathname.endsWith('/') || url.pathname.endsWith('.html');
+  if (estPage) { ev.respondWith(reseauPuisCache(req, COQUILLE)); return; }
+
+  // Dépendances figées : affichage immédiat, mise à jour en arrière-plan.
   ev.respondWith(depuisCachePuisReseau(req, COQUILLE));
 });

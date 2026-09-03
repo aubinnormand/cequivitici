@@ -77,6 +77,9 @@ input[type=text]:focus{outline:2px solid var(--vert); outline-offset:1px; border
 #memoire .quand{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--encre-3)}
 #memoire button{margin-left:8px}
 .icone-liste{padding:6px 8px; line-height:0}
+.discret.rouge{color:var(--brique); border-color:#D9A995}
+.discret.rouge:hover{background:#F7EDE9; border-color:var(--brique)}
+#voir-memoire.ouvert{color:var(--brique); border-color:#D9A995; background:#F7EDE9}
 #stop{color:var(--prune)}
 #stop:hover{border-color:var(--prune); background:#F6EEF3}
 .jetons{display:flex; flex-wrap:wrap; gap:7px; margin-top:9px; min-height:4px}
@@ -104,6 +107,11 @@ nav.onglets button{border:0; background:transparent; font:inherit; cursor:pointe
   color:var(--encre-2); border-bottom:2px solid transparent; margin-bottom:-1px}
 nav.onglets button:hover{color:var(--encre)}
 nav.onglets button.actif{color:var(--encre); border-bottom-color:var(--vert); font-weight:700}
+/* Une pastille dit si l'onglet a ses données : brique tant qu'il faut les charger, verte
+   ensuite. Elle évite d'ouvrir un onglet pour découvrir qu'il est vide. */
+nav.onglets button .pt{display:inline-block; width:6px; height:6px; border-radius:50%;
+  margin-left:7px; vertical-align:middle; background:var(--brique)}
+nav.onglets button.pret .pt{background:var(--vert)}
 section.vue{display:none} section.vue.actif{display:block}
 
 .vide{border:1px dashed var(--trait); border-radius:var(--r); padding:52px 24px;
@@ -170,6 +178,40 @@ select{padding:8px 10px; border:1px solid var(--trait); border-radius:var(--r); 
   overflow:hidden}
 .colonne .entete{display:flex; align-items:flex-start; justify-content:space-between; gap:8px;
   padding:10px 11px; border-bottom:1px solid var(--trait)}
+.colonne .entete .plus{flex:none}
+.rech{padding:8px 10px; border:1px solid var(--trait); border-radius:var(--r);
+  font:inherit; background:#fff; width:210px}
+.rubans{display:flex; height:9px; border-radius:2px; overflow:hidden; background:var(--trait)}
+.rubans span{display:block; height:100%}
+.apercu4{display:grid; grid-template-columns:1fr 1fr; gap:2px; padding:0; border:0;
+  background:var(--trait); cursor:pointer; width:100%}
+.apercu4 span{aspect-ratio:1; background:#DDE4D9; display:block; overflow:hidden}
+.apercu4 img{width:100%; height:100%; object-fit:cover; display:block}
+.apercu4:hover{outline:2px solid var(--vert); outline-offset:-2px}
+#bio-fen{position:fixed; inset:0; z-index:1900; background:rgba(20,35,28,.72);
+  display:flex; align-items:center; justify-content:center; padding:24px}
+#bio-fen .boite{background:var(--carte); border-radius:var(--r); padding:20px 22px;
+  width:min(760px,100%); max-height:86vh; overflow-y:auto; position:relative}
+.mosaique{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px}
+.tuile{position:relative}
+.mosaique a{position:relative; display:block; aspect-ratio:1; background:#DDE4D9;
+  border-radius:var(--r); overflow:hidden; text-decoration:none}
+.mosaique img{width:100%; height:100%; object-fit:cover; display:block}
+.mosaique .transg{position:absolute; top:6px; left:6px; width:20px; height:20px;
+  border-radius:50%; background:rgba(251,252,249,.92); color:var(--prune);
+  font-size:12px; line-height:20px; text-align:center}
+.mosaique span{position:absolute; left:0; right:0; bottom:0; padding:14px 8px 6px;
+  color:#fff; font-size:12.5px; line-height:1.25;
+  background:linear-gradient(transparent, rgba(20,35,28,.82))}
+@media(max-width:640px){.mosaique{grid-template-columns:1fr 1fr}}
+#bio-fen .fermer{position:absolute; top:12px; right:14px}
+.ind{display:flex; align-items:center; gap:9px; padding:5px 0; font-size:13px;
+  color:var(--encre); text-decoration:none; border-top:1px solid var(--trait)}
+.ind:first-child{border-top:0}
+.ind:hover{color:var(--vert)}
+.ind .v{width:34px; height:34px; flex:none; border-radius:3px; overflow:hidden;
+  background:#DDE4D9; display:block}
+.ind .v img{width:100%; height:100%; object-fit:cover; display:block}
 .colonne .entete .fr{font-weight:700; font-size:14px; line-height:1.3}
 .colonne .entete .sci{font-family:'Fraunces',serif; font-style:italic; font-size:13px; color:var(--encre-2)}
 .colonne .photos{display:grid; gap:1px; background:var(--trait)}
@@ -207,7 +249,8 @@ select{padding:8px 10px; border:1px solid var(--trait); border-radius:var(--r); 
 .fiche .img img{width:100%; height:100%; object-fit:cover; display:block}
 .fiche .num{position:absolute; top:6px; left:6px; background:rgba(20,35,28,.72); color:#fff;
   font-family:'IBM Plex Mono',monospace; font-size:10px; padding:2px 6px; border-radius:2px}
-.fiche .statut{position:absolute; bottom:6px; right:6px}
+.fiche .statut{position:absolute; bottom:6px; right:6px; z-index:1}
+.tuile .statut{position:absolute; bottom:6px; right:6px; z-index:2}
 .fiche .statut .iucn{font-size:10px; padding:2px 6px 2px 4px}
 .fiche{position:relative}
 .fiche .corps{padding:10px 11px 11px; display:flex; flex-direction:column; gap:3px; flex:1}
@@ -219,11 +262,17 @@ select{padding:8px 10px; border:1px solid var(--trait); border-radius:var(--r); 
 .fiche .plus{border:1px solid var(--trait); background:#fff; color:var(--encre-2); cursor:pointer;
   width:20px; height:20px; border-radius:3px; line-height:1; font-size:14px; padding:0; flex:none}
 .fiche .plus:hover{border-color:var(--vert); color:var(--vert)}
-.fiche .choisir{position:absolute; top:6px; right:6px; z-index:1; width:24px; height:24px;
+/* Le fuchsia d'iNaturalist pour les espèces introduites, et un décalage vers la droite :
+   le coin supérieur gauche est déjà occupé par le numéro de la fiche. */
+.fiche .intro{position:absolute; top:6px; left:44px; z-index:1; width:20px; height:20px;
+  border-radius:50%; background:#D62F8A; color:#fff; font-weight:700; font-size:13px;
+  line-height:20px; text-align:center; cursor:help;
+  box-shadow:0 1px 3px rgba(20,35,28,.35)}
+.fiche .choisir, .tuile .choisir{position:absolute; top:6px; right:6px; z-index:2; width:24px; height:24px;
   border:1px solid rgba(20,35,28,.25); background:rgba(255,255,255,.92); color:var(--encre-2);
   border-radius:4px; cursor:pointer; font-size:14px; line-height:1; padding:0}
-.fiche .choisir:hover{border-color:var(--vert); color:var(--vert)}
-.fiche .choisir.pris{background:var(--vert); border-color:var(--vert); color:#fff}
+.fiche .choisir:hover, .tuile .choisir:hover{border-color:var(--vert); color:var(--vert)}
+.fiche .choisir.pris, .tuile .choisir.pris{background:var(--vert); border-color:var(--vert); color:#fff}
 .fiche .taxo{position:absolute; inset:0; background:rgba(251,252,249,.975); padding:9px 10px;
   overflow:auto; display:none; z-index:2; cursor:pointer}
 .fiche.ouvert .taxo{display:block}
@@ -252,6 +301,7 @@ select{padding:8px 10px; border:1px solid var(--trait); border-radius:var(--r); 
   .fiche .sci{font-size:11px; line-height:1.25}
   .fiche .n{font-size:10.5px; padding-top:5px}
   .fiche .num{font-size:9px; padding:1px 4px; top:4px; left:4px}
+  .fiche .intro{width:17px; height:17px; line-height:17px; font-size:11px; top:4px; left:34px}
     .fiche .statut{bottom:4px; right:4px}
   .fiche .statut .iucn{font-size:9px; padding:1px 4px 1px 3px; gap:3px}
   .fiche .credit{font-size:8.5px; padding:0 8px 7px; white-space:normal;
@@ -319,6 +369,10 @@ td.num a:hover{color:var(--vert); border-bottom-color:var(--vert)}
 #lieux-trouves .jeton{cursor:pointer}
 #lieux-trouves .jeton:hover{background:#D2DCCE; border-color:var(--vert)}
 #lieux-trouves .jeton small{color:var(--encre-3); font-size:11px; margin-left:6px}
+#comm-resultats .jeton small{color:var(--encre-3); font-size:11px; margin-left:6px}
+#comm-resultats .jeton:hover{background:#D2DCCE; border-color:var(--vert)}
+#comm-resultats .jeton.pale{opacity:.6; cursor:default}
+#comm-resultats .jeton.pale:hover{background:var(--carte); border-color:var(--trait)}
 /* Une légende posée sur la carte plutôt qu'en dessous : c'est là qu'on la cherche, et elle
    reste visible pendant qu'on déplace la vue. */
 .carte-boite{position:relative}
@@ -328,12 +382,15 @@ td.num a:hover{color:var(--vert); border-bottom-color:var(--vert)}
   color:var(--encre-2); cursor:pointer; box-shadow:0 2px 8px rgba(20,35,28,.12)}
 .sur-carte:hover{color:var(--vert); border-color:var(--vert)}
 .sur-carte.actif{background:var(--vert); border-color:var(--vert); color:#fff}
+.discret.actif{background:var(--vert); border-color:var(--vert); color:#fff}
 #c-legende-carte{position:absolute; bottom:14px; left:10px; z-index:500; max-width:60%;
   background:rgba(251,252,249,.94); border:1px solid var(--trait); border-radius:var(--r);
   padding:8px 10px; font-size:12.5px; line-height:1.5;
   box-shadow:0 2px 10px rgba(20,35,28,.12)}
 #c-legende-carte div{display:flex; align-items:center; gap:7px;
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+#carte-bio{height:min(72vh,620px); border:1px solid var(--trait); border-radius:var(--r);
+  background:#DDE4D9}
 #carte{height:min(72vh,620px); border:1px solid var(--trait); border-radius:var(--r); background:#DDE4D9}
 .fond-clair{filter:grayscale(.92) brightness(1.07) contrast(.88)}
 .fond-effort{filter:grayscale(1) contrast(.6); opacity:.38}
@@ -397,7 +454,7 @@ footer{border-top:1px solid var(--trait); margin-top:60px; padding:22px 0 44px;
           <div class="outils" style="margin:10px 0 8px">
             <button class="discret" id="ma-position" data-t="maPosition">Ma position</button>
             <button class="discret" id="zone-vue" data-t="zoneVue">Utiliser cette vue</button>
-            <button class="discret" id="fermer-carte" data-t="fermerCarte">Fermer</button>
+            <button class="discret rouge" id="fermer-carte" data-t="fermerCarte">Fermer</button>
           </div>
           <div id="carte-lieu"></div>
           <div class="tit" style="margin:12px 0 6px" data-t="lieuxIci"></div>
@@ -444,20 +501,29 @@ footer{border-top:1px solid var(--trait); margin-top:60px; padding:22px 0 44px;
   <nav class="onglets">
     <button class="actif" data-vue="liste" data-t="oListe">Liste</button>
     <button data-vue="comparaison" data-t="oComparaison">Comparaison</button>
+    <button data-vue="carte" data-t="oCarte">Carte</button>
     <button data-vue="responsabilite" data-t="oResp">Responsabilité</button>
     <button data-vue="saison" data-t="oSaison">Saisonnalité</button>
     <button data-vue="decouverte" data-t="oDecouverte">Découvertes</button>
     <button data-vue="disparition" data-t="oDisparition">Disparitions</button>
-    <button data-vue="carte" data-t="oCarte">Carte</button>
+    <button data-vue="bio" data-t="oBio">Biorégions</button>
+    <button data-vue="comm" data-t="oComm">Communautés</button>
   </nav>
 
   <section class="vue actif" id="v-liste">
     <div class="vide"><strong data-t="rienCharge"></strong><span data-t="videListe"></span></div>
   </section>
 
+  <section class="vue" id="v-bio">
+    <div class="vide"><strong data-t="oBio"></strong><span data-t="videBio"></span></div>
+  </section>
+
+  <section class="vue" id="v-comm">
+    <div class="vide"><strong data-t="oComm"></strong><span data-t="videComm"></span></div>
+  </section>
+
   <section class="vue" id="v-carte">
     <div class="outils">
-      <select id="c-rendu" aria-label="rendu"></select>
       <label class="bascule"><input type="checkbox" id="c-precis">
         <span data-t="cPrecis">Positions exactes</span></label>
       <label class="bascule"><input type="checkbox" id="c-panier">
@@ -517,6 +583,8 @@ footer{border-top:1px solid var(--trait); margin-top:60px; padding:22px 0 44px;
   <section class="vue" id="v-saison">
     <div class="vide"><strong data-t="rienCharge"></strong><span data-t="videSaison"></span></div>
   </section>
+
+  <div id="bio-fen" hidden></div>
 
   <div id="loupe" hidden>
     <button class="fleche" id="loupe-prec" aria-label="←">‹</button>
@@ -1278,6 +1346,11 @@ Object.entries({
   retirerRef:{fr:"Revenir au monde entier",en:"Back to the whole world",es:"Volver al mundo entero",it:"Torna al mondo intero",de:"Zurück zur ganzen Welt",pt:"Voltar ao mundo inteiro"},
   pExclusive:{fr:"quasi exclusive",en:"near-exclusive",es:"casi exclusiva",it:"quasi esclusiva",de:"nahezu ausschließlich",pt:"quase exclusiva"},
   pTresForte:{fr:"très forte",en:"very high",es:"muy alta",it:"molto alta",de:"sehr hoch",pt:"muito alta"},
+  respDouteux:{fr:"Effectif de référence incohérent : il est inférieur à l'effectif local, ce qui est impossible. La part n'est pas calculable pour cette espèce.",en:"Inconsistent reference count: lower than the local count, which is impossible. The share cannot be computed for this species.",es:"Efectivo de referencia incoherente: es inferior al local, lo que es imposible. La proporción no puede calcularse para esta especie.",pt:"Efetivo de referência incoerente: inferior ao local, o que é impossível. A parcela não pode ser calculada para esta espécie.",it:"Effettivo di riferimento incoerente: inferiore a quello locale, il che è impossibile. La quota non è calcolabile per questa specie.",de:"Widersprüchliche Referenzzahl: niedriger als die lokale Zahl, was unmöglich ist. Der Anteil ist für diese Art nicht berechenbar."},
+  introTitre:{fr:"Introduite dans la zone d'étude",en:"Introduced in the study area",es:"Introducida en la zona de estudio",pt:"Introduzida na zona de estudo",it:"Introdotta nella zona di studio",de:"Im Untersuchungsgebiet eingeführt"},
+  filtreIntroTout:{fr:"Indigènes et introduites",en:"Native and introduced",es:"Nativas e introducidas",pt:"Nativas e introduzidas",it:"Native e introdotte",de:"Einheimisch und eingeführt"},
+  filtreIntroSans:{fr:"Sans les introduites",en:"Without introduced",es:"Sin las introducidas",pt:"Sem as introduzidas",it:"Senza le introdotte",de:"Ohne eingeführte"},
+  filtreIntroSeul:{fr:"Introduites seulement",en:"Introduced only",es:"Solo introducidas",pt:"Apenas introduzidas",it:"Solo introdotte",de:"Nur eingeführte"},
   respIntro:{fr:"Part des observations connues d'une espèce qui provient de cette zone. Attention au biais : une espèce peut y être davantage prospectée sans y être plus présente.",en:"Share of a species' known records that comes from this area. Mind the bias: a species may simply be better surveyed here, not more present.",es:"Proporción de los registros conocidos de una especie que procede de esta zona. Cuidado con el sesgo: una especie puede estar mejor prospectada aquí sin ser más abundante.",pt:"Parcela dos registos conhecidos de uma espécie que provém desta zona. Atenção ao viés: uma espécie pode ser mais prospetada aqui sem ser mais presente.",it:"Quota delle segnalazioni note di una specie proveniente da questa zona. Attenzione al bias: una specie può essere semplicemente più cercata qui, non più presente.",de:"Anteil der bekannten Nachweise einer Art aus diesem Gebiet. Vorsicht vor Verzerrung: Eine Art kann hier schlicht besser erfasst sein, nicht häufiger."},
   videSaison:{fr:"Cet onglet montre la répartition des observations dans l'année.",en:"This tab shows how records are spread through the year.",es:"Esta pestaña muestra el reparto de las observaciones a lo largo del año.",pt:"Esta aba mostra a distribuição das observações ao longo do ano.",it:"Questa scheda mostra la distribuzione delle osservazioni nell'anno.",de:"Dieser Reiter zeigt die Verteilung der Nachweise über das Jahr."},
   espEstimees:{fr:"Espèces estimées",en:"Estimated species",es:"Especies estimadas",pt:"Espécies estimadas",it:"Specie stimate",de:"Geschätzte Arten"},
@@ -1301,6 +1374,52 @@ Object.entries({
   cPanier:{fr:"Espèces sélectionnées",en:"Selected species",es:"Especies seleccionadas",it:"Specie selezionate",de:"Ausgewählte Arten",pt:"Espécies selecionadas"},
   mNoms:{fr:"Noms vernaculaires : {0} / {1}",en:"Common names: {0} / {1}",es:"Nombres comunes: {0} / {1}",it:"Nomi comuni: {0} / {1}",de:"Volkstümliche Namen: {0} / {1}",pt:"Nomes populares: {0} / {1}"},
   horsLigne:{fr:"Hors ligne : seuls les inventaires déjà en mémoire sont consultables.",en:"Offline: only inventories already in memory can be opened.",es:"Sin conexión: solo se pueden abrir los inventarios ya en memoria.",pt:"Sem ligação: apenas os inventários já em memória podem ser abertos.",it:"Non in linea: solo gli inventari già in memoria sono consultabili.",de:"Offline: Nur bereits gespeicherte Inventare sind abrufbar."},
+  oComm:{fr:"Communautés",en:"Communities",es:"Comunidades",pt:"Comunidades",it:"Comunità",de:"Gemeinschaften"},
+  videComm:{fr:"L'inverse des biorégions : au lieu de regrouper les cellules qui partagent des espèces, on regroupe les espèces qui partagent des cellules. Lance d'abord l'analyse des biorégions, dont cet onglet réutilise les données.",en:"The reverse of bioregions: instead of grouping cells that share species, it groups species that share cells. Run the bioregion analysis first — this tab reuses its data.",es:"Lo contrario de las biorregiones: en lugar de agrupar celdas que comparten especies, agrupa especies que comparten celdas. Ejecuta antes el análisis de biorregiones, cuyos datos reutiliza esta pestaña.",pt:"O inverso das biorregiões: em vez de agrupar células que partilham espécies, agrupa espécies que partilham células. Executa primeiro a análise de biorregiões, cujos dados esta aba reutiliza.",it:"L'inverso delle bioregioni: invece di raggruppare le celle che condividono specie, raggruppa le specie che condividono celle. Avvia prima l'analisi delle bioregioni, di cui questa scheda riusa i dati.",de:"Die Umkehrung der Bioregionen: statt Zellen mit gemeinsamen Arten werden Arten mit gemeinsamen Zellen gruppiert. Starte zuerst die Bioregionen-Analyse, deren Daten dieser Reiter nutzt."},
+  commTri:{fr:"Classer par",en:"Sort by",es:"Ordenar por",pt:"Ordenar por",it:"Ordina per",de:"Sortieren nach"},
+  commTriObs:{fr:"Observations",en:"Records",es:"Registros",pt:"Registos",it:"Osservazioni",de:"Nachweise"},
+  commTriEsp:{fr:"Nombre d'espèces",en:"Number of species",es:"Número de especies",pt:"Número de espécies",it:"Numero di specie",de:"Artenzahl"},
+  commTriBio:{fr:"Prédominance en biorégion {0}",en:"Dominance in bioregion {0}",es:"Predominio en la biorregión {0}",pt:"Predominância na biorregião {0}",it:"Predominanza nella bioregione {0}",de:"Vorherrschaft in Bioregion {0}"},
+  commCarte:{fr:"Voir sa répartition",en:"See its distribution",es:"Ver su distribución",pt:"Ver a sua distribuição",it:"Vedi la sua distribuzione",de:"Verbreitung ansehen"},
+  commPart:{fr:"Part des observations de la cellule appartenant à cette communauté",en:"Share of the cell's records belonging to this community",es:"Proporción de los registros de la celda que pertenecen a esta comunidad",pt:"Parcela dos registos da célula pertencentes a esta comunidade",it:"Quota delle segnalazioni della cella appartenenti a questa comunità",de:"Anteil der Nachweise der Zelle, die zu dieser Gemeinschaft gehören"},
+  commAussi:{fr:"Aussi proche de : {0}",en:"Also close to: {0}",es:"También cercana a: {0}",pt:"Também próxima de: {0}",it:"Vicina anche a: {0}",de:"Ebenso nah an: {0}"},
+  commNiveau:{fr:"Finesse",en:"Granularity",es:"Finura",pt:"Granularidade",it:"Finezza",de:"Feinheit"},
+  commTitre:{fr:"Communauté {0}",en:"Community {0}",es:"Comunidad {0}",pt:"Comunidade {0}",it:"Comunità {0}",de:"Gemeinschaft {0}"},
+  commEsp:{fr:"{0} espèces",en:"{0} species",es:"{0} especies",pt:"{0} espécies",it:"{0} specie",de:"{0} Arten"},
+  commPeu:{fr:"moins de {0} obs.",en:"fewer than {0} records",es:"menos de {0} registros",pt:"menos de {0} registos",it:"meno di {0} segnalazioni",de:"weniger als {0} Nachweise"},
+  commAbsente:{fr:"absente de l'échantillon",en:"not in the sample",es:"ausente de la muestra",pt:"ausente da amostra",it:"assente dal campione",de:"nicht in der Stichprobe"},
+  commRech:{fr:"Chercher une espèce…",en:"Search a species…",es:"Buscar una especie…",pt:"Procurar uma espécie…",it:"Cerca una specie…",de:"Art suchen…"},
+  commTrouve:{fr:"appartient à la communauté {0}",en:"belongs to community {0}",es:"pertenece a la comunidad {0}",pt:"pertence à comunidade {0}",it:"appartiene alla comunità {0}",de:"gehört zur Gemeinschaft {0}"},
+  commNote:{fr:"Les espèces sont regroupées selon les cellules qu'elles occupent, par la méthode des k-moyennes. Une communauté rassemble des espèces qui se rencontrent aux mêmes endroits — ce qui traduit souvent un milieu partagé, parfois seulement des habitudes d'observation communes.",en:"Species are grouped by the cells they occupy, using k-means. A community gathers species found in the same places — often reflecting a shared habitat, sometimes merely shared observer habits.",es:"Las especies se agrupan según las celdas que ocupan, mediante k-medias. Una comunidad reúne especies que se encuentran en los mismos lugares, lo que suele reflejar un hábitat común, a veces solo hábitos de observación compartidos.",pt:"As espécies são agrupadas segundo as células que ocupam, pelo método das k-médias. Uma comunidade reúne espécies encontradas nos mesmos locais, o que reflete muitas vezes um habitat partilhado, por vezes apenas hábitos de observação comuns.",it:"Le specie sono raggruppate secondo le celle che occupano, con il metodo delle k-medie. Una comunità riunisce specie che si incontrano negli stessi luoghi, il che riflette spesso un ambiente condiviso, talvolta solo abitudini di osservazione comuni.",de:"Arten werden nach den von ihnen besetzten Zellen gruppiert, mittels k-Means. Eine Gemeinschaft vereint Arten, die an denselben Orten vorkommen — oft ein gemeinsamer Lebensraum, manchmal nur gemeinsame Beobachtungsgewohnheiten."},
+  oBio:{fr:"Biorégions",en:"Bioregions",es:"Biorregiones",pt:"Biorregiões",it:"Bioregioni",de:"Bioregionen"},
+  videBio:{fr:"Analyse exploratoire : découpe la zone en cellules et les regroupe selon la composition de leur faune ou de leur flore.",en:"Exploratory analysis: divides the area into cells and groups them by the composition of their species.",es:"Análisis exploratorio: divide la zona en celdas y las agrupa según la composición de sus especies.",pt:"Análise exploratória: divide a zona em células e agrupa-as segundo a composição das suas espécies.",it:"Analisi esplorativa: divide la zona in celle e le raggruppa secondo la composizione delle loro specie.",de:"Explorative Analyse: teilt das Gebiet in Zellen und gruppiert sie nach ihrer Artenzusammensetzung."},
+  bioDuree:{fr:"L'analyse collecte plusieurs milliers d'observations : compte quelques minutes.",en:"The analysis collects several thousand records: allow a few minutes.",es:"El análisis recoge varios miles de registros: cuenta con unos minutos.",pt:"A análise recolhe vários milhares de registos: conta com alguns minutos.",it:"L'analisi raccoglie diverse migliaia di segnalazioni: conta qualche minuto.",de:"Die Analyse sammelt mehrere tausend Nachweise: rechne mit einigen Minuten."},
+  lancerRecherche:{fr:"Lancer la recherche",en:"Run the search",es:"Iniciar la búsqueda",pt:"Iniciar a pesquisa",it:"Avvia la ricerca",de:"Suche starten"},
+  coutRequetes:{fr:"environ {0} requêtes",en:"about {0} requests",es:"unas {0} peticiones",pt:"cerca de {0} pedidos",it:"circa {0} richieste",de:"etwa {0} Abfragen"},
+  bioLancer:{fr:"Lancer l'analyse",en:"Run the analysis",es:"Ejecutar el análisis",pt:"Executar a análise",it:"Avvia l'analisi",de:"Analyse starten"},
+  bioCharge:{fr:"Collecte des observations : {0}",en:"Collecting records: {0}",es:"Recogida de observaciones: {0}",pt:"Recolha de observações: {0}",it:"Raccolta delle osservazioni: {0}",de:"Sammle Nachweise: {0}"},
+  bioCalcul:{fr:"Calcul en cours…",en:"Computing…",es:"Calculando…",pt:"A calcular…",it:"Calcolo in corso…",de:"Berechnung läuft…"},
+  bioMaigre:{fr:"Pas assez d'observations localisées pour dégager des groupes. Essaie une zone plus vaste ou un groupe taxonomique plus fourni.",en:"Not enough located records to reveal groups. Try a wider area or a richer taxonomic group.",es:"No hay suficientes registros localizados para revelar grupos. Prueba una zona más amplia o un grupo taxonómico más rico.",pt:"Não há registos localizados suficientes para revelar grupos. Tenta uma zona mais ampla ou um grupo taxonómico mais rico.",it:"Non ci sono abbastanza segnalazioni localizzate per far emergere gruppi. Prova una zona più ampia o un gruppo più ricco.",de:"Zu wenige verortete Nachweise für Gruppen. Versuche ein größeres Gebiet oder eine artenreichere Gruppe."},
+  bioResume:{fr:"{0} cellules retenues sur {1} observations · {2} espèces",en:"{0} cells kept from {1} records · {2} species",es:"{0} celdas retenidas de {1} registros · {2} especies",pt:"{0} células retidas de {1} registos · {2} espécies",it:"{0} celle mantenute su {1} segnalazioni · {2} specie",de:"{0} Zellen aus {1} Nachweisen · {2} Arten"},
+  bioGroupe:{fr:"Groupe {0}",en:"Group {0}",es:"Grupo {0}",pt:"Grupo {0}",it:"Gruppo {0}",de:"Gruppe {0}"},
+  bioCellules:{fr:"{0} cellules",en:"{0} cells",es:"{0} celdas",pt:"{0} células",it:"{0} celle",de:"{0} Zellen"},
+  fermer:{fr:"Fermer",en:"Close",es:"Cerrar",pt:"Fechar",it:"Chiudi",de:"Schließen"},
+  bioPeu:{fr:"Données insuffisantes",en:"Not enough data",es:"Datos insuficientes",pt:"Dados insuficientes",it:"Dati insufficienti",de:"Zu wenige Daten"},
+  bioTout:{fr:"Tout",en:"Everything",es:"Todo",pt:"Tudo",it:"Tutto",de:"Alles"},
+  bioRapide:{fr:"Rapide",en:"Quick",es:"Rápido",pt:"Rápido",it:"Rapido",de:"Schnell"},
+  bioMoyen:{fr:"Moyen",en:"Medium",es:"Medio",pt:"Médio",it:"Medio",de:"Mittel"},
+  bioFin:{fr:"Fin",en:"Fine",es:"Fino",pt:"Fino",it:"Fine",de:"Fein"},
+  bioDetail:{fr:"{0} observations, environ {1}",en:"{0} records, about {1}",es:"{0} registros, unos {1}",pt:"{0} registos, cerca de {1}",it:"{0} osservazioni, circa {1}",de:"{0} Nachweise, etwa {1}"},
+  bioSec:{fr:"{0} s",en:"{0} s",es:"{0} s",pt:"{0} s",it:"{0} s",de:"{0} s"},
+  bioMin:{fr:"{0} min",en:"{0} min",es:"{0} min",pt:"{0} min",it:"{0} min",de:"{0} Min."},
+  bioVolume:{fr:"Observations",en:"Records",es:"Registros",pt:"Registos",it:"Osservazioni",de:"Nachweise"},
+  bioRecadrer:{fr:"Recadrer",en:"Reframe",es:"Reencuadrar",pt:"Reenquadrar",it:"Inquadra",de:"Neu ausrichten"},
+  bioRecollecter:{fr:"Recollecter les données",en:"Collect data again",es:"Recoger los datos de nuevo",pt:"Recolher os dados de novo",it:"Raccogli di nuovo i dati",de:"Daten neu sammeln"},
+  bioCache:{fr:"données en mémoire",en:"data from memory",es:"datos en memoria",pt:"dados em memória",it:"dati in memoria",de:"Daten aus dem Speicher"},
+  bioK:{fr:"Groupes",en:"Groups",es:"Grupos",pt:"Grupos",it:"Gruppi",de:"Gruppen"},
+  bioIndic:{fr:"Espèces caractéristiques",en:"Characteristic species",es:"Especies características",pt:"Espécies características",it:"Specie caratteristiche",de:"Kennzeichnende Arten"},
+  bioPlafond:{fr:"Plafond de 10 000 observations atteint : l'analyse porte sur les plus récentes.",en:"Cap of 10,000 records reached: the analysis covers the most recent ones.",es:"Límite de 10 000 registros alcanzado: el análisis cubre los más recientes.",pt:"Limite de 10 000 registos atingido: a análise cobre os mais recentes.",it:"Limite di 10 000 segnalazioni raggiunto: l'analisi riguarda le più recenti.",de:"Obergrenze von 10 000 Nachweisen erreicht: Die Analyse umfasst die jüngsten."},
+  bioNote:{fr:"Méthode : cellules d'au moins 2 km, composition normalisée par cellule puis passée au logarithme, analyse en composantes principales, regroupement de Ward. Les groupes reflètent en partie les habitudes des observateurs autant que l'écologie : restreins l'analyse à un groupe taxonomique pour limiter ce biais.",en:"Method: cells of at least 2 km, composition normalised per cell then log-transformed, principal component analysis, Ward clustering. The groups partly reflect observer habits as much as ecology: restrict the analysis to one taxonomic group to limit this bias.",es:"Método: celdas de al menos 2 km, composición normalizada por celda y transformada en logaritmo, análisis de componentes principales, agrupamiento de Ward. Los grupos reflejan en parte los hábitos de los observadores tanto como la ecología: restringe el análisis a un grupo taxonómico para limitar este sesgo.",pt:"Método: células de pelo menos 2 km, composição normalizada por célula e transformada em logaritmo, análise de componentes principais, agrupamento de Ward. Os grupos refletem em parte os hábitos dos observadores tanto quanto a ecologia: restringe a análise a um grupo taxonómico para limitar este viés.",it:"Metodo: celle di almeno 2 km, composizione normalizzata per cella e trasformata in logaritmo, analisi delle componenti principali, raggruppamento di Ward. I gruppi riflettono in parte le abitudini degli osservatori quanto l'ecologia: restringi l'analisi a un gruppo tassonomico per limitare questo bias.",de:"Methode: Zellen von mindestens 2 km, Zusammensetzung je Zelle normiert und logarithmiert, Hauptkomponentenanalyse, Ward-Clusterung. Die Gruppen spiegeln teils die Gewohnheiten der Beobachtenden ebenso wie die Ökologie: Beschränke die Analyse auf eine taxonomische Gruppe, um diesen Bias zu begrenzen."},
   arreter:{fr:"Arrêter",en:"Stop",es:"Detener",it:"Ferma",de:"Anhalten",pt:"Parar"},
   mArret:{fr:"Chargement interrompu.",en:"Loading stopped.",es:"Carga interrumpida.",it:"Caricamento interrotto.",de:"Laden abgebrochen.",pt:"Carregamento interrompido."},
   memTitre:{fr:"Inventaires en mémoire",en:"Saved inventories",es:"Inventarios en memoria",it:"Inventari in memoria",de:"Gespeicherte Inventare",pt:"Inventários em memória"},
@@ -1312,8 +1431,6 @@ Object.entries({
   touteAnnee:{fr:"Toute l'année",en:"All year",es:"Todo el año",it:"Tutto l'anno",de:"Ganzes Jahr",pt:"O ano inteiro"},
   cPrecis:{fr:"Positions exactes seulement",en:"Exact positions only",es:"Solo posiciones exactas",it:"Solo posizioni esatte",de:"Nur exakte Positionen",pt:"Apenas posições exatas"},
   cFond:{fr:"Fond",en:"Basemap",es:"Fondo",it:"Sfondo",de:"Karte",pt:"Base"},
-  cPoints:{fr:"Points",en:"Points",es:"Puntos",it:"Punti",de:"Punkte",pt:"Pontos"},
-  cGrille:{fr:"Grille",en:"Grid",es:"Cuadrícula",it:"Griglia",de:"Raster",pt:"Grelha"},
   cEffort:{fr:"Fond d'effort",en:"Effort layer",es:"Capa de esfuerzo",it:"Sfondo di sforzo",de:"Aufwandsebene",pt:"Camada de esforço"},
   cpVoir:{fr:"Voir sur iNaturalist",en:"View on iNaturalist",es:"Ver en iNaturalist",it:"Vedi su iNaturalist",de:"Auf iNaturalist ansehen",pt:"Ver no iNaturalist"},
   cpGauche:{fr:"Déplacer à gauche",en:"Move left",es:"Mover a la izquierda",it:"Sposta a sinistra",de:"Nach links",pt:"Mover para a esquerda"},
@@ -1352,7 +1469,7 @@ Object.entries({
     es:"Esta pestaña muestra el ritmo del año: cuándo salir y para ver qué.",
     it:"Questa scheda mostra il ritmo dell'anno: quando uscire e per vedere cosa.",
     de:"Dieser Reiter zeigt den Jahresrhythmus: wann hinausgehen und wofür."},
-  legCorrige:{fr:"Complément estimé",en:"Estimated complement",es:"Complemento estimado",it:"Complemento stimato",de:"Geschätzte Ergänzung",pt:"Complemento estimado"}
+  legPicMois:{fr:"Espèces à leur pic",en:"Species at their peak",es:"Especies en su pico",pt:"Espécies no seu pico",it:"Specie al loro picco",de:"Arten im Maximum"},
 }).forEach(([k, v]) => { for (const l in v) TEXTES[l][k] = v[l]; });
 
 const LANGUES = { fr:'Français', en:'English', es:'Español', pt:'Português', it:'Italiano', de:'Deutsch' };
@@ -1740,7 +1857,7 @@ async function testerMoisV2(f) {
 const BASE = 'inventaire-inat';
 /* À incrémenter dès qu'un calcul enregistré change de sens : sans cela, un inventaire mis en
    mémoire ressortirait avec les résultats de l'ancienne version, sans que rien ne le signale. */
-const VERSION_DONNEES = 3;
+const VERSION_DONNEES = 4;
 const PEREMPTION = 7 * 24 * 3600 * 1000;
 
 /* IndexedDB peut rester muette : en navigation privée sur iOS, ou quand un autre onglet
@@ -1794,6 +1911,7 @@ function enregistrer() {
     // De quoi rejouer la sélection telle quelle depuis le panneau de mémoire.
     lieux: etat.lieux, taxons: etat.taxons, zone: etat.zone, reference: etat.reference,
     especes: etat.especes, ancetres: [...etat.ancetres],
+    introduites: etat.introduites ? [...etat.introduites] : null,
     seriesCache: etat.seriesCache, tronque: etat.tronque, decouvertes, disparitions,
     decMois, disMois,          // la fenêtre retenue fait partie du résultat
     panier: etat.panier,
@@ -1816,6 +1934,7 @@ async function restaurer(gen) {
   etat.mensuel = (etat.seriesCache[etat.qualite] || {}).mensuel || null;
   etat.tronque = d.tronque;
   etat.panier = d.panier || [];
+  etat.introduites = d.introduites ? new Set(d.introduites) : null;
   decouvertes = d.decouvertes || null;
   disparitions = d.disparitions || null;
   if (d.decMois) decMois = d.decMois;
@@ -1900,11 +2019,17 @@ async function listerMemoire() {
   const boite = $('#memoire'), cible = $('#memoire-liste');
   if (!boite || !cible) return;
   boite.hidden = !boite.hidden;
+  $('#voir-memoire').classList.toggle('ouvert', !boite.hidden);
   if (boite.hidden) return;
 
   cible.innerHTML = `<div class="etat">…</div>`;
   const tout = await surBase('readonly', st => st.getAll());
-  const liste = (tout || []).sort((a, b) => b.date - a.date);
+  /* Les réserves d'observations des biorégions partagent la clé du lieu mais ne contiennent
+     pas d'inventaire : elles n'ont rien à faire dans cette liste, où elles apparaissaient
+     comme des entrées à zéro espèce. Le vidage général les efface avec le reste. */
+  const liste = (tout || [])
+    .filter(d => !String(d.cle || '').includes('|bio|'))
+    .sort((a, b) => b.date - a.date);
   if (!liste.length) { cible.innerHTML = `<div class="etat">${t('memVide')}</div>`; return; }
   await nommerDepuisCle(liste);
 
@@ -1934,6 +2059,7 @@ async function listerMemoire() {
     majBoutonRef();
     dessinerJetons();
     boite.hidden = true;
+    $('#voir-memoire').classList.remove('ouvert');
     majURL();
     charger();
   }));
@@ -1964,7 +2090,7 @@ async function viderMemoire() {
   dessinerJetons();
   tracerChoix();
   const vides = `<div class="vide"><strong>${t('rienCharge')}</strong>${t('videListe')}</div>`;
-  ['#v-liste', '#v-saison', '#v-decouverte', '#v-disparition', '#v-comparaison', '#r-tableau']
+  ['#v-liste', '#v-saison', '#v-decouverte', '#v-disparition', '#v-comparaison', '#v-bio', '#r-tableau']
     .forEach(x => { $(x).innerHTML = vides; });
   history.replaceState({}, '', location.pathname);
 
@@ -2049,12 +2175,14 @@ const etat = {
   mensuel: null,
   seriesCache: { research:{}, toutes:{} },
   moisCache: new Map(),
+  moisTronque: null,        // mois dont la liste d'espèces est restée incomplète
+  compEstimee: false,       // la complétude mensuelle a-t-elle été demandée
   phenologie: null,   // Map(idEspèce -> 12 effectifs mensuels), niveau courant
   phenoCache: { research:null, toutes:null },
   charge: false
 };
 
-const vue = { noeud:null, texte:'', tri:'obs', mois:0, deplies:new Set(), nommage:'sci' };
+const vue = { noeud:null, texte:'', tri:'obs', mois:0, deplies:new Set(), nommage:'sci', intro:'tout' };
 
 /* Un même taxon a deux noms possibles. On choisit lequel porte l'information principale,
    l'autre passe en second, et la mise en forme suit : le latin reste toujours en italique. */
@@ -2151,6 +2279,7 @@ function arreterTout() {
 }
 
 function progression(texte, pct) {
+  majOnglets();
   $('#etat').textContent = texte;
   // Le bouton d'arrêt n'apparaît que pendant un chargement, signalé par une jauge active.
   const st = $('#stop');
@@ -2301,12 +2430,14 @@ function reinitialiser() {
   etat.panier = []; cachePhotos.clear();
   decouvertes = null;
   disparitions = null;
+  bio = null; bioTente = false; carteBio = null; anneauxLieu = null;
+  comm = null; commArbre = null;
   etat.phenoCache = { research:null, toutes:null };
   Object.assign(vue, { noeud:null, texte:'', mois:0 });
   vue.deplies.clear();
-  seuilMin = 5;
+  seuilMin = 1;
   const attente = `<div class="vide"><strong>${t('chargeCours')}</strong>${t('effacePrec')}</div>`;
-  ['#v-liste', '#v-saison', '#v-decouverte', '#v-disparition', '#v-comparaison', '#r-tableau'].forEach(s => { $(s).innerHTML = attente; });
+  ['#v-liste', '#v-saison', '#v-decouverte', '#v-disparition', '#v-comparaison', '#v-bio', '#r-tableau'].forEach(s => { $(s).innerHTML = attente; });
   $('#r-compte').textContent = '';
   // On revient à la liste : garder sous les yeux un onglet vide n'apprend rien.
   const versListe = document.querySelector('nav.onglets button[data-vue="liste"]');
@@ -2329,8 +2460,13 @@ async function chargerMaintenant() {
   majURL(true);
 
   try {
-    if (await restaurer(gen)) {      // inventaire déjà en cache : rien à demander
+    if (await restaurer(gen)) {
+      /* Inventaire retrouvé en mémoire. Il peut lui manquer des pièces — effectifs de
+         référence, phénologie, statut d'introduction — si la session précédente n'était pas
+         allée jusqu'au bout ou si l'enregistrement date d'avant leur ajout. On complète en
+         arrière-plan plutôt que de tout redemander. */
       $('#lancer').disabled = false;
+      enTache(() => completerManquant(gen));
       return;
     }
     await chargerEspeces();               verifier(gen);
@@ -2375,6 +2511,9 @@ async function completerManquant(gen) {
     if (!etat.annees) {
       await chargerAnnees(); verifier(gen); dessinerListe(); fait = true;
     }
+    if (!etat.introduites) {
+      await chargerIntroduites(); verifier(gen); dessinerListe(); fait = true;
+    }
     if (etat.especes.some(e => e.nm[q] === null || e.nm[q] === undefined)) {
       await chargerEffectifsMondiaux(); verifier(gen);
       dessinerResponsabilite(); if (vue.tri === 'resp') dessinerListe(); fait = true;
@@ -2382,8 +2521,7 @@ async function completerManquant(gen) {
     if (!etat.phenologie) {
       await chargerMensuel(); verifier(gen); dessinerSaison(); fait = true;
     }
-    if (!decouvertes) { await chargerDecouvertes(); verifier(gen); fait = true; }
-    if (!disparitions) { await chargerDisparitions(); verifier(gen); fait = true; }
+
     if (fait) { progression(t('mComplet'), null); enregistrer(); }
   } catch (e) {
     if (e instanceof Annule) return;
@@ -2394,14 +2532,15 @@ async function completerManquant(gen) {
 async function completer(gen) {
   try {
     await chargerAnnees();                verifier(gen);   // une requête : alimente le bandeau
+    await chargerIntroduites();           verifier(gen);
     dessinerListe();
     await chargerEffectifsMondiaux();     verifier(gen);    // peu coûteux, très consulté
     dessinerResponsabilite();
     if (vue.tri === 'resp') dessinerListe();
     await chargerMensuel();               verifier(gen);
     dessinerSaison();
-    await chargerDecouvertes();           verifier(gen);    // charge la liste des récentes…
-    await chargerDisparitions();          verifier(gen);    // …que celle-ci réutilise
+    // Découvertes et disparitions attendent une demande explicite : ensemble elles coûtent
+    // une quarantaine de requêtes, souvent pour des onglets qu'on n'ouvrira pas.
     progression(t('mComplet'), null);
     enregistrer();
   } catch (e) {
@@ -2552,12 +2691,24 @@ async function chargerAncetres() {
    sous-genre… — sont ignorés : ils allongent l'arbre sans aider à s'y repérer. */
 /* Papilionoidea, Apoidea, Bombycoidea : la super-famille est le rang usuel de découpage
    chez les papillons et les hyménoptères, elle a sa place dans l'échelle. */
+/* Échelle fixe et universelle, sans les rangs facultatifs. Sous-ordres et super-familles
+   n'existent que dans certaines lignées : là où ils sont présents ils ajoutent un niveau,
+   là où ils manquent le suivant remonte, et l'arbre finit par mêler des ordres et des
+   super-familles sur une même rangée. En s'en tenant aux rangs que tout taxon possède, chaque
+   niveau de l'arbre désigne le même rang partout. Le détail d'une espèce, lui, les affiche :
+   c'est une lecture verticale, où l'homogénéité entre branches n'a pas d'objet. */
 const RANGS_ARBRE = new Set(['phylum','class','order','suborder','superfamily',
                              'family','genus','species','subspecies']);
 
+/* Rangs facultatifs : présents chez certains groupes, absents chez d'autres. On les garde,
+   mais un niveau ne les affiche que si toutes les branches sœurs en possèdent un — sans quoi
+   l'arbre mêlerait des ordres et des super-familles sur une même rangée. */
+const RANGS_OPTIONNELS = new Set(['suborder', 'superfamily']);
+
 /* Le détail d'une espèce remonte un cran plus haut que l'arbre de navigation : le règne y a
    sa place, alors qu'il n'y créerait aucune division utile dans l'arbre. */
-const RANGS_LIGNAGE = new Set(['kingdom', ...RANGS_ARBRE]);
+const RANGS_LIGNAGE = new Set(['kingdom', 'phylum', 'class', 'order', 'suborder',
+  'superfamily', 'family', 'genus', 'species', 'subspecies']);
 
 
 function chaineBrute(e) {
@@ -2595,9 +2746,37 @@ function idsANommer() {
    contiennent exactement le même contenu qu'Odonata, autant partir d'Odonata. Ensuite, tout
    nœud qui n'a qu'un seul descendant absorbe ce descendant en gardant son propre nom, de sorte
    que deux entrées voisines représentent toujours le même niveau de découpage. */
+/* Espèces sur lesquelles l'arbre est bâti. Il doit refléter ce que la liste montre : filtrer
+   les introduites ou un mois sans que la taxonomie suive laisserait des branches vides et un
+   décompte trompeur. Le filtre textuel, lui, reste hors de l'arbre — il sert à chercher dans
+   une branche, pas à la redéfinir. */
+/* Reconstruit l'arbre et ramène la vue à la racine si la branche sélectionnée a disparu :
+   rester sur une famille que le filtre vient d'écarter afficherait une liste vide. */
+function reconstruireArbre() {
+  construireArbre();
+  if (vue.noeud && !noeudExiste(etat.arbre, vue.noeud)) { vue.noeud = null; vue.deplies.clear(); }
+}
+
+function noeudExiste(n, id) {
+  if (n.id === id) return true;
+  for (const c of n.enfants.values()) if (noeudExiste(c, id)) return true;
+  return false;
+}
+
+function especesPourArbre() {
+  let l = etat.especes.filter(e => e.nZone > 0);
+  if (vue.intro !== 'tout' && etat.introduites)
+    l = l.filter(e => estIntroduite(e.id) === (vue.intro === 'seul'));
+  if (vue.mois && etat.phenologie)
+    l = l.filter(e => { const m = etat.phenologie.get(e.id); return m && m[vue.mois - 1] > 0; });
+  return l;
+}
+
 function construireArbre() {
   const trie = { id:null, enfants:new Map(), n:0 };
-  for (const e of etat.especes) {
+  // L'arbre est bâti sur les espèces que la liste retient : filtrer l'une sans l'autre
+  // laisserait des branches vides et des décomptes faux.
+  for (const e of especesPourArbre()) {
     if (!e.nZone) continue;   // absente au niveau de validation courant
     let n = trie; n.n++;
     for (const id of chaineAncetres(e)) {
@@ -2617,6 +2796,44 @@ function construireArbre() {
   let racine = trie;
   while (racine.enfants.size === 1) racine = [...racine.enfants.values()][0];
   etat.arbre = compresser(racine);
+  homogeneiser(etat.arbre);
+}
+
+/* Rend chaque niveau homogène en rang. Si les enfants d'un nœud ne partagent pas tous le même
+   rang, on remonte ceux dont le rang est facultatif : leurs propres enfants prennent leur
+   place. Un sous-ordre subsiste donc chez les insectes, où tous les ordres en ont, et
+   s'efface là où il ne concerne qu'une lignée sur trois. L'opération se répète, la promotion
+   pouvant faire apparaître un nouveau mélange. */
+function homogeneiser(n) {
+  const rangDe = id => { const a = etat.ancetres.get(id); return a ? a.rang : ''; };
+
+  for (let tour = 0; tour < 4; tour++) {
+    const enfants = [...n.enfants.values()];
+    if (enfants.length < 2) break;
+    const rangs = new Set(enfants.map(c => rangDe(c.id)));
+    if (rangs.size <= 1) break;
+
+    const promus = new Map();
+    let change = false;
+    for (const c of enfants) {
+      if (RANGS_OPTIONNELS.has(rangDe(c.id)) && c.enfants.size) {
+        c.enfants.forEach(g => promus.set(g.id, g));
+        change = true;
+      } else promus.set(c.id, c);
+    }
+    if (!change) break;
+    n.enfants = promus;
+  }
+  n.enfants.forEach(homogeneiser);
+}
+
+/* L'arbre suit le tri choisi pour la liste : en mode alphabétique, les branches se rangent
+   par nom, sinon par effectif décroissant. Voir la taxonomie ordonnée autrement que la grille
+   qu'elle commande serait déroutant. */
+function ordonnerBranches(l) {
+  if (vue.tri === 'nom')
+    return l.sort((a, b) => infoNoeud(a).nom.localeCompare(infoNoeud(b).nom, langue));
+  return l.sort((a, b) => b.n - a.n);
 }
 
 /* Identifiants effectivement affichés : ce sont les seuls dont il faut chercher le nom. */
@@ -2666,6 +2883,30 @@ async function chargerEffectifsMondiaux() {
         + ' taxons sans réponse, ils resteront sans part.', manquants.slice(0, 5));
     }
     etat.especes.forEach(e => { e.nm[q] = parId.has(e.id) ? parId.get(e.id) : null; });
+
+    /* Un effectif de référence inférieur à l'effectif local est impossible : la zone est
+       incluse dans le territoire de comparaison. Quand cela se produit, la valeur groupée
+       est fausse — l'API renvoie parfois un comptage tronqué sur certains taxons. On les
+       réinterroge un par un, ce qui ne concerne jamais qu'une poignée d'espèces. */
+    const suspects = etat.especes.filter(e => e.nm[q] !== null && e.nm[q] < e.nz[q]);
+    if (suspects.length) {
+      console.warn('Effectifs de référence : ' + suspects.length
+        + ' valeurs inférieures à l\'effectif local, réinterrogées individuellement.',
+        suspects.map(e => e.nom + ' (id ' + e.id + ', ici ' + e.nz[q]
+          + ', référence ' + e.nm[q] + ')'));
+    }
+    for (const e of suspects.slice(0, 40)) {
+      try {
+        const d = await comptages({ ...f, taxon_id:e.id, per_page:1 });
+        verifier(gen);
+        const r = d.results && d.results[0];
+        if (r && r.count) e.nm[q] = r.count;
+      } catch (err) { if (err instanceof Annule) throw err; }
+      /* Si la reprise échoue, la donnée est déclarée douteuse. Plutôt que d'inventer une
+         valeur, on la plafonne pour l'affichage et on marque l'espèce, qui sera reléguée en
+         fin de tableau au lieu d'en occuper la tête avec un pourcentage absurde. */
+      if (e.nm[q] < e.nz[q]) { e.nm[q] = e.nz[q]; e.douteux = true; }
+    }
   }
   appliquerQualite();
 }
@@ -2673,6 +2914,29 @@ async function chargerEffectifsMondiaux() {
 /* Un seul histogramme suffit désormais : il donne le total d'observations et la première
    année documentée. La courbe cumulée exigeait une requête par année ; elle a disparu avec
    le graphique qu'elle alimentait. */
+/* Statut d'établissement. iNaturalist le renseigne lieu par lieu, et la recherche accepte
+   un filtre : une requête paginée donne toutes les espèces considérées comme introduites
+   dans la zone d'étude. Sans lieu sélectionné, la notion n'a pas de sens et on s'abstient. */
+async function chargerIntroduites() {
+  if (etat.introduites || (!etat.lieux.length && !etat.zone)) return;
+  const gen = generation;
+  const f = { ...filtres(), introduced:'true', per_page:500 };
+  const vues = new Set();
+  try {
+    for (let page = 1; page <= 6; page++) {
+      const d = await comptages({ ...f, page });
+      verifier(gen);
+      d.results.forEach(r => vues.add(r.taxon.id));
+      if (d.results.length < 500) break;
+    }
+    etat.introduites = vues;
+    console.info('Espèces introduites dans la zone : ' + vues.size);
+  } catch (e) {
+    if (e instanceof Annule) throw e;
+    etat.introduites = new Set();   // sans la liste, aucune espèce n'est marquée
+  }
+}
+
 async function chargerAnnees(q = etat.qualite) {
   const gen = generation;
   const memo = etat.seriesCache[q];
@@ -2726,6 +2990,8 @@ async function chargerMensuel(q = etat.qualite, complet = (q === etat.qualite)) 
       if (complet) {
         const r = await chargerMois(m, q);
         especes = r.total;
+        if (!etat.moisTronque) etat.moisTronque = new Array(12).fill(false);
+        etat.moisTronque[m - 1] = !!r.tronque;
         r.parId.forEach((n, id) => {
           if (!pheno.has(id)) pheno.set(id, new Array(12).fill(0));
           pheno.get(id)[m - 1] = n;
@@ -2761,22 +3027,28 @@ async function chargerMensuel(q = etat.qualite, complet = (q === etat.qualite)) 
 
 /* La liste d'un mois donne à la fois le détail par espèce et, dans total_results,
    le nombre exact d'espèces de ce mois. Les deux usages partagent donc une seule requête. */
-async function chargerMois(m, q = etat.qualite) {
-  const cle = q + ':' + m;
+async function chargerMois(m, q = etat.qualite, profond = false) {
+  const cle = q + ':' + m + (profond ? ':p' : '');
   if (etat.moisCache.has(cle)) return etat.moisCache.get(cle);
   const f = filtres(true, q);
   const parId = new Map();
   let total = 0;
-  // Deux pages suffisent : au-delà de mille espèces, la queue de rareté ne permet de toute
-  // façon pas d'établir un pic mensuel fiable, et le coût doublerait.
+  /* Deux pages suffisent aux pics mensuels. La complétude, elle, exige la liste entière :
+     les résultats arrivent par abondance décroissante, si bien qu'une troncature emporte
+     exactement les espèces vues une ou deux fois, celles sur lesquelles Chao1 et ACE
+     reposent. On ne descend donc à huit pages que sur demande, et seulement là où les deux
+     premières n'ont pas suffi — sur une flore modeste, la complétude est gratuite. */
   const v1 = !(await testerMoisV2(f));
-  for (let page = 1; page <= 2; page++) {
+  const pages = profond ? 8 : 2;
+  let tronque = false;
+  for (let page = 1; page <= pages; page++) {
     const d = await comptages({ ...f, month:m, per_page:500, page }, v1);
     total = d.total_results;
     d.results.forEach(r => parId.set(r.taxon.id, r.count));
     if (d.results.length < 500 || parId.size >= total) break;
+    if (page === pages) tronque = true;
   }
-  const res = { parId, total };
+  const res = { parId, total, tronque };
   etat.moisCache.set(cle, res);
   return res;
 }
@@ -2806,6 +3078,9 @@ function especesVisibles() {
     const m = (etat.moisCache.get(etat.qualite + ':' + vue.mois) || {}).parId;
     if (m) liste = liste.filter(e => m.has(e.id)).map(e => ({ ...e, nAffiche:m.get(e.id) }));
   }
+  if (vue.intro !== 'tout' && etat.introduites) {
+    liste = liste.filter(e => estIntroduite(e.id) === (vue.intro === 'seul'));
+  }
   if (vue.texte) {
     /* La recherche porte aussi sur la lignée : taper « Asteraceae » ou « Papilionoidea »
        retient toutes les espèces de ce clade, sans avoir à naviguer dans l'arbre. */
@@ -2830,7 +3105,7 @@ function especesVisibles() {
 }
 
 function brancheHTML(n, profondeur) {
-  const enfants = [...n.enfants.values()].sort((a, b) => b.n - a.n);
+  const enfants = ordonnerBranches([...n.enfants.values()]);
   const ouvert = vue.deplies.has(n.id);
   const info = infoNoeud(n);
   return `
@@ -2856,7 +3131,7 @@ function dessinerListe() {
     return;
   }
   const liste = especesVisibles();
-  const racines = [...etat.arbre.enfants.values()].sort((a, b) => b.n - a.n);
+  const racines = ordonnerBranches([...etat.arbre.enfants.values()]);
 
   const avert = etat.tronque
     ? `<div class="alerte">${t('tronque', nb(etat.especes.length))}</div>` : '';
@@ -2864,14 +3139,20 @@ function dessinerListe() {
   v.innerHTML = avert + bandeauChiffres() + `
     <div class="outils">
       <input type="text" id="f-texte" placeholder="${echap(t('phRech'))}" value="${echap(vue.texte)}">
-      <select id="f-mois" title="Filtre l'affichage seulement, pas les autres onglets">
-        <option value="0">${t('touteAnnee')}</option>
-        ${MOIS.map((m, i) => `<option value="${i+1}"${vue.mois === i+1 ? ' selected':''}>${m}</option>`).join('')}
-      </select>
       <select id="f-tri">
         <option value="obs"${vue.tri==='obs'?' selected':''}>${t('triObs')}</option>
         <option value="resp"${vue.tri==='resp'?' selected':''}>${t('triResp')}</option>
         <option value="nom"${vue.tri==='nom'?' selected':''}>${t('triNom')}</option>
+      </select>
+      <select id="f-intro"${etat.introduites ? '' : ' hidden'}>
+        <option value="tout"${vue.intro==='tout'?' selected':''}>${t('filtreIntroTout')}</option>
+        <option value="sans"${vue.intro==='sans'?' selected':''}>${t('filtreIntroSans')}</option>
+        <option value="seul"${vue.intro==='seul'?' selected':''}>${t('filtreIntroSeul')}</option>
+      </select>
+      <select id="f-mois"${etat.phenologie ? '' : ' disabled'}
+        title="Filtre l'affichage seulement, pas les autres onglets">
+        <option value="0">${t('touteAnnee')}</option>
+        ${MOIS.map((m, i) => `<option value="${i+1}"${vue.mois === i+1 ? ' selected':''}>${m}</option>`).join('')}
       </select>
       <span class="compte">${nb(liste.length)} ${t('especes')}${vue.mois ? ' · ' + t('enMois', MOIS[vue.mois-1]) : ''}</span>
     </div>
@@ -2915,6 +3196,10 @@ function vignette(e) {
 
 /* Le sélecteur de comparaison, identique partout : la liste, la saisonnalité, les découvertes
    et les disparitions donnent tous accès au même panier. */
+function estIntroduite(id) {
+  return !!(etat.introduites && etat.introduites.has(id));
+}
+
 function boutonPanier(id) {
   return `<button class="choisir${etat.panier.includes(id) ? ' pris' : ''}"
     data-panier="${id}" aria-label="${echap(t('cpAjouter'))}"
@@ -2950,6 +3235,7 @@ function ficheHTML(e, i) {
         <span class="num">${String(i + 1).padStart(3, '0')}</span>
       </a>
       ${boutonPanier(e.id)}
+      ${estIntroduite(e.id) ? `<span class="intro" title="${echap(t('introTitre'))}">!</span>` : ''}
       <div class="corps">
         ${blocNoms(e.nom, e.nomFr)}
         <div class="bas">
@@ -3001,6 +3287,7 @@ function brancherListe() {
       progression(t('mFiltreApp', MOIS[m - 1]), null);
     }
     vue.mois = m;
+    reconstruireArbre();      // l'arbre ne montre que les branches encore peuplées
     dessinerListe();
   });
 
@@ -3010,6 +3297,13 @@ function brancherListe() {
       b.closest('.fiche').classList.toggle('ouvert');
     });
   });
+  const fi = $('#f-intro');
+  if (fi) fi.addEventListener('change', e => {
+    vue.intro = e.target.value;
+    reconstruireArbre();
+    dessinerListe();
+  });
+
   brancherPanier($('#v-liste'));
   $('#v-liste').querySelectorAll('.taxo').forEach(el => {
     el.addEventListener('click', () => el.closest('.fiche').classList.remove('ouvert'));
@@ -3043,7 +3337,7 @@ function brancherListe() {
    ============================================================ */
 
 let carte = null, coucheLimite = null;
-const optCarte = { rendu:'grid', effort:false, panier:false, fond:'plan', precis:false };
+const optCarte = { effort:false, panier:false, fond:'plan', precis:false };
 
 
 function paramsCarte({ avecFocus = true } = {}) {
@@ -3074,7 +3368,7 @@ function initCarte() {
     else carte.setView([46.6, 2.5], 5);
     majFond();
     carte.on('click', interrogerPoint);
-    
+    surveillerZoom();
     majCarte();
   }
   carte.invalidateSize();       // le conteneur vient seulement d'être affiché
@@ -3108,20 +3402,41 @@ let couchesEsp = [];
 /* Deux fonds sans clé d'accès : le plan d'OpenStreetMap, éclairci par un filtre pour laisser
    ressortir les observations, et l'imagerie satellite d'Esri, qu'on laisse telle quelle —
    la désaturer effacerait justement ce qu'on vient y chercher, la structure du paysage. */
+/* Trois fonds et un calque de repères. Le relief éclaire beaucoup les cartes de biorégions,
+   où les limites suivent souvent les vallées ; le calque de noms se superpose au satellite,
+   qui n'en porte aucun. */
 const FONDS = {
   plan: { url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
           attribution:'© OpenStreetMap', classe:'fond-clair' },
+  relief: { url:'https://tile.opentopomap.org/{z}/{x}/{y}.png',
+            attribution:'© OpenTopoMap, © OpenStreetMap', classe:'', maxZoom:17 },
   satellite: { url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
                attribution:'Imagerie © Esri', classe:'' }
 };
 
+/* Calque de repères, posé sur le satellite qui ne porte aucun nom : villes, voirie et
+   limites administratives, en surimpression légère. */
+const ORDRE_FONDS = ['plan', 'relief', 'satellite'];
+
+const REPERES = { url:'https://stamen-tiles.a.ssl.fastly.net/toner-labels/{z}/{x}/{y}.png',
+                  attribution:'© Stamen, © OpenStreetMap', maxZoom:18 };
+
+let reperesCarte = null;
+
 function majFond() {
   if (!carte) return;
   if (coucheFond) { carte.removeLayer(coucheFond); coucheFond = null; }
+  if (reperesCarte) { carte.removeLayer(reperesCarte); reperesCarte = null; }
   const f = FONDS[optCarte.fond] || FONDS.plan;
-  coucheFond = L.tileLayer(f.url, { attribution:f.attribution, maxZoom:19, className:f.classe });
+  coucheFond = L.tileLayer(f.url, { attribution:f.attribution, maxZoom:f.maxZoom || 19,
+    className:f.classe });
   coucheFond.addTo(carte);
   coucheFond.bringToBack();
+  if (optCarte.fond === 'satellite') {
+    reperesCarte = L.tileLayer(REPERES.url,
+      { attribution:REPERES.attribution, maxZoom:REPERES.maxZoom, opacity:0.9 });
+    reperesCarte.addTo(carte);
+  }
 }
 
 /* Huit teintes distinguables, y compris pour la plupart des daltonismes. Au-delà de huit
@@ -3147,6 +3462,26 @@ function especesColorees() {
     id, couleur: PALETTE_ESP[i % PALETTE_ESP.length],
     nom: (e => e ? nomCourt(e.nom, e.nomFr) : '#' + id)(parId.get(id))
   }));
+}
+
+/* Rendu déduit du zoom, sans réglage. En dessous du zoom 13, une tuile de grille agrège
+   plusieurs observations et montre où l'on en trouve ; au-delà, chaque carreau n'en contient
+   plus qu'une et donne à un point isolé la surface d'une maille, ce qui suggère une
+   occupation qui n'existe pas. Les points, eux, disent exactement ce qui a été observé. */
+function rendreCarte() {
+  return (carte && carte.getZoom() >= 13) ? 'points' : 'grid';
+}
+
+/* Le basculement doit se produire au franchissement du seuil, et seulement là : refaire les
+   couches à chaque cran de zoom rechargerait des tuiles pour rien. */
+let dernierRendu = null;
+
+function surveillerZoom() {
+  if (!carte) return;
+  carte.on('zoomend', () => {
+    const r = rendreCarte();
+    if (r !== dernierRendu) { dernierRendu = r; majDensite(); }
+  });
 }
 
 function majDensite() {
@@ -3180,20 +3515,25 @@ function majDensite() {
        au lieu que la dernière dessinée masque les autres. L'opacité baisse avec le nombre
        d'espèces, sans quoi cinq couches empilées redeviendraient opaques. */
     // Les points sont petits et se juxtaposent : les rendre translucides les efface.
-    const opacite = optCarte.rendu === 'points'
+    const opacite = rendreCarte() === 'points'
       ? 1 : Math.min(1, Math.max(0.42, 0.9 - (colorees.length - 1) * 0.09) * 1.15);
     for (const e of colorees) {
       const p = paramsCarte({ avecFocus:false });
       p.set('taxon_id', e.id);
       p.set('color', e.couleur);
       couchesEsp.push({ ...e,
-        couche: L.tileLayer(API + '/' + optCarte.rendu + '/{z}/{x}/{y}.png?' + p,
+        couche: L.tileLayer(API + '/' + rendreCarte() + '/{z}/{x}/{y}.png?' + p,
           { ...opts, opacity:opacite }).addTo(carte) });
     }
   } else {
+    /* Les tuiles de points prennent une couleur unie : sans consigne, iNaturalist en choisit
+       une par défaut, d'où le vert vif qui tranchait avec le reste. On impose celle du site. */
+    const p = paramsCarte();
+    if (rendreCarte() === 'points') p.set('color', '#2F6B4F');
     coucheTuiles = L.tileLayer(
-      API + '/' + optCarte.rendu + '/{z}/{x}/{y}.png?' + paramsCarte().toString(), opts).addTo(carte);
+      API + '/' + rendreCarte() + '/{z}/{x}/{y}.png?' + p.toString(), opts).addTo(carte);
   }
+  dernierRendu = rendreCarte();
   majLegende();
 }
 
@@ -3336,15 +3676,13 @@ async function tracerContours() {
 }
 
 
-$('#c-rendu').innerHTML = [['grid','cGrille'],['points','cPoints']]
-  .map(([v, k]) => `<option value="${v}">${t(k)}</option>`).join('');
-$('#c-rendu').addEventListener('change', e => { optCarte.rendu = e.target.value; majDensite(); });
 
 
 /* Un seul bouton pour deux fonds : l'icône s'allume quand le satellite est actif. */
 $('#c-fond').addEventListener('click', () => {
-  optCarte.fond = optCarte.fond === 'plan' ? 'satellite' : 'plan';
-  $('#c-fond').classList.toggle('actif', optCarte.fond === 'satellite');
+  // Rotation entre les trois fonds : plan, relief, satellite.
+  optCarte.fond = ORDRE_FONDS[(ORDRE_FONDS.indexOf(optCarte.fond) + 1) % ORDRE_FONDS.length];
+  $('#c-fond').classList.toggle('actif', optCarte.fond !== 'plan');
   majFond();
 });
 
@@ -3366,9 +3704,11 @@ $('#c-recadrer').addEventListener('click', cadrerSurLieux);
    « Carabus sp. » reste une information de terrain légitime. */
 const RANGS_ESPECE = new Set(['species', 'subspecies', 'variety', 'form', 'hybrid']);
 
-let seuilMin = 5, filtreRouge = false;
+let seuilMin = 1, filtreRouge = false;
 let triResp = { col:'part', sens:-1 };
 const RESP_PAR_PAGE = 12;
+const PIC_PAR_PAGE = 12;
+let picPage = 0;
 let respPage = 0;   // -1 = décroissant
 
 const COLONNES = {
@@ -3407,6 +3747,26 @@ $('#r-vider').addEventListener('click', async () => {
 });
 
 /* Le bouton n'apparaît que lorsqu'un territoire est effectivement choisi. */
+/* Chaque onglet porte une pastille d'état. Les onglets toujours disponibles — liste, carte,
+   comparaison — n'en ont pas : leur contenu ne dépend d'aucun calcul différé. */
+function majOnglets() {
+  const q = etat.qualite;
+  const pret = {
+    responsabilite: etat.especes.some(e => e.nm && e.nm[q] !== null && e.nm[q] !== undefined),
+    saison: !!etat.mensuel,
+    decouverte: !!decouvertes,
+    disparition: !!disparitions,
+    bio: !!bio,
+    comm: !!bio        // les communautés se déduisent des mêmes données
+  };
+  document.querySelectorAll('nav.onglets button').forEach(b => {
+    const v = b.dataset.vue;
+    if (!(v in pret)) { const p = b.querySelector('.pt'); if (p) p.remove(); return; }
+    if (!b.querySelector('.pt')) b.insertAdjacentHTML('beforeend', '<span class="pt"></span>');
+    b.classList.toggle('pret', !!pret[v]);
+  });
+}
+
 function majBoutonRef() {
   const b = $('#r-vider');
   if (b) b.hidden = !etat.reference;
@@ -3446,6 +3806,8 @@ function dessinerResponsabilite() {
     .filter(e => e.nZone > 0 && e.nMonde >= Math.max(seuilMin, 1))
     .map(e => ({ ...e, part:e.nZone / e.nMonde }))
     .sort((a, b) => {
+      // Les effectifs de référence incohérents ferment la marche, quel que soit le tri.
+      if (!!a.douteux !== !!b.douteux) return a.douteux ? 1 : -1;
       const x = c.val(a), y = c.val(b);
       const d = c.texte ? String(x).localeCompare(String(y), langue) : x - y;
       // À valeur égale sur la colonne choisie, la part départage : c'est le sujet du tableau.
@@ -3478,13 +3840,14 @@ function dessinerResponsabilite() {
         const p = palier(pct);
         return `
         <tr>
-          <td class="esp"><a href="${lienTaxon(l.id, false)}" target="_blank" rel="noopener">
+          <td class="esp"${l.douteux ? ' title="' + echap(t('respDouteux')) + '"' : ''}
+            ><a href="${lienTaxon(l.id, false)}" target="_blank" rel="noopener">
             ${blocNoms(l.nom, l.nomFr)}</a></td>
           <td>${pastilleIUCN(l.iucn)}</td>
           <td class="num"><a href="${lienPortee(l.id, 'zone')}"
             target="_blank" rel="noopener">${nb(l.nZone)}</a></td>
           <td class="num"><a href="${lienPortee(l.id, 'reference')}"
-            target="_blank" rel="noopener">${nb(l.nMonde)}</a></td>
+            target="_blank" rel="noopener">${l.douteux ? '?' : nb(l.nMonde)}</a></td>
           <td><div class="mesure" title="${p.nom}">
               <div class="rail"><i style="width:${largeurLog(pct).toFixed(1)}%;
                 background:${p.couleur}"></i></div>
@@ -3492,8 +3855,8 @@ function dessinerResponsabilite() {
               ${l.nZone === l.nMonde ? '<span class="tag excl">' + t('exclusive') + '</span>' : ''}</div></td>
         </tr>`; }).join('')}</tbody>
     </table>
-    <div class="niveaux">${PALIERS.map(p =>
-      `<span><i style="background:${p.couleur}"></i>${p.nom} · ${p.etiquette}</span>`).join('')}</div>
+    <div class="niveaux">${Object.keys(IUCN).sort((a, b) => b - a)
+      .map(code => `<span>${pastilleIUCN(+code)} ${echap(IUCN[code].n)}</span>`).join('')}</div>
     <p class="note">${t('noteFloutage')}</p>`;
 
   const pages = Math.ceil(lignes.length / RESP_PAR_PAGE);
@@ -3717,6 +4080,16 @@ async function chargerDisparitions() {
 function dessinerDisparitions() {
   const v = $('#v-disparition');
   if (!etat.especes.length) return;
+  if (!disparitions && !disEnCours) {
+    v.innerHTML = `<div class="outils">
+        <button class="primaire" id="dis-lancer">${t('lancerRecherche')}</button>
+        <span class="compte">${t('coutRequetes', 25)}</span>
+      </div>
+      <div class="vide">${t('videDisparition')}</div>
+      <p class="note">${t('disNote')}</p>`;
+    $('#dis-lancer').addEventListener('click', () => enTache(chargerDisparitions));
+    return;
+  }
   const toutes = disparitions || [];
   // Vulnérable, en danger, en danger critique, éteinte à l'état sauvage ou éteinte.
   const liste = disRouge ? toutes.filter(x => x.e.iucn >= 30) : toutes;
@@ -4138,6 +4511,1635 @@ function loupeDefiler(sens) {
 }
 
 
+
+/* ============================================================
+   Biorégions : regroupement des cellules par composition
+   ============================================================ */
+
+/* Analyse exploratoire, lancée à la demande car elle coûte une cinquantaine de requêtes.
+   Le principe est celui de la biorégionalisation : découper l'espace, décrire chaque cellule
+   par la composition de sa faune ou de sa flore, puis regrouper les cellules semblables.
+
+   Le point délicat est la collecte. Interroger mille cellules ferait mille requêtes ; on
+   récupère donc les observations brutes avec leurs coordonnées, deux cents par appel, et la
+   grille est construite dans le navigateur. Tout le calcul qui suit est local. */
+
+let bio = null, bioEnCours = false, bioTente = false;
+let bioMax = 5000;           // plafond d'observations collectées : rapide, moyen ou fin
+const BIO_PAR_APPEL = 200;   // maximum autorisé par l'API
+const BIO_CIBLE = 1000;      // nombre de cellules visé
+const BIO_MIN_OBS = 20;      // en deçà, la composition d'une cellule n'est que du bruit
+const BIO_MIN_CELL = 3;      // une espèce vue dans moins de cellules n'informe pas
+const BIO_MAX_PART = 0.8;    // au-delà, l'espèce est partout et ne sépare plus rien
+const BIO_AXES = 10;
+let bioGroupes = null;       // fixé par la méthode du coude, puis par la glissière
+
+/* Périmètre taxonomique de la collecte. Restreindre aux espèces les plus fréquentes densifie
+   les cellules — on cesse de dépenser des requêtes sur la longue traîne, qui n'entre pas dans
+   l'analyse. Mais les espèces les plus observées sont souvent des généralistes présentes
+   partout, qui ne discriminent rien : d'où la troisième option, qui écarte les deux
+   extrémités et ne garde que la bande de fréquence moyenne, la plus séparatrice. */
+/* Un seul périmètre de collecte : les espèces comptant au moins vingt observations dans la
+   zone. C'est le socle commun aux deux analyses. Les biorégions y appliquent ensuite leurs
+   propres exclusions — les ubiquistes n'y séparent rien —, tandis que les communautés
+   travaillent sur l'ensemble, une espèce omniprésente ayant sa place dans un groupe. Un
+   chargement unique sert donc aux deux, avec des filtres appliqués après coup. */
+function taxonsBio() {
+  /* Les espèces introduites sont écartées d'emblée : elles suivent l'habitat humain plutôt
+     que les milieux, et leur répartition brouille aussi bien le découpage en régions que le
+     regroupement en communautés. */
+  const tries = etat.especes
+    .filter(e => e.nZone >= 20 && !estIntroduite(e.id))
+    .sort((a, b) => b.nZone - a.nZone);
+  if (!tries.length) return null;
+  let choix = tries;
+
+  /* Les identifiants voyagent dans l'adresse de la requête, dont la longueur est bornée :
+     au-delà de huit cents taxons on garde les mieux observés, ce qui ne change presque rien
+     puisque la liste est déjà triée par effectif décroissant. */
+  if (choix.length > 800) {
+    console.info('Biorégions : ' + choix.length + ' espèces retenues, limitées aux 800 plus observées.');
+    choix = choix.slice(0, 800);
+  }
+  return choix.length ? choix.map(e => e.id).join(',') : null;
+}
+/* Dix teintes distinctes, la glissière montant jusqu'à dix groupes. Au-delà de six, les
+   couleurs deviennent difficiles à départager : c'est une limite de lecture, pas de calcul. */
+/* Huit teintes pour les biorégions, quatre de plus pour les communautés, dont le nombre
+   peut monter à douze. Au-delà, les couleurs cesseraient d'être distinguables. */
+const BIO_TEINTES = ['#2F6B4F', '#C97E2B', '#3A63B8', '#7B3B52',
+                     '#8CC63F', '#38A0A8', '#D81E05', '#6B4CA8',
+                     '#A87C14', '#4E7A9B', '#B4553A', '#5E5E5E'];
+
+/* Les observations collectées sont enregistrées à part, sous leur propre clé : elles pèsent
+   plusieurs centaines de kilooctets et n'ont pas à alourdir l'inventaire, qui est relu à
+   chaque chargement. Relancer l'analyse repart de cette réserve, sans un seul appel. */
+function cleBio() { return cleInventaire() + '|bio|' + bioMax; }
+
+async function chargerBioregions(forcer = false) {
+  if (bioEnCours || !etat.especes.length) return;
+  bioEnCours = true; bioTente = true;
+  const gen = generation;
+  dessinerBioregions();
+
+  try {
+    if (!forcer) {
+      const garde = await surBase('readonly', st => st.get(cleBio()));
+      verifier(gen);
+      if (garde && garde.pts && Date.now() - garde.date < PEREMPTION) {
+        progression(t('bioCalcul'), 80);
+        bio = analyserBio(garde.pts);
+        if (bio) { bio.plafond = garde.plafond; bio.memoire = true; }
+        progression(t('mComplet'), null);
+        return;                       // le rendu final a lieu dans le bloc « finally »
+      }
+    }
+
+    /* Coordonnées exactes seulement : les positions floutées des espèces sensibles sont
+       déplacées de plusieurs dizaines de kilomètres et brouilleraient la grille. */
+    /* Pas de paramètre « photos » : il ne sert pas à alléger la réponse mais à filtrer,
+       et photos=false ne renvoie que les observations dépourvues de photo.
+
+       La pagination par numéro de page bute sur dix mille résultats. On avance donc par
+       curseur d'identifiant, ce qui n'a pas de plafond. Deux régimes en découlent : si la
+       zone tient dans notre budget d'appels, on la parcourt entièrement ; sinon on prélève
+       des tranches réparties sur toute la plage d'identifiants, ce qui donne un échantillon
+       étalé dans le temps au lieu des seules observations récentes. */
+    const f = { ...filtres(), geoprivacy:'open', taxon_geoprivacy:'open',
+                order_by:'id', order:'asc', per_page:200 };
+    const restreint = taxonsBio();
+    if (restreint) f.taxon_id = restreint;
+
+    const bornes = await appel('/observations', { ...f, per_page:1 }, false, true);
+    verifier(gen);
+    const total = bornes.total_results || 0;
+    const premier = (bornes.results && bornes.results[0] && bornes.results[0].id) || 0;
+    const finBrut = await appel('/observations',
+      { ...f, order:'desc', per_page:1 }, false, true);
+    verifier(gen);
+    const dernier = (finBrut.results && finBrut.results[0] && finBrut.results[0].id) || premier;
+
+    /* Contrairement aux comptages par espèce, cet endpoint renvoie le taxon le plus fin
+       déterminé : une observation identifiée jusqu'à Beta vulgaris ssp. maritima arrive sous
+       la sous-espèce. On la remonte à son espèce en cherchant, dans sa lignée, le premier
+       ancêtre figurant à l'inventaire — lequel est déjà au rang espèce. Une observation
+       arrêtée au genre n'y trouve rien et sort de l'analyse, ce qui est souhaitable :
+       « Quercus sp. » ne caractérise aucun milieu. */
+    const idsEspece = new Set(etat.especes
+      .filter(e => e.rang === 'species' || e.rang === 'hybrid').map(e => e.id));
+    const versEspece = tx => {
+      if (idsEspece.has(tx.id)) return tx.id;
+      const anc = tx.ancestor_ids || [];
+      for (let i = anc.length - 1; i >= 0; i--) if (idsEspece.has(anc[i])) return anc[i];
+      return null;
+    };
+
+    const vus = new Set();
+    const pts = [];
+    let horsRang = 0;
+    const avaler = d => {
+      for (const o of (d.results || [])) {
+        if (vus.has(o.id)) continue;
+        vus.add(o.id);
+        const g = o.geojson && o.geojson.coordinates;
+        if (!g || !o.taxon) continue;
+        const esp = versEspece(o.taxon);
+        if (esp === null) { horsRang++; continue; }
+        pts.push({ x:g[0], y:g[1], t:esp });
+      }
+      return (d.results || []).length;
+    };
+
+    const pages = Math.ceil(bioMax / BIO_PAR_APPEL);
+    const echantillon = total > bioMax;
+    if (!echantillon) {
+      // Recensement complet : le curseur suit le dernier identifiant reçu.
+      let curseur = premier - 1;
+      for (let k = 0; k < pages; k++) {
+        progression(t('bioCharge', nb(pts.length)), (k / pages) * 70);
+        const d = await appel('/observations', { ...f, id_above:curseur }, false, true);
+        verifier(gen);
+        const n = avaler(d);
+        if (!n) break;
+        curseur = d.results[d.results.length - 1].id;
+      }
+    } else {
+      // Tranches régulières : une fenêtre de deux cents observations à chaque palier.
+      const pas = Math.max(1, Math.floor((dernier - premier) / pages));
+      for (let k = 0; k < pages; k++) {
+        progression(t('bioCharge', nb(pts.length)), (k / pages) * 70);
+        const d = await appel('/observations',
+          { ...f, id_above: premier + k * pas - 1 }, false, true);
+        verifier(gen);
+        avaler(d);
+      }
+    }
+    const plafond = echantillon;
+
+    await surBase('readwrite', st => st.put({ cle:cleBio(), date:Date.now(), pts, plafond }));
+    bioEnMemoire.add(bioMax);
+    progression(t('bioCalcul'), 80);
+    console.info('Biorégions : ' + pts.length + ' observations localisées collectées'
+      + (horsRang ? ', ' + horsRang + ' écartées faute d\'être déterminées à l\'espèce' : '') + '.');
+    bio = analyserBio(pts);
+    if (!bio) console.info('Biorégions : découpage impossible — trop peu de cellules '
+      + 'atteignent ' + BIO_MIN_OBS + ' observations, ou trop peu d\'espèces partagées.');
+    if (bio) bio.plafond = plafond;
+    progression(t('mComplet'), null);
+  } catch (e) {
+    if (!(e instanceof Annule)) progression(t('mEchec', String((e && e.message) || e)), null);
+  } finally {
+    bioEnCours = false;
+    dessinerBioregions();
+  }
+}
+
+/* Grille, matrice, composantes principales et regroupement : aucune requête. */
+function analyserBio(pts) {
+  if (pts.length < 200) return null;
+
+  // Emprise réelle des observations, puis un côté de cellule visant BIO_CIBLE cellules.
+  const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs);
+  const y0 = Math.min(...ys), y1 = Math.max(...ys);
+  const kmParDegLat = 111;
+  const kmParDegLon = 111 * Math.cos((y0 + y1) / 2 * Math.PI / 180) || 1;
+  const aireKm = Math.max((x1 - x0) * kmParDegLon, 0.1) * Math.max((y1 - y0) * kmParDegLat, 0.1);
+
+  /* Agrégation de proche en proche, en trois temps.
+
+     On part d'une grille fine couvrant toute l'emprise. Les cases sans observation n'ont
+     aucune composition : plutôt que de les laisser vides, on les rattache par propagation à
+     la case observée la plus proche en nombre de pas — le rattachement reste donc contigu,
+     jamais un saut par-dessus le vide. Chaque case observée devient ainsi une unité munie
+     d'un territoire, et la carte est entièrement couverte.
+
+     Ensuite seulement vient la fusion : tant qu'une unité n'atteint pas le seuil, elle rejoint
+     sa voisine la plus pauvre. Les unités restent d'un seul tenant et carrées d'aspect, ce
+     qu'aucun découpage récursif ne garantissait. */
+  /* Cellules carrées valant un centième du plus grand côté de la zone. La résolution suit
+     ainsi l'échelle de ce qu'on regarde — une commune se découpe en cellules de quelques
+     centaines de mètres, un massif en cellules de quelques kilomètres — et la grille compte
+     toujours le même ordre de grandeur de cases, quelle que soit l'étendue. */
+  const grandCoteKm = Math.max((x1 - x0) * kmParDegLon, (y1 - y0) * kmParDegLat);
+  const cote = Math.max(grandCoteKm / 100, 0.05);
+  const pasX = cote / kmParDegLon, pasY = cote / kmParDegLat;
+  const ni = Math.ceil((x1 - x0) / pasX) + 1, nj = Math.ceil((y1 - y0) / pasY) + 1;
+  const N = ni * nj;
+  const idx = (i, j) => i * nj + j;
+
+  const compteCase = new Int32Array(N);
+  const espCase = new Map();
+  for (const p of pts) {
+    const i = Math.min(ni - 1, Math.floor((p.x - x0) / pasX));
+    const j = Math.min(nj - 1, Math.floor((p.y - y0) / pasY));
+    const k = idx(i, j);
+    compteCase[k]++;
+    let m = espCase.get(k);
+    if (!m) { m = new Map(); espCase.set(k, m); }
+    m.set(p.t, (m.get(p.t) || 0) + 1);
+  }
+
+  // Propagation en largeur depuis toutes les cases observées à la fois.
+  const proprio = new Int32Array(N).fill(-1);
+  let file = [];
+  for (const k of espCase.keys()) { proprio[k] = k; file.push(k); }
+  if (!file.length) return null;
+  for (let tete = 0; tete < file.length; tete++) {
+    const k = file[tete], i = Math.floor(k / nj), j = k % nj;
+    for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const a = i + di, b = j + dj;
+      if (a < 0 || b < 0 || a >= ni || b >= nj) continue;
+      const v = idx(a, b);
+      if (proprio[v] === -1) { proprio[v] = proprio[k]; file.push(v); }
+    }
+  }
+
+  // Une unité par case observée, dotée du territoire qui lui a été rattaché.
+  const rangUnite = new Map();
+  const unites = [];
+  for (const k of espCase.keys()) {
+    rangUnite.set(k, unites.length);
+    unites.push({ idx:unites.length, vive:true, n:compteCase[k],
+                  esp:new Map(espCase.get(k)), cases:[] });
+  }
+  const uniteDe = new Int32Array(N);
+  for (let k = 0; k < N; k++) {
+    const u = rangUnite.get(proprio[k]);
+    uniteDe[k] = u;
+    unites[u].cases.push(k);
+  }
+
+  // Voisinages, tenus à jour au fil des fusions.
+  const voisins = unites.map(() => new Set());
+  for (let i = 0; i < ni; i++) for (let j = 0; j < nj; j++) {
+    const u = uniteDe[idx(i, j)];
+    for (const [di, dj] of [[1, 0], [0, 1]]) {
+      const a = i + di, b = j + dj;
+      if (a >= ni || b >= nj) continue;
+      const v = uniteDe[idx(a, b)];
+      if (v !== u) { voisins[u].add(v); voisins[v].add(u); }
+    }
+  }
+
+  // Barycentre en coordonnées de grille, tenu à jour pour guider les fusions.
+  for (const u of unites) {
+    let si = 0, sj = 0;
+    for (const k of u.cases) { si += Math.floor(k / nj); sj += k % nj; }
+    u.ci = si / u.cases.length; u.cj = sj / u.cases.length;
+  }
+
+  const fusionner = (a, b) => {
+    for (const [id, n] of b.esp) a.esp.set(id, (a.esp.get(id) || 0) + n);
+    a.n += b.n;
+    const na = a.cases.length, nbc = b.cases.length;
+    a.ci = (a.ci * na + b.ci * nbc) / (na + nbc);
+    a.cj = (a.cj * na + b.cj * nbc) / (na + nbc);
+    for (const k of b.cases) { uniteDe[k] = a.idx; a.cases.push(k); }
+    for (const v of voisins[b.idx]) {
+      if (v === a.idx) continue;
+      voisins[v].delete(b.idx); voisins[v].add(a.idx); voisins[a.idx].add(v);
+    }
+    voisins[a.idx].delete(b.idx);
+    voisins[b.idx].clear();
+    b.vive = false;
+  };
+
+  for (;;) {
+    let cible = null;
+    for (const u of unites) if (u.vive && u.n < BIO_MIN_OBS && (!cible || u.n < cible.n)) cible = u;
+    if (!cible) break;
+    /* On rejoint la voisine dont le barycentre est le plus proche, et non la plus pauvre :
+       une unité s'agrège alors autour d'elle plutôt que de s'étirer le long d'une chaîne de
+       voisins pauvres, ce qui donne des formes nettement plus compactes. */
+    let choisie = null, dmin = Infinity;
+    for (const v of voisins[cible.idx]) {
+      const u = unites[v];
+      if (!u.vive) continue;
+      const d2 = (u.ci - cible.ci) ** 2 + (u.cj - cible.cj) ** 2;
+      if (d2 < dmin) { dmin = d2; choisie = u; }
+    }
+    if (!choisie) break;               // unité isolée : la grille entière est trop pauvre
+    fusionner(choisie, cible);
+  }
+
+  const vivantes = unites.filter(u => u.vive && u.n >= BIO_MIN_OBS);
+  const retenues = vivantes.map(u => ({ n:u.n, esp:u.esp, cases:u.cases }));
+  const maigres = [];
+  if (retenues.length < bioGroupes * 2) return null;
+
+  // Espèces présentes dans assez de cellules pour porter un signal.
+  /* Deux coupes, aux deux extrémités. En bas, une espèce vue dans moins de trois cellules
+     n'apporte que du hasard d'échantillonnage. En haut, une espèce présente dans plus de
+     quatre-vingts pour cent des cellules est partout et ne sépare rien — c'est le critère
+     pertinent pour écarter les généralistes, bien plus que leur nombre d'observations.
+     Ce filtre agit après le découpage, donc sans rien coûter à la collecte. */
+  const compte = new Map();
+  for (const c of retenues) for (const id of c.esp.keys()) compte.set(id, (compte.get(id) || 0) + 1);
+  /* Deux exclusions propres aux biorégions. Les espèces trop rares pour porter un signal,
+     et les ubiquistes — celles présentes dans plus de quatre-vingts pour cent des cellules,
+     ainsi que les deux pour cent les plus observées, qui décrivent la fréquentation humaine
+     davantage que les milieux. Les communautés, elles, gardent tout. */
+  const plafond = retenues.length * BIO_MAX_PART;
+  const abondance = new Map();
+  for (const c of retenues) for (const [id, n] of c.esp)
+    abondance.set(id, (abondance.get(id) || 0) + n);
+  const parAbondance = [...abondance].sort((a, b) => b[1] - a[1]);
+  const tetes = new Set(parAbondance.slice(0, Math.floor(parAbondance.length * 0.02)).map(([id]) => id));
+
+  const especes = [...compte]
+    .filter(([id, n]) => n >= BIO_MIN_CELL && n <= plafond && !tetes.has(id))
+    .map(([id]) => id);
+  const ubiquistes = [...compte].filter(([, n]) => n > plafond).length;
+  if (ubiquistes) console.info('Biorégions : ' + ubiquistes
+    + ' espèces présentes dans plus de 80 % des cellules, écartées comme non séparatrices.');
+  if (especes.length < 10) return null;
+  const rang = new Map(especes.map((id, k) => [id, k]));
+
+  /* Lignes creuses : normalisation par cellule puis logarithme. La normalisation met sur un
+     pied d'égalité une cellule visitée mille fois et une autre visitée cinquante ; le
+     logarithme empêche quelques espèces très photographiées de dominer les composantes. */
+  const lignes = retenues.map(c => {
+    const idx = [], val = [];
+    let total = 0, riches = 0;
+    for (const [id, n] of c.esp) if (rang.has(id)) { total += n; riches++; }
+    const norme = Math.sqrt(riches) || 1;
+    for (const [id, n] of c.esp) {
+      if (!rang.has(id)) continue;
+      idx.push(rang.get(id));
+      /* Deux lectures possibles de la même cellule. En abondances, la fréquence relative
+         passée au logarithme : on garde l'information de dominance en écrasant les écarts.
+         En présence seule, chaque espèce compte pour un, divisé par la racine de la richesse
+         — la transformation de Hellinger, qui met les cellules sur un pied d'égalité quel que
+         soit leur nombre d'espèces. La présence est plus robuste au biais d'effort, puisque
+         l'abondance des données participatives mesure surtout combien de gens ont photographié. */
+      val.push(Math.log1p((n / total) * 100));
+    }
+    return { idx, val };
+  });
+
+  const scores = acpCreuse(lignes, especes.length, BIO_AXES);
+  /* Nombre de régions suggéré par la méthode du coude, comme pour les communautés : les
+     coûts de fusion croissent doucement tant qu'on réunit des cellules semblables, puis
+     brusquement quand il faut rapprocher des ensembles distincts. On ne l'applique qu'au
+     premier calcul, la glissière reprenant la main ensuite. */
+  if (bioGroupes === null) bioGroupes = coudeDeBioregions(scores);
+  const groupes = ordonnerGroupes(ward(scores, bioGroupes));
+
+  retenues.forEach((c, k) => { c.groupe = groupes[k]; });
+  return {
+    // Les points bruts restent accessibles : les cartes de communautés s'appuient sur les
+    // localisations réelles, bien plus fines que les unités d'analyse.
+    pts,
+    cellules:retenues, maigres, x0, y0, cote, scores, rang,
+    grille:{ ni, nj, pasX, pasY, x0, y0 },
+    nObs:pts.length, nEsp:especes.length,
+    indicatrices:indicatrices(retenues, groupes, rang)
+  };
+}
+
+/* Composantes principales sur matrice creuse. Le centrage se fait implicitement : former la
+   matrice dense coûterait des dizaines de mégaoctets pour rien. */
+function acpCreuse(lignes, p, k) {
+  const n = lignes.length;
+  const moy = new Float64Array(p);
+  for (const l of lignes) for (let z = 0; z < l.idx.length; z++) moy[l.idx[z]] += l.val[z];
+  for (let j = 0; j < p; j++) moy[j] /= n;
+
+  const parLigne = (v) => {            // X_c · v, v de dimension p
+    const out = new Float64Array(n);
+    let mv = 0;
+    for (let j = 0; j < p; j++) mv += moy[j] * v[j];
+    for (let i = 0; i < n; i++) {
+      const l = lignes[i];
+      let s = 0;
+      for (let z = 0; z < l.idx.length; z++) s += l.val[z] * v[l.idx[z]];
+      out[i] = s - mv;
+    }
+    return out;
+  };
+  const parColonne = (u) => {          // X_cᵀ · u, u de dimension n
+    const out = new Float64Array(p);
+    let su = 0;
+    for (let i = 0; i < n; i++) {
+      su += u[i];
+      const l = lignes[i];
+      for (let z = 0; z < l.idx.length; z++) out[l.idx[z]] += l.val[z] * u[i];
+    }
+    for (let j = 0; j < p; j++) out[j] -= moy[j] * su;
+    return out;
+  };
+
+  const axes = [], scores = Array.from({ length:n }, () => new Float64Array(k));
+  for (let c = 0; c < k; c++) {
+    let v = new Float64Array(p);
+    for (let j = 0; j < p; j++) v[j] = Math.sin(j * 12.9898 + c * 7.233);  // départ reproductible
+    for (let it = 0; it < 60; it++) {
+      let w = parColonne(parLigne(v));
+      for (const a of axes) {          // déflation : on retire les axes déjà trouvés
+        let d = 0;
+        for (let j = 0; j < p; j++) d += a[j] * w[j];
+        for (let j = 0; j < p; j++) w[j] -= d * a[j];
+      }
+      let norme = Math.hypot(...w);
+      if (!norme || !isFinite(norme)) break;
+      for (let j = 0; j < p; j++) w[j] /= norme;
+      v = w;
+    }
+    axes.push(v);
+    const proj = parLigne(v);
+    for (let i = 0; i < n; i++) scores[i][c] = proj[i];
+  }
+  return scores;
+}
+
+/* Coude appliqué aux cellules : on fusionne progressivement jusqu'à deux groupes en relevant
+   le coût de chaque étape, et l'on retient le nombre de groupes juste avant le saut le plus
+   marqué. Contrairement aux communautés, l'arbre n'est pas conservé ici — le calcul est donc
+   refait, mais il ne porte que sur quelques centaines de cellules. */
+function coudeDeBioregions(scores) {
+  /* On part de k = 1 : sans ce point de départ, la chute qui mène d'un ensemble unique à
+     deux régions reste invisible, et un territoire nettement coupé en deux se voit attribuer
+     quatre régions faute d'avoir pu comparer. */
+  const couts = [];
+  for (let k = 1; k <= Math.min(8, Math.floor(scores.length / 3)); k++) {
+    couts.push({ k, cout:inertieWard(scores, k) });
+  }
+  if (couts.length < 3) return 2;
+  let meilleur = 2, ecart = 0;
+  for (let i = 0; i < couts.length - 1; i++) {
+    const r = couts[i].cout / (couts[i + 1].cout || 1e-9);
+    if (r > ecart) { ecart = r; meilleur = couts[i + 1].k; }
+  }
+  return Math.max(2, Math.min(8, meilleur));
+}
+
+/* Inertie intra-groupe pour un découpage donné : somme des carrés des écarts aux centres. */
+function inertieWard(scores, k) {
+  const g = ward(scores, k);
+  const dim = scores[0].length;
+  const sommes = new Map(), effectifs = new Map();
+  scores.forEach((p, i) => {
+    const c = g[i];
+    if (!sommes.has(c)) { sommes.set(c, new Float64Array(dim)); effectifs.set(c, 0); }
+    const s = sommes.get(c);
+    for (let z = 0; z < dim; z++) s[z] += p[z];
+    effectifs.set(c, effectifs.get(c) + 1);
+  });
+  let total = 0;
+  scores.forEach((p, i) => {
+    const c = g[i], n = effectifs.get(c), s = sommes.get(c);
+    for (let z = 0; z < dim; z++) { const e = p[z] - s[z] / n; total += e * e; }
+  });
+  return total;
+}
+
+/* Regroupement de Ward par chaîne de plus proches voisins : O(n²), sans matrice complète. */
+function ward(pts, k) {
+  const n = pts.length, dim = pts[0].length;
+  const centres = pts.map(p => Float64Array.from(p));
+  const taille = new Array(n).fill(1);
+  const vivant = new Array(n).fill(true);
+  const membres = pts.map((_, i) => [i]);
+  let restants = n;
+
+  const cout = (a, b) => {             // inertie ajoutée par la fusion, critère de Ward
+    let d = 0;
+    for (let z = 0; z < dim; z++) { const e = centres[a][z] - centres[b][z]; d += e * e; }
+    return d * taille[a] * taille[b] / (taille[a] + taille[b]);
+  };
+
+  while (restants > k) {
+    let meilleur = Infinity, ia = -1, ib = -1;
+    for (let a = 0; a < n; a++) {
+      if (!vivant[a]) continue;
+      for (let b = a + 1; b < n; b++) {
+        if (!vivant[b]) continue;
+        const c = cout(a, b);
+        if (c < meilleur) { meilleur = c; ia = a; ib = b; }
+      }
+    }
+    if (ia < 0) break;
+    const ta = taille[ia], tb = taille[ib];
+    for (let z = 0; z < dim; z++)
+      centres[ia][z] = (centres[ia][z] * ta + centres[ib][z] * tb) / (ta + tb);
+    taille[ia] = ta + tb;
+    membres[ia] = membres[ia].concat(membres[ib]);
+    vivant[ib] = false;
+    restants--;
+  }
+
+  const sortie = new Array(n).fill(0);
+  let g = 0;
+  for (let a = 0; a < n; a++) if (vivant[a]) { for (const m of membres[a]) sortie[m] = g; g++; }
+  return sortie;
+}
+
+/* Espèces caractéristiques, selon la valeur indicatrice de Dufrêne et Legendre. Deux termes
+   se multiplient : la spécificité, soit la part des observations de l'espèce qui tombe dans
+   ce groupe, et la fidélité, soit la proportion des cellules du groupe où elle est présente.
+   Le produit récompense une espèce à la fois concentrée sur le groupe et répandue à
+   l'intérieur. Le rapport de fréquences seul, que j'utilisais, faisait remonter des espèces
+   rares vues dans une seule cellule — spécifiques mais nullement typiques. */
+function indicatrices(cellules, groupes, rang) {
+  const parGroupe = new Map(), global = new Map();
+  cellules.forEach((c, k) => {
+    const g = groupes[k];
+    if (!parGroupe.has(g)) parGroupe.set(g, { esp:new Map(), presence:new Map(), n:0 });
+    const G = parGroupe.get(g);
+    G.n++;
+    for (const [id, n] of c.esp) {
+      // Mêmes espèces que pour le calcul : ni les trop rares ni les ubiquistes ne décrivent
+      // un groupe, et une liste descriptive qui ne correspond pas au calcul induirait en erreur.
+      if (rang && !rang.has(id)) continue;
+      G.esp.set(id, (G.esp.get(id) || 0) + n);
+      G.presence.set(id, (G.presence.get(id) || 0) + 1);
+      global.set(id, (global.get(id) || 0) + n);
+    }
+  });
+
+  const parId = new Map(etat.especes.map(e => [e.id, e]));
+  const sortie = new Map();
+  for (const [g, G] of parGroupe) {
+    const liste = [...G.esp]
+      .filter(([, n]) => n >= 5)
+      .map(([id, n]) => {
+        const specificite = n / (global.get(id) || 1);
+        const fidelite = (G.presence.get(id) || 0) / (G.n || 1);
+        return { id, score:specificite * fidelite, n };
+      })
+      .filter(x => x.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 12)
+      .map(x => {
+        const e = parId.get(x.id);
+        return { id:x.id, nom: e ? nomCourt(e.nom, e.nomFr) : '#' + x.id,
+                 photo: e ? e.photoPetite || e.photo : null,
+                 photoGrande: e ? e.photo || e.photoPetite : null };
+      });
+    sortie.set(g, { especes:liste, cellules:G.n });
+  }
+  return sortie;
+}
+
+
+/* Changer le nombre de groupes ne demande que de refaire le regroupement : les composantes
+   principales, elles, ne dépendent pas de k. */
+/* Les numéros que rend Ward n'ont pas d'ordre : on les renomme du groupe le plus étendu au
+   plus petit, de sorte que le groupe 1 soit toujours le principal et que les couleurs se
+   suivent dans un ordre lisible. */
+function ordonnerGroupes(groupes) {
+  const taille = new Map();
+  for (const g of groupes) taille.set(g, (taille.get(g) || 0) + 1);
+  const rangs = new Map([...taille.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([g], i) => [g, i]));
+  return groupes.map(g => rangs.get(g));
+}
+
+function regrouperBio() {
+  if (!bio || !bio.scores) return;
+  const groupes = ordonnerGroupes(ward(bio.scores, bioGroupes));
+  bio.cellules.forEach((c, k) => { c.groupe = groupes[k]; });
+  bio.indicatrices = indicatrices(bio.cellules, groupes, bio.rang);
+}
+
+let carteBio = null, coucheBio = null, fondBio = null;
+let bioSatellite = 0;   // indice dans ORDRE_FONDS
+
+let reperesBio = null;
+
+function majFondBio() {
+  if (!carteBio) return;
+  if (fondBio) { carteBio.removeLayer(fondBio); fondBio = null; }
+  if (reperesBio) { carteBio.removeLayer(reperesBio); reperesBio = null; }
+  const nom = ORDRE_FONDS[bioSatellite % ORDRE_FONDS.length];
+  const f = FONDS[nom];
+  fondBio = L.tileLayer(f.url, { attribution:f.attribution, maxZoom:f.maxZoom || 19,
+    className:f.classe });
+  fondBio.addTo(carteBio);
+  fondBio.bringToBack();
+  // Le satellite ne porte aucun nom : on ajoute villes, routes et limites par-dessus.
+  if (nom === 'satellite') {
+    reperesBio = L.tileLayer(REPERES.url,
+      { attribution:REPERES.attribution, maxZoom:REPERES.maxZoom, opacity:0.9 });
+    reperesBio.addTo(carteBio);
+  }
+}
+
+
+/* Niveaux déjà collectés, relevés une fois à l'ouverture de l'onglet : les rouvrir est
+   instantané, autant que cela se voie avant de cliquer. */
+let bioEnMemoire = new Set();
+
+async function releverMemoireBio() {
+  try {
+    const tout = await surBase('readonly', st => st.getAll());
+    const prefixe = cleInventaire() + '|bio|';
+    bioEnMemoire = new Set((tout || [])
+      .filter(d => String(d.cle || '').startsWith(prefixe)
+        && Date.now() - d.date < PEREMPTION)
+      .map(d => +String(d.cle).slice(prefixe.length)));
+  } catch (e) { bioEnMemoire = new Set(); }
+}
+
+/* Les réglages de collecte doivent être accessibles avant le premier calcul : les découvrir
+   après coup obligerait à relancer une analyse de plusieurs minutes pour rien. */
+function reglagesBio() {
+  return `
+    <select id="bio-volume">${[[1000, 'bioRapide'], [5000, 'bioMoyen'], [20000, 'bioFin'],
+      [200000, 'bioTout']]
+      .map(([v, k]) => {
+        /* Estimation calée sur la durée réellement constatée. La cadence entre requêtes n'en
+           représente qu'une part : s'y ajoutent le temps de réponse de chacune, les deux
+           appels de bornage, et le calcul qui suit la collecte. Mieux vaut annoncer un peu
+           trop que de faire attendre le double du temps promis. */
+        const s = Math.round(6 + (v / BIO_PAR_APPEL) * 2.8);
+        const duree = s < 90 ? t('bioSec', s) : t('bioMin', Math.round(s / 60));
+        const garde = bioEnMemoire.has(v);
+        return `<option value="${v}"${v === bioMax ? ' selected' : ''}
+          title="${echap(t('bioDetail', nb(v), duree))}"
+          >${garde ? '● ' : ''}${t(k)} · ${garde ? t('bioCache') : duree}</option>`;
+      }).join('')}</select>`;
+}
+
+/* Changer de niveau ne lance jamais la collecte : on revient à l'écran de départ et c'est le
+   bouton qui décide. Enclencher plusieurs minutes de requêtes sur un simple changement de
+   menu était une mauvaise surprise. */
+function brancherReglagesBio() {
+  const refaire = () => {
+    bio = null; comm = null; commArbre = null;
+    dessinerBioregions();
+  };
+  const bv = $('#bio-volume');
+  if (bv) bv.addEventListener('change', e => { bioMax = +e.target.value; refaire(); });
+
+}
+
+function dessinerBioregions() {
+  const v = $('#v-bio');
+  if (!v) return;
+  if (!etat.especes.length) {
+    v.innerHTML = `<div class="vide"><strong>${t('oBio')}</strong>${t('videBio')}</div>`;
+    return;
+  }
+
+  if (!bio) {
+    v.innerHTML = `
+      <div class="outils">
+        <button class="primaire" id="bio-lancer"${bioEnCours ? ' disabled' : ''}
+          >${t('bioLancer')}</button>
+        ${reglagesBio()}
+        <span class="compte">${bioEnCours ? t('bioCalcul') : ''}</span>
+      </div>
+      <div class="vide">${bio === null && !bioEnCours && bioTente
+        ? t('bioMaigre') : t('videBio') + ' ' + t('bioDuree')}</div>
+      <p class="note">${t('bioNote')}</p>`;
+    brancherReglagesBio();
+    const b = $('#bio-lancer');
+    if (b) b.addEventListener('click', () => {
+      // Appel direct plutôt que mise en file : l'analyse répond à un geste explicite, et
+      // ses requêtes passent de toute façon par la file des appels réseau.
+      chargerBioregions().catch(e =>
+        progression(t('mEchec', String((e && e.message) || e)), null));
+    });
+    carteBio = null;              // le conteneur vient d'être remplacé
+    return;
+  }
+
+  const groupes = [...bio.indicatrices.keys()].sort((a, b) => a - b);
+  v.innerHTML = `
+    <div class="outils">
+      <button class="discret" id="bio-recadrer">${t('bioRecadrer')}</button>
+      <button class="discret rouge" id="bio-relancer">${t('bioRecollecter')}</button>
+      ${reglagesBio()}
+      <label class="glissiere"><span>${t('bioK')}</span>
+        <input type="range" id="bio-k" min="2" max="8" step="1" value="${bioGroupes || 2}">
+        <b>${bioGroupes}</b></label>
+      <span class="compte">${t('bioResume', nb(bio.cellules.length), nb(bio.nObs), nb(bio.nEsp))
+        }${bio.memoire ? ' · ' + t('bioCache') : ''}</span>
+    </div>
+    <div class="carte-boite">
+      <div id="carte-bio"></div>
+      <button id="bio-fond" class="sur-carte" data-tt="cFond">
+        <svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true">
+          <path d="M10 2.4 2.6 6.2 10 10l7.4-3.8z" fill="none" stroke="currentColor"
+            stroke-width="1.5" stroke-linejoin="round"/>
+          <path d="M3.4 9.6 10 13l6.6-3.4M3.4 13.2 10 16.6l6.6-3.4" fill="none"
+            stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+    <div class="legende" style="margin-top:12px">
+      <span><i style="background:#B7C1B9"></i> ${t('bioPeu')}</span>
+    </div>
+    <div class="planche" style="margin-top:18px">${groupes.map(g => {
+      const G = bio.indicatrices.get(g);
+      const teinte = BIO_TEINTES[g % BIO_TEINTES.length];
+      return `<div class="colonne groupe-bio" data-groupe="${g}"
+          style="border-left:10px solid ${teinte}">
+        <div class="entete"><div>
+          <div class="fr">${t('bioGroupe', g + 1)}</div>
+          <div class="freq">${t('bioCellules', nb(G.cellules))}</div>
+        </div></div>
+        <button class="apercu4" data-deplier="${g}" aria-label="${echap(t('bioIndic'))}"
+          >${G.especes.slice(0, 4).map(e => `<span>${e.photo
+            ? `<img src="${echap(e.photo)}" loading="lazy" alt="">` : ''}</span>`).join('')}</button>
+      </div>`;
+    }).join('')}</div>
+    ${bio.plafond ? `<p class="note">${t('bioPlafond')}</p>` : ''}
+    <p class="note">${t('bioNote')}</p>`;
+
+  v.querySelectorAll('[data-deplier]').forEach(b =>
+    b.addEventListener('click', () => ouvrirGroupeBio(+b.dataset.deplier)));
+
+  $('#bio-recadrer').addEventListener('click', cadrerBio);
+  $('#bio-fond').addEventListener('click', () => {
+    bioSatellite = (bioSatellite + 1) % ORDRE_FONDS.length;
+    $('#bio-fond').classList.toggle('actif', bioSatellite > 0);
+    majFondBio();
+  });
+
+  brancherReglagesBio();
+
+
+  const bk = $('#bio-k');
+  if (bk) {
+    // Le regroupement se refait sur les scores déjà calculés : aucune requête.
+    bk.addEventListener('input', e => { bioGroupes = +e.target.value; bk.nextElementSibling.textContent = bioGroupes; });
+    bk.addEventListener('change', () => {
+      regrouperBio();
+      comm = null;              // les rubans de communautés décrivent ces biorégions
+      dessinerBioregions();
+    });
+  }
+
+  $('#bio-relancer').addEventListener('click', () => {
+    bio = null; comm = null; commArbre = null; dessinerBioregions();
+    chargerBioregions(true).catch(e =>
+      progression(t('mEchec', String((e && e.message) || e)), null));
+  });
+
+  setTimeout(tracerCarteBio, 30);   // le conteneur doit être visible pour être mesuré
+}
+
+/* Contours du lieu, mis en réserve une fois pour toutes : ils servent à écarter les cellules
+   qui tombent en dehors. Les rectangles du découpage débordent forcément d'une limite
+   administrative ou naturelle, et rien ne sert d'afficher une cellule posée hors de la zone. */
+let anneauxLieu = null;
+
+async function chargerContoursLieu() {
+  if (anneauxLieu) return anneauxLieu;
+  const a = [];
+  if (etat.zone) {
+    const z = etat.zone;
+    a.push([[z.swlng, z.swlat], [z.nelng, z.swlat], [z.nelng, z.nelat], [z.swlng, z.nelat]]);
+  }
+  for (const l of etat.lieux) {
+    try {
+      const d = await appelDirect('/places/' + l.id, {});
+      const g = d.results && d.results[0] && d.results[0].geometry_geojson;
+      if (!g) continue;
+      if (g.type === 'Polygon') a.push(g.coordinates[0]);
+      else if (g.type === 'MultiPolygon') for (const q of g.coordinates) a.push(q[0]);
+    } catch (e) { /* sans contour, aucune cellule n'est écartée */ }
+  }
+  anneauxLieu = a;
+  return a;
+}
+
+/* Découpage exact d'un contour par une cellule. Une cellule étant un rectangle, donc une
+   fenêtre convexe, l'algorithme de Sutherland-Hodgman s'applique directement : on rabat le
+   contour successivement sur les quatre côtés. Le résultat épouse la limite du lieu, sans
+   masque posé par-dessus la carte et sans toucher au fond. */
+function couperAuRectangle(anneau, ax, ay, bx, by) {
+  const bords = [
+    p => p[0] >= ax, p => p[0] <= bx, p => p[1] >= ay, p => p[1] <= by
+  ];
+  const coupe = [
+    (a, b) => [ax, a[1] + (b[1] - a[1]) * (ax - a[0]) / (b[0] - a[0])],
+    (a, b) => [bx, a[1] + (b[1] - a[1]) * (bx - a[0]) / (b[0] - a[0])],
+    (a, b) => [a[0] + (b[0] - a[0]) * (ay - a[1]) / (b[1] - a[1]), ay],
+    (a, b) => [a[0] + (b[0] - a[0]) * (by - a[1]) / (b[1] - a[1]), by]
+  ];
+  let sortie = anneau;
+  for (let k = 0; k < 4 && sortie.length; k++) {
+    const entree = sortie;
+    sortie = [];
+    for (let i = 0, j = entree.length - 1; i < entree.length; j = i++) {
+      const a = entree[j], b = entree[i];
+      const da = bords[k](a), db = bords[k](b);
+      if (db) {
+        if (!da) sortie.push(coupe[k](a, b));
+        sortie.push(b);
+      } else if (da) sortie.push(coupe[k](a, b));
+    }
+  }
+  return sortie;
+}
+
+/* Lancer de rayon : sert à ne garder que les segments de contour situés dans le lieu. */
+function dansAnneaux(x, y, anneaux) {
+  if (!anneaux || !anneaux.length) return true;
+  for (const an of anneaux) {
+    let dedans = false;
+    for (let i = 0, j = an.length - 1; i < an.length; j = i++) {
+      const xi = an[i][0], yi = an[i][1], xj = an[j][0], yj = an[j][1];
+      if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) dedans = !dedans;
+    }
+    if (dedans) return true;
+  }
+  return false;
+}
+
+/* Morceaux d'une cellule situés dans le lieu. Sans contour connu, la cellule reste entière. */
+function cellulesCoupees(c, anneaux) {
+  if (!anneaux || !anneaux.length)
+    return [[[c.ay, c.ax], [c.ay, c.bx], [c.by, c.bx], [c.by, c.ax]]];
+  const morceaux = [];
+  for (const an of anneaux) {
+    const q = couperAuRectangle(an, c.ax, c.ay, c.bx, c.by);
+    if (q.length >= 3) morceaux.push(q.map(p => [p[1], p[0]]));
+  }
+  return morceaux;
+}
+
+/* Une carte propre à l'onglet : les cellules y sont dessinées en rectangles colorés selon
+   leur groupe, sur le même fond clair que la carte principale. */
+async function tracerCarteBio() {
+  const cible = document.getElementById('carte-bio');
+  if (!cible || !bio) return;
+  const anneaux = await chargerContoursLieu();
+
+  let neuve = false;
+  if (!carteBio || carteBio.getContainer() !== cible) {
+    neuve = true;
+    carteBio = L.map('carte-bio', { scrollWheelZoom:true });
+    fondBio = null;
+    majFondBio();
+    coucheBio = null;
+  }
+  carteBio.invalidateSize();
+
+  if (coucheBio) { carteBio.removeLayer(coucheBio); coucheBio = null; }
+  /* Les cellules trop maigres sont tracées d'abord, en gris, pour rester sous les autres. */
+  /* Chaque case est tracée séparément, avec son liseré : le quadrillage reste visible et
+     l'on voit la granularité réelle de l'analyse. Les milliers de formes que cela représente
+     passent par le rendu en canevas, seul capable de les afficher sans ralentir la carte. */
+  const G = bio.grille;
+  const groupeDe = new Int32Array(G.ni * G.nj).fill(-1);
+  bio.cellules.forEach(u => { for (const k of u.cases) groupeDe[k] = u.groupe; });
+
+  const toile = L.canvas({ padding:0.3 });
+  const formes = [];
+  for (let i = 0; i < G.ni; i++) {
+    for (let j = 0; j < G.nj; j++) {
+      const g = groupeDe[i * G.nj + j];
+      if (g < 0) continue;
+      const boite = {
+        ax:G.x0 + i * G.pasX, ay:G.y0 + j * G.pasY,
+        bx:G.x0 + (i + 1) * G.pasX, by:G.y0 + (j + 1) * G.pasY
+      };
+      const parts = cellulesCoupees(boite, anneaux);
+      if (!parts.length) continue;
+      const couleur = BIO_TEINTES[g % BIO_TEINTES.length];
+      formes.push(L.polygon(parts, { renderer:toile, weight:0,
+        fillColor:couleur, fillOpacity:0.62 })
+        .bindTooltip(t('bioGroupe', g + 1))
+        .on('click', () => ouvrirGroupeBio(g)));
+    }
+  }
+
+  /* Contour des unités finales, et non de la grille de départ : on ne trace un segment que
+     là où deux cases voisines appartiennent à des unités différentes. C'est cette limite-là
+     qui a un sens — chaque unité est l'ensemble d'observations sur lequel la composition a
+     réellement été calculée. */
+  const uniteDe = new Int32Array(G.ni * G.nj).fill(-1);
+  bio.cellules.forEach((u, k) => { for (const c of u.cases) uniteDe[c] = k; });
+
+  const bords = [];
+  const segment = (x1b, y1b, x2b, y2b) => {
+    if (!dansAnneaux((x1b + x2b) / 2, (y1b + y2b) / 2, anneaux)) return;
+    bords.push([[y1b, x1b], [y2b, x2b]]);
+  };
+  for (let i = 0; i < G.ni; i++) {
+    for (let j = 0; j < G.nj; j++) {
+      const u = uniteDe[i * G.nj + j];
+      if (u < 0) continue;
+      const ax = G.x0 + i * G.pasX, ay = G.y0 + j * G.pasY;
+      const bx = ax + G.pasX, by = ay + G.pasY;
+      if (i + 1 >= G.ni || uniteDe[(i + 1) * G.nj + j] !== u) segment(bx, ay, bx, by);
+      if (i === 0 || uniteDe[(i - 1) * G.nj + j] !== u) segment(ax, ay, ax, by);
+      if (j + 1 >= G.nj || uniteDe[i * G.nj + (j + 1)] !== u) segment(ax, by, bx, by);
+      if (j === 0 || uniteDe[i * G.nj + (j - 1)] !== u) segment(ax, ay, bx, ay);
+    }
+  }
+  if (bords.length) formes.push(L.polyline(bords, { renderer:toile, color:'#3A463E',
+    weight:0.7, opacity:0.55, interactive:false }));
+
+  coucheBio = L.layerGroup(formes).addTo(carteBio);
+  // Le cadrage n'a lieu qu'au premier tracé : faire varier le nombre de groupes ne doit pas
+  // ramener sans cesse la vue au point de départ.
+  if (neuve) cadrerBio();
+}
+
+/* Le détail d'un groupe s'ouvre en fenêtre : dix espèces avec leur vignette tiennent mal
+   dans une colonne, et l'on veut comparer un groupe à la fois, pas tous à la fois. */
+function ouvrirGroupeBio(g) {
+  const G = bio && bio.indicatrices.get(g);
+  if (!G) return;
+  fenetreEspeces(t('bioGroupe', g + 1) + ' · ' + t('bioCellules', nb(G.cellules)),
+    G.especes, BIO_TEINTES[g % BIO_TEINTES.length]);
+}
+
+/* Fenêtre de présentation d'une liste d'espèces : sert aux groupes de biorégions comme aux
+   communautés, avec le même rendu en mosaïque. */
+/* Fermeture d'une fenêtre : le bouton, le fond, et la touche d'échappement. Le bouton était
+   affiché sans gestionnaire, ce qui le rendait inerte dans les deux fenêtres. */
+function brancherFermeture(f) {
+  const x = f.querySelector('#bio-fen-x');
+  if (x) x.addEventListener('click', () => { f.hidden = true; });
+  f.onclick = ev => { if (ev.target === f) f.hidden = true; };
+}
+
+function fenetreEspeces(titre, especes, teinte) {
+  const f = $('#bio-fen');
+  f.innerHTML = `<div class="boite" style="border-top:8px solid ${teinte}">
+    <button class="discret fermer" id="bio-fen-x">${t('fermer')}</button>
+    <div class="tit" style="margin:0">${echap(titre)}</div>
+    <div class="k" style="margin:14px 0 8px">${t('bioIndic')}</div>
+    <div class="mosaique">${especes.map(e => `
+      <div class="tuile">
+        <a href="https://www.inaturalist.org/taxa/${e.id}" target="_blank" rel="noopener"
+           ${e.aussi !== undefined ? `title="${echap(t('commAussi', e.aussiNom || ''))}"` : ''}>
+          ${e.photo ? `<img src="${echap(e.photoGrande || e.photo)}" loading="lazy" alt="">` : ''}
+          ${e.aussi !== undefined ? `<b class="transg">↔</b>` : ''}
+          <span>${echap(e.nom)}</span>
+        </a>
+        ${boutonPanier(e.id)}
+      </div>`).join('')}</div>
+  </div>`;
+  f.hidden = false;
+  brancherPanier(f);
+  brancherFermeture(f);
+}
+
+function cadrerBio() {
+  if (!carteBio || !bio || !bio.cellules.length) return;
+  const G = bio.grille;
+  const b = L.latLngBounds([G.y0, G.x0],
+    [G.y0 + G.nj * G.pasY, G.x0 + G.ni * G.pasX]);
+  if (b) carteBio.fitBounds(b, { padding:[16, 16] });
+}
+
+
+/* ============================================================
+   Communautés : regrouper les espèces qui occupent les mêmes cellules
+   ============================================================ */
+
+/* L'analyse inverse de celle des biorégions. Là-bas on rassemblait les cellules de
+   composition semblable ; ici on rassemble les espèces de répartition semblable. Les données
+   sont les mêmes — la matrice cellules par espèces déjà constituée —, simplement lue dans
+   l'autre sens, ce qui rend cet onglet gratuit en requêtes.
+
+   Le regroupement est non hiérarchique, par la méthode des k-moyennes : on cherche des
+   partitions d'espèces sans construire d'arbre, ce qui convient mieux ici, une espèce
+   n'ayant pas vocation à se rattacher progressivement à des ensembles emboîtés. */
+
+let comm = null, commArbre = null;
+let commNiveau = null;       // position sur l'échelle logarithmique ; le coude la fixe
+let commPage = 0;
+let commTri = 'obs';         // « obs », « esp », ou « bio:N » pour une biorégion donnée
+/* Vingt observations dans l'inventaire : c'est aussi le seuil de collecte, si bien que toute
+   espèce ramenée est classable. En deçà, la répartition d'une espèce ne mesure que le hasard
+   du prélèvement. */
+const commMinObs = 10;
+const COMM_MAX_ESP = 1500;   // au-delà, la matrice de distances deviendrait démesurée
+
+/* Toutes les espèces collectées, et non les seules retenues pour délimiter les biorégions.
+   Le filtre de là-bas écarte les espèces rares et les ubiquistes, ce qui a un sens pour
+   découper l'espace mais n'en a aucun pour classer les espèces elles-mêmes : une espèce
+   présente partout appartient bien à une communauté, et une espèce localisée aussi. Le seul
+   critère retenu ici est d'avoir assez d'observations pour que sa répartition signifie
+   quelque chose. */
+function profilsEspeces() {
+  const totalParEsp = new Map();
+  for (const c of bio.cellules)
+    for (const [id, n] of c.esp) totalParEsp.set(id, (totalParEsp.get(id) || 0) + n);
+
+  /* Le seuil porte sur l'effectif de l'inventaire, non sur celui de l'échantillon collecté.
+     Ce dernier n'est qu'un prélèvement : une espèce comptant trente observations dans la zone
+     peut n'en avoir que huit ici, et serait écartée à tort. C'est bien la quantité de données
+     disponibles sur l'espèce qui décide si sa répartition veut dire quelque chose. */
+  const inventaire = new Map(etat.especes.map(e => [e.id, e.nZone]));
+  let ids = [...totalParEsp]
+    .filter(([id]) => (inventaire.get(id) || 0) >= commMinObs)
+    .sort((a, b) => (inventaire.get(b[0]) || 0) - (inventaire.get(a[0]) || 0))
+    .map(([id]) => id);
+  if (ids.length > COMM_MAX_ESP) {
+    console.info('Communautés : ' + ids.length + ' espèces classables, limitées aux '
+      + COMM_MAX_ESP + ' plus observées.');
+    ids = ids.slice(0, COMM_MAX_ESP);
+  }
+  const rang = new Map(ids.map((id, r) => [id, r]));
+  const nC = bio.cellules.length;
+  const profils = ids.map(() => new Float64Array(nC));
+  const totaux = new Float64Array(ids.length);
+
+  bio.cellules.forEach((c, j) => {
+    for (const [id, n] of c.esp) {
+      const r = rang.get(id);
+      if (r === undefined) continue;
+      profils[r][j] += n;
+      totaux[r] += n;
+    }
+  });
+
+  /* Chaque espèce est décrite par la façon dont ses observations se répartissent entre les
+     cellules, non par leur nombre : sans cette normalisation, les espèces abondantes se
+     retrouveraient toutes ensemble quelle que soit leur répartition. La racine carrée est la
+     transformation de Hellinger, qui rend la distance euclidienne pertinente sur des
+     profils de fréquences. */
+  for (let r = 0; r < ids.length; r++) {
+    const tot = totaux[r] || 1;
+    for (let j = 0; j < nC; j++) profils[r][j] = Math.sqrt(profils[r][j] / tot);
+  }
+  return { ids, profils, totaux };
+}
+
+/* Arbre de Ward sur les espèces, calculé une seule fois.
+
+   Les k-moyennes donnaient une partition nouvelle à chaque valeur de k : passer de cinq à six
+   communautés bouleversait tout. Un arbre, lui, se coupe à n'importe quelle hauteur, et les
+   partitions restent emboîtées — augmenter le nombre de communautés divise un groupe existant
+   au lieu de tout redistribuer. On peut donc explorer du général au détail, jusqu'à deux cents
+   groupes, sans le moindre recalcul.
+
+   L'algorithme est celui de la chaîne des plus proches voisins, en temps quadratique là où
+   la recherche naïve du minimum est cubique — indispensable au-delà de quelques centaines
+   d'espèces. La mise à jour des distances suit la formule de Lance et Williams. */
+function wardArbre(profils) {
+  const n = profils.length, dim = profils[0].length;
+  const D = new Float64Array(n * n);
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      let s2 = 0;
+      const a = profils[i], b = profils[j];
+      for (let z = 0; z < dim; z++) { const e = a[z] - b[z]; s2 += e * e; }
+      D[i * n + j] = D[j * n + i] = s2;
+    }
+  }
+
+  const vif = new Uint8Array(n).fill(1);
+  const taille = new Int32Array(n).fill(1);
+  const fusions = [];
+  const chaine = [];
+
+  // La chaîne s'allonge souvent sans conclure : c'est le nombre de fusions qui compte,
+  // pas le nombre de tours.
+  while (fusions.length < n - 1) {
+    if (!chaine.length) {
+      let d = 0; while (!vif[d]) d++;
+      chaine.push(d);
+    }
+    let a = chaine[chaine.length - 1], b = -1, dmin = Infinity;
+    for (let k = 0; k < n; k++) {
+      if (!vif[k] || k === a) continue;
+      const d = D[a * n + k];
+      if (d < dmin || (d === dmin && k < b)) { dmin = d; b = k; }
+    }
+    if (chaine.length >= 2 && b === chaine[chaine.length - 2]) {
+      chaine.pop(); chaine.pop();
+      // On fusionne dans le plus petit indice, par convention, puis on met à jour les distances.
+      const [x, y] = a < b ? [a, b] : [b, a];
+      fusions.push([x, y, dmin]);
+      const nx = taille[x], ny = taille[y];
+      for (let k = 0; k < n; k++) {
+        if (!vif[k] || k === x || k === y) continue;
+        const nk = taille[k];
+        const d = ((nx + nk) * D[x * n + k] + (ny + nk) * D[y * n + k] - nk * D[x * n + y])
+          / (nx + ny + nk);
+        D[x * n + k] = D[k * n + x] = d;
+      }
+      taille[x] = nx + ny;
+      vif[y] = 0;
+    } else {
+      chaine.push(b);
+    }
+  }
+  return fusions;
+}
+
+/* Coupe de l'arbre à une hauteur donnée : on rejoue toutes les fusions moins coûteuses que
+   le seuil. Le nombre de communautés s'en déduit au lieu d'être imposé, ce qui donne des
+   groupes de cohésion comparable — deux espèces réunies le sont toujours à la même distance,
+   qu'elles appartiennent à un grand ensemble ou à une petite communauté isolée.
+   Le curseur ne parcourt pas l'échelle des distances mais leur distribution : il désigne un
+   quantile parmi les fusions. Les dernières fusions de Ward coûtent des ordres de grandeur
+   de plus que les premières, si bien qu'une échelle géométrique laissait les trois quarts du
+   curseur sans effet visible. Le seuil reste une hauteur — deux espèces réunies le sont
+   toujours à la même distance —, mais son réglage devient progressif. */
+/* Hauteur produisant approximativement k groupes : il faut appliquer les n − k fusions les
+   moins coûteuses. L'algorithme de la chaîne ne les rend pas dans cet ordre, d'où le tri. */
+function hauteurPourGroupes(fusions, n, k) {
+  if (!fusions.length) return 0;
+  const tri = fusions.map(f => f[2]).sort((a, b) => a - b);
+  const i = Math.min(tri.length - 1, Math.max(0, n - k - 1));
+  return tri[i];
+}
+
+/* Le curseur suit une échelle logarithmique du nombre de groupes : à gauche un seul groupe,
+   à droite autant que d'espèces. Une échelle linéaire consacrerait ses neuf dixièmes aux
+   partitions très fines, indiscernables entre elles. */
+function groupesPourPosition(n, position) {
+  return Math.max(1, Math.min(n, Math.round(Math.pow(n, position))));
+}
+
+function couperArbreHauteur(fusions, n, hauteur) {
+  const parent = new Int32Array(n).map((_, i) => i);
+  const racine = i => { while (parent[i] !== i) { parent[i] = parent[parent[i]]; i = parent[i]; } return i; };
+  /* On applique toutes les fusions moins coûteuses que le seuil, sans s'arrêter à la
+     première qui le dépasse : elles n'arrivent pas dans l'ordre des coûts. Le critère de
+     Ward étant monotone, l'ensemble ainsi retenu forme bien une partition de l'arbre. */
+  for (const [x, y, d] of fusions) {
+    if (d <= hauteur) parent[racine(y)] = racine(x);
+  }
+  const numero = new Map();
+  const sortie = new Int32Array(n);
+  for (let i = 0; i < n; i++) {
+    const r = racine(i);
+    if (!numero.has(r)) numero.set(r, numero.size);
+    sortie[i] = numero.get(r);
+  }
+  return sortie;
+}
+
+/* Nombre de communautés suggéré, par la méthode du coude. Les coûts de fusion de Ward
+   croissent lentement tant qu'on réunit des espèces semblables, puis brutalement quand il
+   faut rapprocher des ensembles distincts. Le coude est ce point de rupture : on cherche la
+   fusion dont le coût s'écarte le plus de la tendance qui précède. */
+function coudeDeWard(fusions) {
+  const couts = fusions.map(f => f[2]).sort((a, b) => a - b);
+  const n = couts.length;
+  if (n < 8) return 2;
+  let meilleur = 2, ecartMax = 0;
+  // On ignore les extrémités, où le rapport est instable par construction.
+  for (let i = Math.floor(n * 0.5); i < n - 2; i++) {
+    const rapport = couts[i + 1] / (couts[i] || 1e-9);
+    if (rapport > ecartMax) { ecartMax = rapport; meilleur = n - i; }
+  }
+  return Math.max(2, Math.min(40, meilleur));
+}
+
+function analyserCommunautes() {
+  if (!bio || !bio.rang || !bio.cellules.length) return null;
+  const { ids, profils, totaux } = profilsEspeces();
+  if (ids.length < 4) return null;
+
+  if (!commArbre || commArbre.n !== ids.length || commArbre.seuil !== commMinObs) {
+    const fusions = wardArbre(profils);
+    commArbre = { n:ids.length, seuil:commMinObs, fusions, coude:coudeDeWard(fusions) };
+    // Première ouverture : on se place d'emblée sur le découpage que les données suggèrent.
+    if (commNiveau === null)
+      commNiveau = Math.log(commArbre.coude) / Math.log(Math.max(ids.length, 2));
+  }
+  const vise = groupesPourPosition(ids.length, commNiveau === null ? 0.35 : commNiveau);
+  const appartient = couperArbreHauteur(commArbre.fusions, ids.length,
+    hauteurPourGroupes(commArbre.fusions, ids.length, vise));
+  const parId = new Map(etat.especes.map(e => [e.id, e]));
+
+  const groupes = new Map();
+  ids.forEach((id, r) => {
+    const c = appartient[r];
+    if (!groupes.has(c)) groupes.set(c, { especes:[], rangs:[], parBio:new Map(), total:0 });
+    const G = groupes.get(c);
+    const e = parId.get(id);
+    G.rangs.push(r);
+    G.especes.push({ id, n:totaux[r], r,
+      nom: e ? nomCourt(e.nom, e.nomFr) : '#' + id,
+      photo: e ? e.photoPetite || e.photo : null,
+      photoGrande: e ? e.photo || e.photoPetite : null });
+  });
+
+  /* Nom de la communauté : l'espèce dont la répartition colle le mieux à celle du groupe.
+     On calcule le profil moyen, on retient le quart des espèces qui s'en écartent le moins,
+     puis parmi elles la mieux observée — une espèce représentative mais confidentielle
+     nommerait mal un groupe, et la plus abondante n'en est pas forcément typique. */
+  const dim = profils[0].length;
+  for (const G of groupes.values()) {
+    const centre = new Float64Array(dim);
+    for (const r of G.rangs) { const p = profils[r]; for (let z = 0; z < dim; z++) centre[z] += p[z]; }
+    for (let z = 0; z < dim; z++) centre[z] /= G.rangs.length;
+
+    const ecarts = G.especes.map(e => {
+      let s2 = 0; const p = profils[e.r];
+      for (let z = 0; z < dim; z++) { const d = p[z] - centre[z]; s2 += d * d; }
+      return { e, s2 };
+    }).sort((a, b) => a.s2 - b.s2);
+
+    const proches = ecarts.slice(0, Math.max(3, Math.ceil(ecarts.length / 4)));
+    proches.sort((a, b) => b.e.n - a.e.n);
+    G.nom = proches[0].e.nom;
+    G.centre = centre;
+  }
+
+  /* Espèces transgressives, au sens de la phytosociologie : celles qui appartiennent presque
+     autant à une autre communauté qu'à la leur. On compare la distance au centre de son
+     groupe à celle du deuxième plus proche ; quand l'écart est faible, l'affectation tient du
+     tirage au sort et l'espèce fait en réalité le lien entre deux ensembles. Aucun calcul
+     supplémentaire de fond : les centres sont déjà là. */
+  const tousCentres = [...groupes.entries()];
+  for (const [c, G] of groupes) {
+    G.transgressives = 0;
+    for (const e of G.especes) {
+      const p = profils[e.r];
+      let d1 = Infinity, d2 = Infinity, second = -1;
+      for (const [c2, H] of tousCentres) {
+        let s2 = 0;
+        for (let z = 0; z < dim; z++) { const d = p[z] - H.centre[z]; s2 += d * d; }
+        if (c2 === c) { d1 = s2; continue; }
+        if (s2 < d2) { d2 = s2; second = c2; }
+      }
+      // Moins de 30 % d'écart entre les deux distances : l'appartenance est ambiguë.
+      if (second >= 0 && d1 > 0 && Math.sqrt(d2 / d1) < 1.15) {
+        e.aussi = second;
+        G.transgressives++;
+      }
+    }
+  }
+
+  /* Une espèce transgressive figure dans les deux communautés dont elle est proche, comme
+     dans la tradition phytosociologique. La signaler dans une seule n'avait pas de sens :
+     c'est précisément parce qu'elle relie deux ensembles qu'elle mérite d'être nommée, et
+     l'exemplaire emprunté est marqué pour qu'on ne le confonde pas avec un membre à part
+     entière. */
+  for (const [c, G] of groupes) {
+    for (const e of G.especes.slice()) {
+      if (e.aussi === undefined) continue;
+      const H = groupes.get(e.aussi);
+      if (!H) continue;
+      H.especes.push({ ...e, emprunt:true, venuDe:c });
+      H.transgressives = (H.transgressives || 0) + 1;
+    }
+  }
+
+  // Où chaque communauté se tient : part de ses observations dans chaque biorégion.
+  const rangDe = new Map(ids.map((id, r) => [id, r]));
+  bio.cellules.forEach(c => {
+    for (const [id, n] of c.esp) {
+      const r = rangDe.get(id);
+      if (r === undefined) continue;
+      const G = groupes.get(appartient[r]);
+      G.parBio.set(c.groupe, (G.parBio.get(c.groupe) || 0) + n);
+      G.total += n;
+    }
+  });
+
+  // De la plus fournie à la plus modeste, comme pour les biorégions.
+  // Classement par masse d'observations : une communauté nombreuse mais confidentielle
+  // ne prime pas sur une communauté plus étroite mais massivement documentée.
+  /* Effectifs de l'inventaire, non de l'échantillon : la collecte ne ramène qu'une part des
+     observations, si bien que compter celles chargées sous-estimait fortement le poids réel
+     d'une communauté et rendait la comparaison entre elles dépendante du hasard du tirage. */
+  const effectifReel = new Map(etat.especes.map(e => [e.id, e.nZone || 0]));
+
+  for (const G of groupes.values()) {
+    G.obs = G.especes.reduce((a, e) => a + (e.emprunt ? 0 : (effectifReel.get(e.id) || 0)), 0);
+    /* Effectif propre : les transgressives empruntées à une autre communauté sont affichées
+       ici mais appartiennent ailleurs. Les compter gonflerait les totaux et ferait dépasser
+       la somme des communautés le nombre d'espèces classées. */
+    G.nMembres = G.especes.reduce((a, e) => a + (e.emprunt ? 0 : 1), 0);
+    G.nEmpruntees = G.especes.length - G.nMembres;
+  }
+  const liste = [...groupes.values()];
+  // Une fois l'ordre fixé, on peut nommer la communauté voisine de chaque transgressive.
+  const nomDe = new Map([...groupes.entries()].map(([c, G]) => [c, G.nom]));
+  for (const G of liste) for (const e of G.especes)
+    if (e.aussi !== undefined)
+      e.aussiNom = nomDe.get(e.emprunt ? e.venuDe : e.aussi) || '';
+  // Les membres d'abord, les empruntées ensuite : la liste décrit le noyau avant ses marges.
+  for (const G of liste) {
+    // Une espèce peut avoir été ajoutée comme emprunt alors qu'elle est déjà membre :
+    // on ne garde alors que l'exemplaire de plein droit.
+    const vus = new Set();
+    G.especes = G.especes
+      .sort((a, b) => (a.emprunt ? 1 : 0) - (b.emprunt ? 1 : 0) || b.n - a.n)
+      .filter(e => !vus.has(e.id) && vus.add(e.id));
+  }
+  return liste;
+}
+
+/* Clic sur la carte d'une communauté : mêmes gestes que l'onglet Carte, mais la liste est
+   restreinte aux espèces du groupe. La restriction se fait après la requête, un filtre par
+   identifiants portant sur plusieurs centaines de taxons dépassant la longueur d'une adresse. */
+let cercleComm = null;
+let commFond = 0, coucheFondComm = null, reperesComm = null;
+
+/* Même rotation de fonds que les autres cartes : plan, relief, satellite, avec le calque de
+   noms ajouté sur le satellite qui n'en porte aucun. */
+function majFondComm() {
+  if (!carteComm) return;
+  if (coucheFondComm) { carteComm.removeLayer(coucheFondComm); coucheFondComm = null; }
+  if (reperesComm) { carteComm.removeLayer(reperesComm); reperesComm = null; }
+  const nom = ORDRE_FONDS[commFond % ORDRE_FONDS.length];
+  const f = FONDS[nom];
+  coucheFondComm = L.tileLayer(f.url, { attribution:f.attribution,
+    maxZoom:f.maxZoom || 19, className:f.classe }).addTo(carteComm);
+  coucheFondComm.bringToBack();
+  if (nom === 'satellite') {
+    reperesComm = L.tileLayer(REPERES.url, { attribution:REPERES.attribution,
+      maxZoom:REPERES.maxZoom, opacity:0.9 }).addTo(carteComm);
+  }
+}
+
+async function interrogerPointComm(ev, membres, teinte) {
+  if (!carteComm) return;
+  const r = Math.max(0.2, Math.min(40, 2000 / Math.pow(2, carteComm.getZoom())));
+  const dist = formatDistance(r);
+  if (cercleComm) carteComm.removeLayer(cercleComm);
+  cercleComm = L.circle(ev.latlng, { radius:r * 1000, color:teinte, weight:1.5,
+    dashArray:'5 4', fillColor:teinte, fillOpacity:0.06 }).addTo(carteComm);
+
+  const bulle = L.popup({ maxWidth:290 }).setLatLng(ev.latlng)
+    .setContent(`<div class="pop-tit">${t('cAutour')}</div>
+      <div class="pop-sous">${t('cRecherche', dist)}</div>`).openOn(carteComm);
+  bulle.on('remove', () => {
+    if (cercleComm) { carteComm.removeLayer(cercleComm); cercleComm = null; }
+  });
+
+  const p = { ...filtres(false), lat:ev.latlng.lat.toFixed(5), lng:ev.latlng.lng.toFixed(5),
+              radius:r.toFixed(3), per_page:200, locale:langue };
+  try {
+    const d = await appel('/observations/species_counts', p, false, true);
+    const gardees = (d.results || []).filter(x => membres.has(x.taxon.id)).slice(0, 8);
+    if (!gardees.length) {
+      bulle.setContent(`<div class="pop-tit">${t('cAutour')}</div>
+        <div class="pop-sous">${t('cAucune', dist)}</div>`);
+      return;
+    }
+    bulle.setContent(`
+      <div class="pop-tit">${t('cEspecesDans', nb(gardees.length), dist)}</div>
+      <div class="pop-sous">${t('cPlusObs')} · ${t('cRayon', dist)}</div>
+      <ul class="pop-liste">${gardees.map(x => {
+        const tx = x.taxon;
+        return `<li><a href="${lienDisque(tx.id, ev.latlng.lat, ev.latlng.lng, r)}"
+          target="_blank" rel="noopener" style="text-decoration:none"
+          ><span>${echap(nomCourt(tx.name, tx.preferred_common_name))}</span></a
+          ><b>${nb(x.count)}</b></li>`;
+      }).join('')}</ul>`);
+  } catch (e) {
+    bulle.setContent(`<div class="pop-tit">${t('cAutour')}</div>
+      <div class="pop-sous">${t('cEchec')}</div>`);
+  }
+}
+
+/* Répartition d'une communauté. Chaque cellule est teintée selon la part de ses observations
+   appartenant à cette communauté — non selon leur nombre brut, qui ne dirait que la densité
+   de prospection. Une cellule où la communauté représente les trois quarts des signalements
+   est bien son domaine, qu'elle compte trente observations ou trois cents. */
+let carteComm = null, coucheComm = null;
+
+function carteCommunaute(i) {
+  const G = comm && comm[i];
+  if (!G || !bio) return;
+  const teinte = BIO_TEINTES[i % BIO_TEINTES.length];
+  const membres = new Set(G.especes.filter(e => !e.emprunt).map(e => e.id));
+
+  const f = $('#bio-fen');
+  f.innerHTML = `<div class="boite" style="border-top:8px solid ${teinte}; width:min(880px,100%)">
+    <button class="discret fermer" id="bio-fen-x">${t('fermer')}</button>
+    <div class="tit" style="margin:0">${echap(G.nom || t('commTitre', i + 1))}</div>
+    <div class="k" style="margin:12px 0 8px">${t('commPart')}</div>
+    <div class="carte-boite">
+      <div id="carte-comm" style="height:min(60vh,460px); border:1px solid var(--trait);
+        border-radius:var(--r); background:#DDE4D9"></div>
+      <button id="comm-fond" class="sur-carte" data-tt="cFond">
+        <svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true">
+          <path d="M10 2.4 2.6 6.2 10 10l7.4-3.8z" fill="none" stroke="currentColor"
+            stroke-width="1.5" stroke-linejoin="round"/>
+          <path d="M3.4 9.6 10 13l6.6-3.4M3.4 13.2 10 16.6l6.6-3.4" fill="none"
+            stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  </div>`;
+  f.hidden = false;
+  brancherFermeture(f);
+
+  setTimeout(async () => {
+    const cible = document.getElementById('carte-comm');
+    if (!cible) return;
+    try {
+      if (carteComm) { carteComm.remove(); carteComm = null; }
+      carteComm = L.map(cible, { scrollWheelZoom:true });
+      majFondComm();
+      const bf = $('#comm-fond');
+      if (bf) bf.addEventListener('click', () => {
+        commFond = (commFond + 1) % ORDRE_FONDS.length;
+        bf.classList.toggle('actif', commFond > 0);
+        majFondComm();
+      });
+      // Le conteneur vient d'apparaître : Leaflet doit remesurer avant de placer les tuiles.
+      carteComm.invalidateSize();
+      carteComm.setView([46.6, 2.5], 5);
+    } catch (e) {
+      console.error('Carte de communauté :', e);
+      return;
+    }
+
+    let anneaux = [];
+    try { anneaux = await chargerContoursLieu(); } catch (e) { anneaux = []; }
+    /* Tuiles servies par iNaturalist, filtrées sur les espèces de la communauté — exactement
+       ce que fait l'onglet Carte quand on sélectionne des espèces. On cartographie ainsi
+       toutes leurs observations, et non le seul échantillon collecté pour l'analyse, qui
+       n'en représente qu'une fraction variable selon le niveau de collecte choisi.
+
+       La liste d'identifiants voyage dans l'adresse de chaque tuile : au-delà de quatre cents
+       espèces on s'en tient aux mieux observées, faute de quoi l'adresse deviendrait trop
+       longue pour certains serveurs intermédiaires. */
+    const ids = G.especes.filter(e => !e.emprunt).map(e => e.id).slice(0, 400);
+    if (!ids.length) return;
+
+    const base = new URLSearchParams();
+    for (const [k, v] of Object.entries(filtres(true))) {
+      if (k === 'locale' || k === 'per_page') continue;
+      base.set(k, v);
+    }
+    base.set('taxon_id', ids.join(','));
+
+    let rendu = null;
+    const redessiner = () => {
+      const voulu = carteComm.getZoom() >= 13 ? 'points' : 'grid';
+      if (voulu === rendu) return;
+      rendu = voulu;
+      if (coucheComm) { carteComm.removeLayer(coucheComm); coucheComm = null; }
+      const p = new URLSearchParams(base);
+      p.set('color', teinte);
+      coucheComm = L.tileLayer(API + '/' + rendu + '/{z}/{x}/{y}.png?' + p.toString(),
+        { maxZoom:19, opacity:0.9, keepBuffer:1, updateWhenIdle:true,
+          updateWhenZooming:false }).addTo(carteComm);
+    };
+
+    redessiner();
+    carteComm.on('zoomend', redessiner);
+    carteComm.on('click', ev => interrogerPointComm(ev, membres, teinte));
+
+    // Cadrage sur l'emprise du lieu, la répartition venant maintenant du serveur.
+    const b = bornesLocales();
+    carteComm.invalidateSize();
+    if (b) carteComm.fitBounds(b, { padding:[24, 24] });
+  }, 40);
+}
+
+/* Classement des communautés. Trier par prédominance dans une biorégion donnée répond à une
+   question précise : quelles communautés font la spécificité de cette région ? C'est la part
+   des observations de la communauté qui tombe dans cette biorégion, non leur nombre. */
+function ordonnerCommunautes(liste) {
+  const c = [...liste];
+  if (commTri === 'esp') c.sort((a, b) => b.nMembres - a.nMembres);
+  else if (commTri.startsWith('bio:')) {
+    const g = +commTri.slice(4);
+    const part = G => (G.parBio.get(g) || 0) / (G.total || 1);
+    c.sort((a, b) => part(b) - part(a));
+  } else c.sort((a, b) => b.obs - a.obs);
+  return c;
+}
+
+function dessinerCommunautes() {
+  const v = $('#v-comm');
+  if (!v) return;
+  if (!bio) {
+    v.innerHTML = `<div class="vide"><strong>${t('oComm')}</strong>${t('videComm')}</div>`;
+    return;
+  }
+  if (!comm) comm = analyserCommunautes();
+  const commTotal = (commArbre && commArbre.n) || 1;
+  if (comm) comm = ordonnerCommunautes(comm);
+  if (!comm) {
+    v.innerHTML = `<div class="vide">${t('bioMaigre')}</div>`;
+    return;
+  }
+
+  v.innerHTML = `
+    <div class="outils">
+      <label class="glissiere"><span>${t('commNiveau')}</span>
+        <input type="range" id="comm-k" min="0" max="1000" step="1" list="comm-crans"
+          value="${Math.round(commNiveau * 1000)}">
+        <datalist id="comm-crans">${[10, 100, 1000]
+          .filter(v => v < commTotal)
+          .map(v => `<option value="${Math.round(Math.log(v) / Math.log(commTotal) * 1000)}"
+            label="${v}"></option>`).join('')}</datalist>
+        <b id="comm-k-val">${nb(comm.length)}</b></label>
+      <select id="comm-tri">
+        <option value="obs"${commTri === 'obs' ? ' selected' : ''}>${t('commTriObs')}</option>
+        <option value="esp"${commTri === 'esp' ? ' selected' : ''}>${t('commTriEsp')}</option>
+        ${[...new Set(bio.cellules.map(c => c.groupe))].sort((a, b) => a - b).map(g =>
+          `<option value="bio:${g}"${commTri === 'bio:' + g ? ' selected' : ''}
+            >${t('commTriBio', g + 1)}</option>`).join('')}
+      </select>
+      <input type="text" id="comm-rech" class="rech" data-tp="commRech"
+        placeholder="${echap(t('commRech'))}" autocomplete="off">
+      <span class="compte">${t('commEsp', nb(comm.reduce((a, G) => a + G.nMembres, 0)))}</span>
+    </div>
+    <div id="comm-resultats" class="jetons" style="margin-bottom:6px"></div>
+    <div class="planche">${comm.slice(commPage * 12, commPage * 12 + 12).map((G, iRel) => {
+      const i = commPage * 12 + iRel;
+      const teinte = BIO_TEINTES[i % BIO_TEINTES.length];
+      const parts = [...G.parBio.entries()].sort((a, b) => b[1] - a[1]);
+      return `<div class="colonne" style="border-left:10px solid ${teinte}">
+        <div class="entete"><div>
+          <div class="k" style="margin:0 0 3px">${t('commTitre', i + 1)}</div>
+          <div class="fr">${echap(G.nom || '')}</div>
+          <div class="freq">${t('commEsp', nb(G.especes.length))}<br>${nb(G.obs)} ${t('obs')}</div>
+        </div></div>
+        <button class="apercu4" data-comm="${i}" aria-label="${echap(t('bioIndic'))}"
+          >${G.especes.slice(0, 4).map(e => `<span>${e.photo
+            ? `<img src="${echap(e.photo)}" loading="lazy" alt="">` : ''}</span>`).join('')}</button>
+        <div style="padding:10px 12px">
+          <button class="discret" data-carte-comm="${i}"
+            style="width:100%; margin-bottom:10px">${t('commCarte')}</button>
+          <div class="rubans">${parts.map(([g, n]) => `
+            <span style="width:${Math.max(2, (n / (G.total || 1)) * 100).toFixed(1)}%;
+              background:${BIO_TEINTES[g % BIO_TEINTES.length]}"
+              title="${t('bioGroupe', g + 1)} · ${pourcent((n / (G.total || 1)) * 100)}"></span>`).join('')}</div>
+        </div>
+      </div>`;
+    }).join('')}</div>
+    ${comm.length > 12 ? `<div class="outils" style="margin-top:16px">
+      <button class="discret" id="comm-prec"${commPage === 0 ? ' disabled' : ''}>‹</button>
+      <span class="compte" style="margin-left:0">${commPage + 1} / ${
+        Math.ceil(comm.length / 12)}</span>
+      <button class="discret" id="comm-suiv"${(commPage + 1) * 12 >= comm.length
+        ? ' disabled' : ''}>›</button>
+    </div>` : ''}
+    <p class="note">${t('commNote')}</p>`;
+
+  const cp = $('#comm-prec'), cn = $('#comm-suiv');
+  if (cp) cp.addEventListener('click', () => { commPage--; dessinerCommunautes(); });
+  if (cn) cn.addEventListener('click', () => { commPage++; dessinerCommunautes(); });
+
+  v.querySelectorAll('[data-carte-comm]').forEach(b => b.addEventListener('click', () => {
+    carteCommunaute(+b.dataset.carteComm);
+  }));
+
+  v.querySelectorAll('[data-comm]').forEach(b => b.addEventListener('click', () => {
+    const i = +b.dataset.comm;
+    fenetreEspeces((comm[i].nom || t('commTitre', i + 1))
+      + ' · ' + t('commEsp', nb(comm[i].nMembres)),
+      comm[i].especes.slice(0, 24), BIO_TEINTES[i % BIO_TEINTES.length]);
+  }));
+
+  /* Recherche d'espèce : elle porte sur les seules espèces retenues par l'analyse, donc
+     aucune requête. Un clic ouvre la communauté à laquelle l'espèce appartient. */
+  const cr = $('#comm-rech');
+  if (cr) cr.addEventListener('input', () => {
+    const q = cr.value.trim().toLowerCase();
+    const cible = $('#comm-resultats');
+    if (q.length < 2) { cible.innerHTML = ''; return; }
+    const trouves = [];
+    comm.forEach((G, i) => G.especes.forEach(e => {
+      if (trouves.length < 10 && e.nom.toLowerCase().includes(q)) trouves.push({ e, i });
+    }));
+
+    /* Une espèce absente des communautés n'est pas introuvable : elle est le plus souvent
+       sous le seuil de classement. Le dire vaut mieux que de ne rien afficher, ce qui
+       laisserait croire à une faute de frappe. */
+    const classees = new Set(trouves.map(x => x.e.id));
+    const dehors = etat.especes
+      .filter(e => !classees.has(e.id) && nomCourt(e.nom, e.nomFr).toLowerCase().includes(q))
+      .slice(0, 6);
+
+    cible.innerHTML = trouves.map(x =>
+      `<span class="jeton" data-ouvrir-comm="${x.i}" style="cursor:pointer"
+        >${echap(x.e.nom)}<small>${t('commTrouve', x.i + 1)}</small></span>`).join('')
+      + dehors.map(e => `<span class="jeton pale">${echap(nomCourt(e.nom, e.nomFr))}<small>${
+        e.nZone < commMinObs ? t('commPeu', commMinObs) : t('commAbsente')
+      }</small></span>`).join('');
+    cible.querySelectorAll('[data-ouvrir-comm]').forEach(b => b.addEventListener('click', () => {
+      const i = +b.dataset.ouvrirComm;
+      fenetreEspeces((comm[i].nom || t('commTitre', i + 1))
+        + ' · ' + t('commEsp', nb(comm[i].nMembres)),
+        comm[i].especes.slice(0, 24), BIO_TEINTES[i % BIO_TEINTES.length]);
+    }));
+  });
+
+
+  const ct = $('#comm-tri');
+  if (ct) ct.addEventListener('change', e => {
+    commTri = e.target.value; commPage = 0; dessinerCommunautes();
+  });
+
+  const ck = $('#comm-k');
+  if (ck) {
+    // L'arbre est conservé : changer de niveau ne coûte qu'une coupe, jamais un recalcul.
+    ck.addEventListener('change', e => {
+      commNiveau = +e.target.value / 1000;
+      comm = null; commPage = 0; dessinerCommunautes();
+    });
+  }
+}
+
+
 /* ============================================================
    Choisir un lieu sur une carte
    ============================================================ */
@@ -4237,7 +6239,8 @@ async function chercherLieux() {
    sont groupés, species_counts acceptant des listes de taxons. Pour les dater, une seule
    requête triée par date croissante et restreinte à ces espèces suffit : on retient la
    première venue de chacune. Six requêtes en tout. */
-let decouvertes = null, decEnCours = false, decMois = 60;
+let decouvertes = null, decEnCours = false, decMois = 60, bioTenteDec = false;
+let decIntro = 'tout';       // « tout », « sans » ou « seul »
 let decMondiales = false;   // n'afficher que les premières mondiales
 /* Les paliers sont pris en entier : couper au milieu d'une tranche reviendrait à écarter des
    espèces de même ancienneté que celles conservées, au hasard de l'ordre de la liste. On
@@ -4296,7 +6299,7 @@ async function nouveautes(mois, gen) {
 
 async function chargerDecouvertes() {
   if (decEnCours || !etat.especes.length) return;
-  decEnCours = true;
+  decEnCours = true; bioTenteDec = true;
   const gen = generation;
   const f = filtres();
 
@@ -4390,11 +6393,28 @@ async function chargerDecouvertes() {
 function dessinerDecouvertes() {
   const v = $('#v-decouverte');
   if (!etat.especes.length) return;
-  const toutes = decouvertes || [];
+  if (!decouvertes && !decEnCours) {
+    v.innerHTML = `<div class="outils">
+        <button class="primaire" id="dec-lancer">${t('lancerRecherche')}</button>
+        <span class="compte">${t('coutRequetes', 25)}</span>
+      </div>
+      <div class="vide">${bioTenteDec ? t('decVide') : t('videDecouverte')}</div>
+      <p class="note">${t('decNote')}</p>`;
+    $('#dec-lancer').addEventListener('click', () => enTache(chargerDecouvertes));
+    return;
+  }
+  let toutes = decouvertes || [];
+  if (decIntro !== 'tout' && etat.introduites)
+    toutes = toutes.filter(x => estIntroduite(x.e.id) === (decIntro === 'seul'));
   const liste = decMondiales ? toutes.filter(x => x.mondiale) : toutes;
 
   v.innerHTML = `
     <div class="outils">
+      ${etat.introduites ? `<select id="d-intro">
+        <option value="tout"${decIntro === 'tout' ? ' selected' : ''}>${t('filtreIntroTout')}</option>
+        <option value="sans"${decIntro === 'sans' ? ' selected' : ''}>${t('filtreIntroSans')}</option>
+        <option value="seul"${decIntro === 'seul' ? ' selected' : ''}>${t('filtreIntroSeul')}</option>
+      </select>` : ''}
       ${toutes.some(x => x.mondiale) ? `<select id="d-mondiale">
         <option value=""${decMondiales ? '' : ' selected'}>${t('decFiltreTout')}</option>
         <option value="1"${decMondiales ? ' selected' : ''}>${t('decFiltreMond')}</option>
@@ -4425,6 +6445,11 @@ function dessinerDecouvertes() {
     <p class="note">${t('decNote')}</p>`;
 
   brancherPanier(v, dessinerDecouvertes);
+  const di = $('#d-intro');
+  if (di) di.addEventListener('change', e => {
+    decIntro = e.target.value; decPage = 0; dessinerDecouvertes();
+  });
+
   const dm = $('#d-mondiale');
   if (dm) dm.addEventListener('change', e => {
     decMondiales = !!e.target.value; decPage = 0; dessinerDecouvertes();
@@ -4491,7 +6516,8 @@ function panneauChercher() {
       </select>
       <span class="compte">${nb(liste.length)} ${t('especes')} · ${t('aChercherD')}</span>
     </div>
-    ${liste.length ? `<div class="planche">${liste.slice(0, 24).map(x => `
+    ${liste.length ? `<div class="planche">${liste.slice(picPage * PIC_PAR_PAGE,
+      (picPage + 1) * PIC_PAR_PAGE).map(x => `
       <div class="fiche">
         ${boutonPanier(x.e.id)}
         <a class="img" href="${lienTaxon(x.e.id, true)}" target="_blank" rel="noopener">${x.e.photo
@@ -4506,7 +6532,15 @@ function panneauChercher() {
         </div>
       </div>`).join('')}</div>`
       : `<div class="vide">${t('aucunPic')}</div>`}
+    ${liste.length > PIC_PAR_PAGE ? `<div class="outils" style="margin-top:16px">
+      <button class="discret" id="p-prec"${picPage === 0 ? ' disabled' : ''}>‹</button>
+      <span class="compte" style="margin-left:0">${picPage + 1} / ${
+        Math.ceil(liste.length / PIC_PAR_PAGE)}</span>
+      <button class="discret" id="p-suiv"${(picPage + 1) * PIC_PAR_PAGE >= liste.length
+        ? ' disabled' : ''}>›</button>
+    </div>` : ''}
     <p class="note">${t('noteChercher')}</p>`;
+
 }
 
 
@@ -4514,11 +6548,20 @@ function panneauChercher() {
 
 
 function brancherSaison() {
+  const pp = $('#p-prec'), ps = $('#p-suiv');
+  if (pp) pp.addEventListener('click', () => { picPage--; dessinerSaison(); });
+  if (ps) ps.addEventListener('click', () => { picPage++; dessinerSaison(); });
+
   brancherPanier($('#v-saison'), panneauChercher);
+
   const sm = $('#s-mois');
-  if (sm) sm.addEventListener('change', e => { vue.moisChercher = +e.target.value; dessinerSaison(); });
+  if (sm) sm.addEventListener('change', e => {
+    vue.moisChercher = +e.target.value; picPage = 0; dessinerSaison();
+  });
   const st = $('#s-tri');
-  if (st) st.addEventListener('change', e => { vue.triChercher = e.target.value; dessinerSaison(); });
+  if (st) st.addEventListener('change', e => {
+    vue.triChercher = e.target.value; picPage = 0; dessinerSaison();
+  });
 
 
 }
@@ -4536,37 +6579,13 @@ function dessinerSaison() {
     <div class="graphe">${graphiqueMensuel()}</div>
     <div class="legende">
       <span><i style="background:#6E8B63"></i> ${t('legEspMois')}</span>
-      <span><i style="background:#7A8B3C; opacity:.45"></i> ${t('legCorrige')}</span>
+      <span><i style="background:#7B3B52"></i> ${t('legPicMois')}</span>
     </div>
 
     ${etat.phenologie ? panneauChercher() : ''}`;
 
   brancherSaison();
 }
-
-/* Complétude mois par mois. Chaque mois est un échantillon indépendant : on y applique les
-   deux estimateurs et on affiche la fourchette qu'ils encadrent. Aucune requête, la
-   phénologie par espèce et par mois étant déjà en mémoire. */
-function completudeMois() {
-  const sortie = new Array(12).fill(null);
-  if (!etat.phenologie) return sortie;
-  for (let m = 0; m < 12; m++) {
-    const c = [];
-    etat.phenologie.forEach(mens => { if (mens[m] > 0) c.push(mens[m]); });
-    if (c.length < 5) continue;
-    const c1 = chao1(c), a = ace(c);
-    const est = [c1.fiable ? c1.est : null, a].filter(x => x && x >= c.length);
-    if (!est.length) continue;
-    sortie[m] = { bas: c.length / Math.max(...est), haut: c.length / Math.min(...est) };
-  }
-  return sortie;
-}
-
-const TEINTES_COMPLETUDE = [
-  { min:0.85, couleur:'#2F6B4F' }, { min:0.70, couleur:'#6E9C57' },
-  { min:0.55, couleur:'#C6A73C' }, { min:0.40, couleur:'#C97E2B' },
-  { min:0,    couleur:'#B4553A' }
-];
 
 function graphiqueMensuel() {
   const d = etat.mensuel, L = 60, R = 30, H = 240, T = 18, B = 34, W = 900;
@@ -4576,63 +6595,48 @@ function graphiqueMensuel() {
   const maxSp = Math.max(...connus.map(l => l.especes), 1);
   const pas = largeur / 12;
 
-  /* Chaque barre empile ce qui a été vu et ce qui manque probablement : la part pleine
-     correspond aux espèces effectivement relevées, la part olive au complément qu'estiment
-     Chao1 et ACE. La hauteur totale est donc la richesse présumée du mois. */
-  const comp = completudeMois();
-  const total = d.map((l, i) => {
-    const c = comp[i];
-    if (!c || !l.especes) return l.especes || 0;
-    const moyenne = (c.bas + Math.min(c.haut, 1)) / 2;
-    return moyenne > 0 ? (l.especes || 0) / moyenne : (l.especes || 0);
-  });
-  const maxTot = Math.max(...total, 1);
+  /* Barres simples : les espèces effectivement relevées dans le mois. Le complément estimé
+     par Chao1 et ACE a été retiré — sur des listes mensuelles souvent tronquées, il donnait
+     une hauteur confiante et mal fondée. */
+  const maxTot = Math.max(...d.map(l => l.especes || 0), 1);
 
   const barres = d.map((l, i) => {
     const vues = l.especes || 0;
-    const hTot = (total[i] / maxTot) * hauteur;
     const hVues = (vues / maxTot) * hauteur;
     const x = (L + i*pas + pas*0.16).toFixed(1);
     const w = (pas*0.68).toFixed(1);
-    const manque = Math.max(0, Math.round(total[i] - vues));
-    return `<rect x="${x}" y="${(T + hauteur - hTot).toFixed(1)}" width="${w}"
-        height="${Math.max(hTot - hVues, 0).toFixed(1)}" fill="#7A8B3C" opacity="0.45" rx="1"
-        ><title>${MOIS[i]} · +${nb(manque)}</title></rect>
-      <rect x="${x}" y="${(T + hauteur - hVues).toFixed(1)}" width="${w}"
+    return `<rect x="${x}" y="${(T + hauteur - hVues).toFixed(1)}" width="${w}"
         height="${hVues.toFixed(1)}" fill="#6E8B63" rx="1"
-        ><title>${MOIS[i]} · ${nb(vues)}</title></rect>`;
+        ><title>${MOIS[i]} — ${t('legEspMois')} : ${nb(vues)}</title></rect>`;
   }).join('');
 
+
+  /* Les espèces dont c'est le mois de pic, en courbe : cette série n'a pas la même unité que
+     les barres et son échelle lui est propre, indiquée à droite. */
+  const pics = etat.phenologie ? picsParMois().compte : new Array(12).fill(0);
+  const maxPic = Math.max(...pics, 1);
+  const ptsPic = pics.map((n, i) =>
+    `${(L + i*pas + pas/2).toFixed(1)},${(T + hauteur - (n / maxPic) * hauteur).toFixed(1)}`);
+  const courbePic = pics.some(x => x)
+    ? `<polyline points="${ptsPic.join(' ')}" fill="none" stroke="#7B3B52" stroke-width="2"
+        stroke-linejoin="round" stroke-linecap="round"/>`
+      + ptsPic.map((q, i) => `<circle cx="${q.split(',')[0]}" cy="${q.split(',')[1]}" r="2.6"
+        fill="#7B3B52"><title>${MOIS[i]} — ${t('legPicMois')} : ${
+        nb(pics[i])}</title></circle>`).join('')
+    : '';
 
   const etiquettes = d.map((l, i) =>
     `<text x="${(L + i*pas + pas/2).toFixed(1)}" y="${H-16}" text-anchor="middle" font-size="11"
       fill="#8B9990" font-family="IBM Plex Mono, monospace">${MOIS_C[i]}</text>`).join('');
 
-  /* Seconde lecture du même mois : le nombre d'espèces divisé par la complétude estimée,
-     c'est-à-dire la richesse que l'on aurait relevée avec une prospection parfaite. Les deux
-     séries cohabitent dans le SVG et l'on bascule leur opacité, ce qui donne une transition
-     douce sans reconstruire le graphique. */
-  const corrige = d.map((l, i) => {
-    const c = comp[i];
-    if (!c || !l.especes) return null;
-    const moyenne = (c.bas + Math.min(c.haut, 1)) / 2;
-    return moyenne > 0 ? l.especes / moyenne : null;
-  });
-  const maxCorr = Math.max(...corrige.filter(Boolean), maxSp);
-  const barresCorr = corrige.map((v, i) => {
-    if (!v) return '';
-    const h = (v / maxCorr) * hauteur;
-    return `<rect x="${(L + i*pas + pas*0.14).toFixed(1)}" y="${(T + hauteur - h).toFixed(1)}"
-      width="${(pas*0.72).toFixed(1)}" height="${h.toFixed(1)}" fill="#7A8B3C" rx="1"
-      ><title>${MOIS[i]} · ${nb(Math.round(v))}</title></rect>`;
-  }).join('');
-
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img"
       aria-label="Observations et nombre d'espèces mois par mois">
     <line x1="${L}" y1="${T+hauteur}" x2="${W-R}" y2="${T+hauteur}" stroke="#C6CEC1"/>
-    ${barres}
+    ${barres}${courbePic}
     <text x="${L}" y="${T-4}" font-size="11" fill="#7A8B3C"
       font-family="IBM Plex Mono, monospace">${nb(Math.round(maxTot))} ${t('especes')}</text>
+    ${pics.some(x => x) ? `<text x="${W-R}" y="${T-4}" text-anchor="end" font-size="11"
+      fill="#7B3B52" font-family="IBM Plex Mono, monospace">${nb(maxPic)} ${t('legPicMois')}</text>` : ''}
     ${etiquettes}
   </svg>`;
 }
@@ -4649,11 +6653,12 @@ document.querySelectorAll('nav.onglets button').forEach(b => {
       s.classList.toggle('actif', s.id === 'v-' + b.dataset.vue));
     majURL();
     if (b.dataset.vue === 'carte') setTimeout(initCarte, 30);   // recadre et redessine
+    if (b.dataset.vue === 'bio')
+      releverMemoireBio().then(dessinerBioregions);
+    if (b.dataset.vue === 'comm') dessinerCommunautes();
     if (b.dataset.vue === 'comparaison') dessinerComparaison();
-    if (b.dataset.vue === 'decouverte' && !decouvertes && !decEnCours)
-      enTache(chargerDecouvertes);
-    if (b.dataset.vue === 'disparition' && !disparitions && !disEnCours)
-      enTache(chargerDisparitions);
+    if (b.dataset.vue === 'decouverte') dessinerDecouvertes();
+    if (b.dataset.vue === 'disparition') dessinerDisparitions();
   });
 });
 
@@ -4689,7 +6694,7 @@ for (const etape of [
     $('#f-langue').addEventListener('change', e => changerLangue(e.target.value));
   },
   () => {
-    $('#f-seuil').innerHTML = [1, 5, 20, 50, 200]
+    $('#f-seuil').innerHTML = [1, 10, 100]
       .map(v => `<option value="${v}"${v === seuilMin ? ' selected' : ''}>${t('seuilObs', v)}</option>`).join('');
   },
   () => {
