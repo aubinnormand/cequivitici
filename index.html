@@ -4544,13 +4544,29 @@ let bioGroupes = null;       // fixé par la méthode du coude, puis par la glis
    propres exclusions — les ubiquistes n'y séparent rien —, tandis que les communautés
    travaillent sur l'ensemble, une espèce omniprésente ayant sa place dans un groupe. Un
    chargement unique sert donc aux deux, avec des filtres appliqués après coup. */
+/* Seuil d'observations exigé d'une espèce pour entrer dans l'analyse. Il s'adapte à la zone :
+   vingt observations garantissent une répartition fiable, mais dans un territoire peu
+   prospecté presque aucune espèce ne les atteint — la collecte revient alors quasi vide et
+   les cellules doivent fusionner à l'excès. On descend donc par paliers jusqu'à réunir assez
+   d'espèces pour que l'analyse ait du sens. */
+function seuilBio() {
+  const eligibles = etat.especes.filter(e => !estIntroduite(e.id));
+  for (const seuil of [20, 12, 8]) {
+    if (eligibles.filter(e => e.nZone >= seuil).length >= 250) return seuil;
+  }
+  return 8;
+}
+
 function taxonsBio() {
   /* Les espèces introduites sont écartées d'emblée : elles suivent l'habitat humain plutôt
      que les milieux, et leur répartition brouille aussi bien le découpage en régions que le
      regroupement en communautés. */
+  const seuil = seuilBio();
   const tries = etat.especes
-    .filter(e => e.nZone >= 20 && !estIntroduite(e.id))
+    .filter(e => e.nZone >= seuil && !estIntroduite(e.id))
     .sort((a, b) => b.nZone - a.nZone);
+  console.info('Biorégions : seuil de ' + seuil + ' obs. par espèce, '
+    + tries.length + ' espèces retenues.');
   if (!tries.length) return null;
   let choix = tries;
 
@@ -5513,7 +5529,9 @@ let commTri = 'obs';         // « obs », « esp », ou « bio:N » pour une bi
 /* Vingt observations dans l'inventaire : c'est aussi le seuil de collecte, si bien que toute
    espèce ramenée est classable. En deçà, la répartition d'une espèce ne mesure que le hasard
    du prélèvement. */
-const commMinObs = 10;
+/* Le classement en communautés reprend le seuil de la collecte : toute espèce ramenée doit
+   pouvoir être classée, et aucune espèce absente des données ne doit apparaître classable. */
+function seuilComm() { return seuilBio(); }
 const COMM_MAX_ESP = 1500;   // au-delà, la matrice de distances deviendrait démesurée
 
 /* Toutes les espèces collectées, et non les seules retenues pour délimiter les biorégions.
@@ -5533,7 +5551,7 @@ function profilsEspeces() {
      disponibles sur l'espèce qui décide si sa répartition veut dire quelque chose. */
   const inventaire = new Map(etat.especes.map(e => [e.id, e.nZone]));
   let ids = [...totalParEsp]
-    .filter(([id]) => (inventaire.get(id) || 0) >= commMinObs)
+    .filter(([id]) => (inventaire.get(id) || 0) >= seuilComm())
     .sort((a, b) => (inventaire.get(b[0]) || 0) - (inventaire.get(a[0]) || 0))
     .map(([id]) => id);
   if (ids.length > COMM_MAX_ESP) {
@@ -5696,9 +5714,9 @@ function analyserCommunautes() {
   const { ids, profils, totaux } = profilsEspeces();
   if (ids.length < 4) return null;
 
-  if (!commArbre || commArbre.n !== ids.length || commArbre.seuil !== commMinObs) {
+  if (!commArbre || commArbre.n !== ids.length || commArbre.seuil !== seuilComm()) {
     const fusions = wardArbre(profils);
-    commArbre = { n:ids.length, seuil:commMinObs, fusions, coude:coudeDeWard(fusions) };
+    commArbre = { n:ids.length, seuil:seuilComm(), fusions, coude:coudeDeWard(fusions) };
     // Première ouverture : on se place d'emblée sur le découpage que les données suggèrent.
     if (commNiveau === null)
       commNiveau = Math.log(commArbre.coude) / Math.log(Math.max(ids.length, 2));
@@ -6113,7 +6131,7 @@ function dessinerCommunautes() {
       `<span class="jeton" data-ouvrir-comm="${x.i}" style="cursor:pointer"
         >${echap(x.e.nom)}<small>${t('commTrouve', x.i + 1)}</small></span>`).join('')
       + dehors.map(e => `<span class="jeton pale">${echap(nomCourt(e.nom, e.nomFr))}<small>${
-        e.nZone < commMinObs ? t('commPeu', commMinObs) : t('commAbsente')
+        e.nZone < seuilComm() ? t('commPeu', seuilComm()) : t('commAbsente')
       }</small></span>`).join('');
     cible.querySelectorAll('[data-ouvrir-comm]').forEach(b => b.addEventListener('click', () => {
       const i = +b.dataset.ouvrirComm;
