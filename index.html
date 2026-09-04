@@ -389,6 +389,8 @@ td.num a:hover{color:var(--vert); border-bottom-color:var(--vert)}
   box-shadow:0 2px 10px rgba(20,35,28,.12)}
 #c-legende-carte div{display:flex; align-items:center; gap:7px;
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+#carte-pred-onglet{height:min(66vh,560px); border:1px solid var(--trait);
+  border-radius:var(--r); background:#DDE4D9}
 #carte-bio{height:min(72vh,620px); border:1px solid var(--trait); border-radius:var(--r);
   background:#DDE4D9}
 #carte{height:min(72vh,620px); border:1px solid var(--trait); border-radius:var(--r); background:#DDE4D9}
@@ -1374,6 +1376,12 @@ Object.entries({
   cPanier:{fr:"Espèces sélectionnées",en:"Selected species",es:"Especies seleccionadas",it:"Specie selezionate",de:"Ausgewählte Arten",pt:"Espécies selecionadas"},
   mNoms:{fr:"Noms vernaculaires : {0} / {1}",en:"Common names: {0} / {1}",es:"Nombres comunes: {0} / {1}",it:"Nomi comuni: {0} / {1}",de:"Volkstümliche Namen: {0} / {1}",pt:"Nomes populares: {0} / {1}"},
   horsLigne:{fr:"Hors ligne : seuls les inventaires déjà en mémoire sont consultables.",en:"Offline: only inventories already in memory can be opened.",es:"Sin conexión: solo se pueden abrir los inventarios ya en memoria.",pt:"Sem ligação: apenas os inventários já em memória podem ser abertos.",it:"Non in linea: solo gli inventari già in memoria sono consultabili.",de:"Offline: Nur bereits gespeicherte Inventare sind abrufbar."},
+  oPred:{fr:"Prédiction",en:"Prediction",es:"Predicción",pt:"Predição",it:"Predizione",de:"Vorhersage"},
+  videPred:{fr:"Expérimental. Estime où une espèce devrait se trouver d'après les espèces qui l'accompagnent habituellement. Lance d'abord l'analyse des biorégions, dont cet onglet réutilise les données.",en:"Experimental. Estimates where a species should occur, based on the species that usually accompany it. Run the bioregion analysis first — this tab reuses its data.",es:"Experimental. Estima dónde debería encontrarse una especie según las especies que la acompañan habitualmente. Ejecuta antes el análisis de biorregiones.",pt:"Experimental. Estima onde uma espécie deveria encontrar-se com base nas espécies que habitualmente a acompanham. Executa primeiro a análise de biorregiões.",it:"Sperimentale. Stima dove una specie dovrebbe trovarsi in base alle specie che di solito l'accompagnano. Avvia prima l'analisi delle bioregioni.",de:"Experimentell. Schätzt, wo eine Art vorkommen sollte, anhand ihrer üblichen Begleitarten. Starte zuerst die Bioregionen-Analyse."},
+  predChoisir:{fr:"Choisis une espèce pour voir où elle est attendue.",en:"Pick a species to see where it is expected.",es:"Elige una especie para ver dónde se espera.",pt:"Escolhe uma espécie para ver onde é esperada.",it:"Scegli una specie per vedere dove è attesa.",de:"Wähle eine Art, um zu sehen, wo sie erwartet wird."},
+  predFaible:{fr:"peu attendue",en:"unlikely",es:"poco esperada",pt:"pouco esperada",it:"poco attesa",de:"unwahrscheinlich"},
+  predForte:{fr:"très attendue",en:"very likely",es:"muy esperada",pt:"muito esperada",it:"molto attesa",de:"sehr wahrscheinlich"},
+  predEcart:{fr:"{0} cellules attendues sans observation",en:"{0} expected cells without records",es:"{0} celdas esperadas sin registros",pt:"{0} células esperadas sem registos",it:"{0} celle attese senza segnalazioni",de:"{0} erwartete Zellen ohne Nachweis"},
   oComm:{fr:"Communautés",en:"Communities",es:"Comunidades",pt:"Comunidades",it:"Comunità",de:"Gemeinschaften"},
   videComm:{fr:"L'inverse des biorégions : au lieu de regrouper les cellules qui partagent des espèces, on regroupe les espèces qui partagent des cellules. Lance d'abord l'analyse des biorégions, dont cet onglet réutilise les données.",en:"The reverse of bioregions: instead of grouping cells that share species, it groups species that share cells. Run the bioregion analysis first — this tab reuses its data.",es:"Lo contrario de las biorregiones: en lugar de agrupar celdas que comparten especies, agrupa especies que comparten celdas. Ejecuta antes el análisis de biorregiones, cuyos datos reutiliza esta pestaña.",pt:"O inverso das biorregiões: em vez de agrupar células que partilham espécies, agrupa espécies que partilham células. Executa primeiro a análise de biorregiões, cujos dados esta aba reutiliza.",it:"L'inverso delle bioregioni: invece di raggruppare le celle che condividono specie, raggruppa le specie che condividono celle. Avvia prima l'analisi delle bioregioni, di cui questa scheda riusa i dati.",de:"Die Umkehrung der Bioregionen: statt Zellen mit gemeinsamen Arten werden Arten mit gemeinsamen Zellen gruppiert. Starte zuerst die Bioregionen-Analyse, deren Daten dieser Reiter nutzt."},
   commTri:{fr:"Classer par",en:"Sort by",es:"Ordenar por",pt:"Ordenar por",it:"Ordina per",de:"Sortieren nach"},
@@ -1413,9 +1421,13 @@ Object.entries({
   bioSec:{fr:"{0} s",en:"{0} s",es:"{0} s",pt:"{0} s",it:"{0} s",de:"{0} s"},
   bioMin:{fr:"{0} min",en:"{0} min",es:"{0} min",pt:"{0} min",it:"{0} min",de:"{0} Min."},
   bioVolume:{fr:"Observations",en:"Records",es:"Registros",pt:"Registos",it:"Osservazioni",de:"Nachweise"},
+  bioAttendu:{fr:"Présence attendue",en:"Expected presence",es:"Presencia esperada",pt:"Presença esperada",it:"Presenza attesa",de:"Erwartetes Vorkommen"},
+  bioObserve:{fr:"Déjà observée",en:"Already recorded",es:"Ya registrada",pt:"Já registada",it:"Già segnalata",de:"Bereits nachgewiesen"},
+  bioPredNote:{fr:"L'intensité indique où l'espèce est attendue au vu de ses compagnes habituelles ; le liseré marque les cellules où elle a déjà été signalée. Une cellule intense et sans liseré est une piste de prospection — ou une lacune de la base. Le raisonnement échoue sur les espèces à écologie large, dont les compagnes ne disent rien.",en:"The intensity shows where the species is expected given its usual companions; the outline marks cells where it has already been recorded. An intense cell without outline is a survey lead — or a gap in the database. The reasoning fails for wide-ranging species, whose companions say nothing.",es:"La intensidad indica dónde se espera la especie según sus acompañantes habituales; el borde marca las celdas donde ya se registró. Una celda intensa sin borde es una pista de prospección, o una laguna de la base. El razonamiento falla en especies de ecología amplia.",pt:"A intensidade indica onde a espécie é esperada face às suas acompanhantes habituais; o contorno marca as células onde já foi registada. Uma célula intensa sem contorno é uma pista de prospeção, ou uma lacuna da base. O raciocínio falha em espécies de ecologia ampla.",it:"L'intensità indica dove la specie è attesa viste le sue compagne abituali; il bordo segna le celle in cui è già stata segnalata. Una cella intensa senza bordo è una pista di ricerca, o una lacuna della base. Il ragionamento fallisce sulle specie a ecologia ampia.",de:"Die Intensität zeigt, wo die Art aufgrund ihrer üblichen Begleiter erwartet wird; der Rand markiert Zellen mit vorhandenem Nachweis. Eine intensive Zelle ohne Rand ist ein Suchhinweis – oder eine Lücke in der Datenbank. Bei weit verbreiteten Arten versagt die Überlegung."},
   bioRecadrer:{fr:"Recadrer",en:"Reframe",es:"Reencuadrar",pt:"Reenquadrar",it:"Inquadra",de:"Neu ausrichten"},
   bioRecollecter:{fr:"Recollecter les données",en:"Collect data again",es:"Recoger los datos de nuevo",pt:"Recolher os dados de novo",it:"Raccogli di nuovo i dati",de:"Daten neu sammeln"},
   bioCache:{fr:"données en mémoire",en:"data from memory",es:"datos en memoria",pt:"dados em memória",it:"dati in memoria",de:"Daten aus dem Speicher"},
+  bioLissage:{fr:"Correction du biais",en:"Bias correction",es:"Corrección del sesgo",pt:"Correção do viés",it:"Correzione del bias",de:"Bias-Korrektur"},
   bioK:{fr:"Groupes",en:"Groups",es:"Grupos",pt:"Grupos",it:"Gruppi",de:"Gruppen"},
   bioIndic:{fr:"Espèces caractéristiques",en:"Characteristic species",es:"Especies características",pt:"Espécies características",it:"Specie caratteristiche",de:"Kennzeichnende Arten"},
   bioPlafond:{fr:"Plafond de 10 000 observations atteint : l'analyse porte sur les plus récentes.",en:"Cap of 10,000 records reached: the analysis covers the most recent ones.",es:"Límite de 10 000 registros alcanzado: el análisis cubre los más recientes.",pt:"Limite de 10 000 registos atingido: a análise cobre os mais recentes.",it:"Limite di 10 000 segnalazioni raggiunto: l'analisi riguarda le più recenti.",de:"Obergrenze von 10 000 Nachweisen erreicht: Die Analyse umfasst die jüngsten."},
@@ -1795,9 +1807,25 @@ const CHAMPS_COMPTE = '(count:!t,taxon:(id:!t))';
 
 /* Champs demandés pour la liste des espèces : le strict nécessaire, ce qui divise le poids
    de la réponse par une dizaine par rapport à la v1 complète. */
+/* Le statut d'établissement est demandé avec le lieu auquel il se rattache. C'est essentiel :
+   iNaturalist renseigne ce statut territoire par territoire, et une fiche saisie pour un
+   continent ou pour un pays lointain peut remonter par héritage — d'où le chêne kermès ou le
+   ciste cotonneux donnés comme introduits en Provence. Connaître le territoire de référence
+   permet de juger, et de n'accorder crédit qu'aux fiches assez proches. */
 const CHAMPS_ESPECE = '(count:!t,taxon:(id:!t,name:!t,rank:!t,preferred_common_name:!t,'
   + 'ancestor_ids:!t,conservation_status:(status_name:!t,status:!t),'
+  + 'establishment_means:(establishment_means:!t,place:(id:!t,name:!t,admin_level:!t)),'
   + 'default_photo:(square_url:!t,medium_url:!t,url:!t,attribution:!t)))';
+
+/* Statut d'établissement et territoire qui le porte, conservés à titre de diagnostic : savoir
+   qu'une espèce est donnée comme introduite « selon la fiche de Californie » vaut mieux que
+   de la voir marquée sans explication. */
+function etablissement(t) {
+  const e = t.establishment_means;
+  if (!e || !e.establishment_means) return null;
+  const lieu = e.place || {};
+  return { statut:e.establishment_means, lieu:lieu.name || '' };
+}
 
 /* Noms des rangs taxonomiques, dans la langue choisie. Les clés préfixées r_ existent dans
    les traductions ; on retombe sur le terme latin pour tout rang non prévu. */
@@ -1857,7 +1885,7 @@ async function testerMoisV2(f) {
 const BASE = 'inventaire-inat';
 /* À incrémenter dès qu'un calcul enregistré change de sens : sans cela, un inventaire mis en
    mémoire ressortirait avec les résultats de l'ancienne version, sans que rien ne le signale. */
-const VERSION_DONNEES = 4;
+const VERSION_DONNEES = 5;
 const PEREMPTION = 7 * 24 * 3600 * 1000;
 
 /* IndexedDB peut rester muette : en navigation privée sur iOS, ou quand un autre onglet
@@ -1911,7 +1939,6 @@ function enregistrer() {
     // De quoi rejouer la sélection telle quelle depuis le panneau de mémoire.
     lieux: etat.lieux, taxons: etat.taxons, zone: etat.zone, reference: etat.reference,
     especes: etat.especes, ancetres: [...etat.ancetres],
-    introduites: etat.introduites ? [...etat.introduites] : null,
     seriesCache: etat.seriesCache, tronque: etat.tronque, decouvertes, disparitions,
     decMois, disMois,          // la fenêtre retenue fait partie du résultat
     panier: etat.panier,
@@ -1934,7 +1961,6 @@ async function restaurer(gen) {
   etat.mensuel = (etat.seriesCache[etat.qualite] || {}).mensuel || null;
   etat.tronque = d.tronque;
   etat.panier = d.panier || [];
-  etat.introduites = d.introduites ? new Set(d.introduites) : null;
   decouvertes = d.decouvertes || null;
   disparitions = d.disparitions || null;
   if (d.decMois) decMois = d.decMois;
@@ -2428,10 +2454,12 @@ function reinitialiser() {
   etat.moisCache.clear(); moisV2 = null;
   etat.phenologie = null;
   etat.panier = []; cachePhotos.clear();
+  indexEspeces = null;
   decouvertes = null;
   disparitions = null;
   bio = null; bioTente = false; carteBio = null; anneauxLieu = null;
   comm = null; commArbre = null;
+  predEspece = null; cartePredOnglet = null;
   etat.phenoCache = { research:null, toutes:null };
   Object.assign(vue, { noeud:null, texte:'', mois:0 });
   vue.deplies.clear();
@@ -2511,9 +2539,6 @@ async function completerManquant(gen) {
     if (!etat.annees) {
       await chargerAnnees(); verifier(gen); dessinerListe(); fait = true;
     }
-    if (!etat.introduites) {
-      await chargerIntroduites(); verifier(gen); dessinerListe(); fait = true;
-    }
     if (etat.especes.some(e => e.nm[q] === null || e.nm[q] === undefined)) {
       await chargerEffectifsMondiaux(); verifier(gen);
       dessinerResponsabilite(); if (vue.tri === 'resp') dessinerListe(); fait = true;
@@ -2532,7 +2557,6 @@ async function completerManquant(gen) {
 async function completer(gen) {
   try {
     await chargerAnnees();                verifier(gen);   // une requête : alimente le bandeau
-    await chargerIntroduites();           verifier(gen);
     dessinerListe();
     await chargerEffectifsMondiaux();     verifier(gen);    // peu coûteux, très consulté
     dessinerResponsabilite();
@@ -2603,7 +2627,8 @@ async function chargerEspeces() {
             anc: t.ancestor_ids || [],
             iucn: cs ? (cs.iucn ?? CODE_IUCN[String(cs.status || '').toLowerCase()] ?? null) : null,
             nz:{ toutes:0, research:0 }, nm:{ toutes:0, research:0 },
-            nZone:0, nMonde:null
+            nZone:0, nMonde:null,
+            etab: etablissement(t)
           };
           parId.set(t.id, e);
         }
@@ -2765,7 +2790,7 @@ function noeudExiste(n, id) {
 
 function especesPourArbre() {
   let l = etat.especes.filter(e => e.nZone > 0);
-  if (vue.intro !== 'tout' && etat.introduites)
+  if (vue.intro !== 'tout')
     l = l.filter(e => estIntroduite(e.id) === (vue.intro === 'seul'));
   if (vue.mois && etat.phenologie)
     l = l.filter(e => { const m = etat.phenologie.get(e.id); return m && m[vue.mois - 1] > 0; });
@@ -2917,26 +2942,6 @@ async function chargerEffectifsMondiaux() {
 /* Statut d'établissement. iNaturalist le renseigne lieu par lieu, et la recherche accepte
    un filtre : une requête paginée donne toutes les espèces considérées comme introduites
    dans la zone d'étude. Sans lieu sélectionné, la notion n'a pas de sens et on s'abstient. */
-async function chargerIntroduites() {
-  if (etat.introduites || (!etat.lieux.length && !etat.zone)) return;
-  const gen = generation;
-  const f = { ...filtres(), introduced:'true', per_page:500 };
-  const vues = new Set();
-  try {
-    for (let page = 1; page <= 6; page++) {
-      const d = await comptages({ ...f, page });
-      verifier(gen);
-      d.results.forEach(r => vues.add(r.taxon.id));
-      if (d.results.length < 500) break;
-    }
-    etat.introduites = vues;
-    console.info('Espèces introduites dans la zone : ' + vues.size);
-  } catch (e) {
-    if (e instanceof Annule) throw e;
-    etat.introduites = new Set();   // sans la liste, aucune espèce n'est marquée
-  }
-}
-
 async function chargerAnnees(q = etat.qualite) {
   const gen = generation;
   const memo = etat.seriesCache[q];
@@ -3078,7 +3083,7 @@ function especesVisibles() {
     const m = (etat.moisCache.get(etat.qualite + ':' + vue.mois) || {}).parId;
     if (m) liste = liste.filter(e => m.has(e.id)).map(e => ({ ...e, nAffiche:m.get(e.id) }));
   }
-  if (vue.intro !== 'tout' && etat.introduites) {
+  if (vue.intro !== 'tout') {
     liste = liste.filter(e => estIntroduite(e.id) === (vue.intro === 'seul'));
   }
   if (vue.texte) {
@@ -3144,7 +3149,7 @@ function dessinerListe() {
         <option value="resp"${vue.tri==='resp'?' selected':''}>${t('triResp')}</option>
         <option value="nom"${vue.tri==='nom'?' selected':''}>${t('triNom')}</option>
       </select>
-      <select id="f-intro"${etat.introduites ? '' : ' hidden'}>
+      <select id="f-intro">
         <option value="tout"${vue.intro==='tout'?' selected':''}>${t('filtreIntroTout')}</option>
         <option value="sans"${vue.intro==='sans'?' selected':''}>${t('filtreIntroSans')}</option>
         <option value="seul"${vue.intro==='seul'?' selected':''}>${t('filtreIntroSeul')}</option>
@@ -3196,8 +3201,35 @@ function vignette(e) {
 
 /* Le sélecteur de comparaison, identique partout : la liste, la saisonnalité, les découvertes
    et les disparitions donnent tous accès au même panier. */
+/* Une espèce n'est tenue pour introduite que si la fiche vient d'un territoire identifié.
+   Le repli sur l'ancienne liste ne joue que si aucun statut n'a été transmis avec l'espèce. */
+let indexEspeces = null;      // reconstruit à chaque inventaire, pour un accès direct par id
+
+function especeParId(id) {
+  if (!indexEspeces || indexEspeces.taille !== etat.especes.length) {
+    indexEspeces = new Map(etat.especes.map(e => [e.id, e]));
+    indexEspeces.taille = etat.especes.length;
+  }
+  return indexEspeces.get(id) || null;
+}
+
+/* Statut lu sur la fiche d'établissement renvoyée avec l'espèce, et non sur le filtre
+   « introduced » de la recherche d'observations. Ce filtre ne se rapporte pas au lieu
+   interrogé : il retient tout taxon introduit où que ce soit dans le monde. Le chêne kermès
+   en fait la démonstration — indigène en Europe, en Grèce, au Portugal et en Afrique du Nord,
+   introduit dans les seules Abruzzes, il ressortait comme introduit en Provence.
+
+   La fiche, elle, est celle du lieu interrogé ou de son ancêtre le plus proche, ce qui est
+   exactement ce qu'on veut. Son absence signifie qu'aucun statut n'a été saisi : on ne conclut
+   alors rien, plutôt que de présumer une introduction. */
 function estIntroduite(id) {
-  return !!(etat.introduites && etat.introduites.has(id));
+  const e = especeParId(id);
+  return !!(e && e.etab && e.etab.statut === 'introduced');
+}
+
+function origineDe(id) {
+  const e = especeParId(id);
+  return e && e.etab && e.etab.lieu ? e.etab.lieu : '';
 }
 
 function boutonPanier(id) {
@@ -3235,7 +3267,8 @@ function ficheHTML(e, i) {
         <span class="num">${String(i + 1).padStart(3, '0')}</span>
       </a>
       ${boutonPanier(e.id)}
-      ${estIntroduite(e.id) ? `<span class="intro" title="${echap(t('introTitre'))}">!</span>` : ''}
+      ${estIntroduite(e.id) ? `<span class="intro" title="${
+        echap(t('introTitre') + (origineDe(e.id) ? ' — ' + origineDe(e.id) : ''))}">!</span>` : ''}
       <div class="corps">
         ${blocNoms(e.nom, e.nomFr)}
         <div class="bas">
@@ -4532,6 +4565,15 @@ const BIO_MIN_OBS = 20;      // en deçà, la composition d'une cellule n'est qu
 const BIO_MIN_CELL = 3;      // une espèce vue dans moins de cellules n'informe pas
 const BIO_MAX_PART = 0.8;    // au-delà, l'espèce est partout et ne sépare plus rien
 const BIO_AXES = 10;
+/* Correction du biais d'échantillonnage, appliquée pleinement. Chaque cellule est décrite non
+   par ce qu'on y a vu, mais par ce que ses espèces impliquent au vu de leurs associations
+   habituelles — ce qui met sur un pied d'égalité une cellule très prospectée et une cellule
+   effleurée.
+
+   Contrepartie à garder en tête : la matrice de corrélation étant tirée de ces mêmes données,
+   le lissage renforce les structures qu'elles contiennent déjà, y compris celles qui viennent
+   des habitudes d'observation. Les groupes obtenus sont donc plus nets qu'ils ne le méritent. */
+const bioLissage = 1;
 let bioGroupes = null;       // fixé par la méthode du coude, puis par la glissière
 
 /* Périmètre taxonomique de la collecte. Restreindre aux espèces les plus fréquentes densifie
@@ -4550,7 +4592,7 @@ let bioGroupes = null;       // fixé par la méthode du coude, puis par la glis
    les cellules doivent fusionner à l'excès. On descend donc par paliers jusqu'à réunir assez
    d'espèces pour que l'analyse ait du sens. */
 function seuilBio() {
-  const eligibles = etat.especes.filter(e => !estIntroduite(e.id));
+  const eligibles = etat.especes;
   for (const seuil of [20, 12, 8]) {
     if (eligibles.filter(e => e.nZone >= seuil).length >= 250) return seuil;
   }
@@ -4558,12 +4600,16 @@ function seuilBio() {
 }
 
 function taxonsBio() {
-  /* Les espèces introduites sont écartées d'emblée : elles suivent l'habitat humain plutôt
-     que les milieux, et leur répartition brouille aussi bien le découpage en régions que le
-     regroupement en communautés. */
+  /* Les espèces introduites ne sont plus écartées d'office. Le statut vient des listes
+     d'établissement d'iNaturalist, renseignées par la communauté lieu par lieu, et il est
+     souvent faux : des méditerranéennes strictement indigènes comme le chêne kermès ou le
+     ciste cotonneux y figurent comme introduites, sans doute parce qu'un statut saisi pour
+     un autre territoire remonte par héritage. Les exclure automatiquement retirait donc de
+     l'analyse des espèces parfaitement caractéristiques du milieu — un tort bien plus grave
+     que celui de garder quelques exotiques. */
   const seuil = seuilBio();
   const tries = etat.especes
-    .filter(e => e.nZone >= seuil && !estIntroduite(e.id))
+    .filter(e => e.nZone >= seuil)
     .sort((a, b) => b.nZone - a.nZone);
   console.info('Biorégions : seuil de ' + seuil + ' obs. par espèce, '
     + tries.length + ' espèces retenues.');
@@ -4877,24 +4923,24 @@ function analyserBio(pts) {
      logarithme empêche quelques espèces très photographiées de dominer les composantes. */
   const lignes = retenues.map(c => {
     const idx = [], val = [];
-    let total = 0, riches = 0;
-    for (const [id, n] of c.esp) if (rang.has(id)) { total += n; riches++; }
-    const norme = Math.sqrt(riches) || 1;
+    let total = 0;
+    for (const [id, n] of c.esp) if (rang.has(id)) total += n;
     for (const [id, n] of c.esp) {
       if (!rang.has(id)) continue;
       idx.push(rang.get(id));
-      /* Deux lectures possibles de la même cellule. En abondances, la fréquence relative
-         passée au logarithme : on garde l'information de dominance en écrasant les écarts.
-         En présence seule, chaque espèce compte pour un, divisé par la racine de la richesse
-         — la transformation de Hellinger, qui met les cellules sur un pied d'égalité quel que
-         soit leur nombre d'espèces. La présence est plus robuste au biais d'effort, puisque
-         l'abondance des données participatives mesure surtout combien de gens ont photographié. */
+      /* Fréquence relative de l'espèce dans sa cellule, passée au logarithme. La division par
+         le total met sur un pied d'égalité une cellule visitée mille fois et une autre visitée
+         trente : seule leur composition les distingue, non l'effort qu'on y a mis. Le
+         logarithme empêche ensuite quelques espèces très photographiées de dominer. */
       val.push(Math.log1p((n / total) * 100));
     }
     return { idx, val };
   });
 
-  const scores = acpCreuse(lignes, especes.length, BIO_AXES);
+  const lissees = lisserParCorrelation(lignes, especes.length);
+  // Conservées pour la prédiction de répartition, qui réutilise la même matrice.
+  const donneesBrutes = { lignes, nEsp:especes.length };
+  const scores = acpCreuse(lissees, especes.length, BIO_AXES);
   /* Nombre de régions suggéré par la méthode du coude, comme pour les communautés : les
      coûts de fusion croissent doucement tant qu'on réunit des cellules semblables, puis
      brusquement quand il faut rapprocher des ensembles distincts. On ne l'applique qu'au
@@ -4907,11 +4953,94 @@ function analyserBio(pts) {
     // Les points bruts restent accessibles : les cartes de communautés s'appuient sur les
     // localisations réelles, bien plus fines que les unités d'analyse.
     pts,
-    cellules:retenues, maigres, x0, y0, cote, scores, rang,
+    cellules:retenues, maigres, x0, y0, cote, scores, rang, donneesBrutes,
     grille:{ ni, nj, pasX, pasY, x0, y0 },
     nObs:pts.length, nEsp:especes.length,
     indicatrices:indicatrices(retenues, groupes, rang)
   };
+}
+
+/* Correction expérimentale du biais d'échantillonnage.
+
+   Une cellule peu prospectée n'affiche que quelques espèces, alors que d'autres y sont
+   présentes sans avoir été vues. On calcule donc la corrélation géographique entre espèces —
+   coefficient de Pearson sur les profils déjà normalisés et logarithmés — puis on réinjecte
+   dans chaque cellule les espèces associées à celles qu'on y trouve. Une absence due au
+   manque d'observation se trouve ainsi comblée ; une absence écologique, elle, l'est moins,
+   les espèces du milieu voisin n'étant pas corrélées à celles présentes.
+
+   Les corrélations négatives sont conservées : une exclusion mutuelle est une information
+   écologique au même titre qu'une association, et deux espèces qui ne se rencontrent jamais
+   ensemble séparent les milieux tout aussi bien. Le profil lissé comporte donc des valeurs
+   négatives, ce qui ne gêne ni les composantes principales ni le regroupement, tous deux
+   fondés sur des distances. Le résultat est dosé plutôt que substitué, pour comparer avec
+   et sans.
+
+   Prudence à la lecture : la matrice est calculée sur les mêmes données biaisées. Si tous les
+   observateurs longent les routes, cette structure sera renforcée et non corrigée. Le lissage
+   rend par ailleurs les groupes mécaniquement plus nets, en partie parce qu'il les impose. */
+function matriceCorrelation(lignes, p) {
+  const n = lignes.length;
+  const P = Math.min(p, 700);          // la matrice croît au carré du nombre d'espèces
+
+  // Profils par espèce, en colonnes : la corrélation se calcule entre espèces, pas cellules.
+  const col = Array.from({ length:P }, () => new Float64Array(n));
+  lignes.forEach((l, i) => {
+    for (let z = 0; z < l.idx.length; z++) if (l.idx[z] < P) col[l.idx[z]][i] = l.val[z];
+  });
+
+  const moy = new Float64Array(P), ecart = new Float64Array(P);
+  for (let j = 0; j < P; j++) {
+    let s2 = 0;
+    for (let i = 0; i < n; i++) s2 += col[j][i];
+    moy[j] = s2 / n;
+    let v = 0;
+    for (let i = 0; i < n; i++) { const e = col[j][i] - moy[j]; v += e * e; }
+    ecart[j] = Math.sqrt(v) || 1;
+    for (let i = 0; i < n; i++) col[j][i] = (col[j][i] - moy[j]) / ecart[j];
+  }
+
+  // Corrélations, partie positive seulement, diagonale à un.
+  const C = Array.from({ length:P }, () => new Float64Array(P));
+  for (let a = 0; a < P; a++) {
+    C[a][a] = 1;
+    for (let b = a + 1; b < P; b++) {
+      let r = 0;
+      const ca = col[a], cb = col[b];
+      for (let i = 0; i < n; i++) r += ca[i] * cb[i];
+      r /= n;
+      C[a][b] = r; C[b][a] = r;
+    }
+  }
+  return { C, P };
+}
+
+function lisserParCorrelation(lignes, p) {
+  const { C, P } = matriceCorrelation(lignes, p);
+  const norme = v => { let s2 = 0; for (const x of v) s2 += x * x; return Math.sqrt(s2) || 1; };
+
+  return lignes.map(l => {
+    const dense = new Float64Array(p);
+    for (let z = 0; z < l.idx.length; z++) dense[l.idx[z]] = l.val[z];
+
+    const diffuse = new Float64Array(p);
+    for (let z = 0; z < l.idx.length; z++) {
+      const j = l.idx[z];
+      if (j >= P) { diffuse[j] += l.val[z]; continue; }   // hors matrice : valeur inchangée
+      const v = l.val[z], ligne = C[j];
+      for (let k = 0; k < P; k++) diffuse[k] += v * ligne[k];
+    }
+
+    // Les deux profils sont ramenés à la même norme avant d'être mélangés.
+    const n1 = norme(dense), n2 = norme(diffuse);
+    const idx = [], val = [];
+    for (let k = 0; k < p; k++) {
+      const x = (1 - bioLissage) * (dense[k] / n1) + bioLissage * (diffuse[k] / n2);
+      // On garde aussi les valeurs négatives, qui portent les exclusions entre espèces.
+      if (Math.abs(x) > 1e-6) { idx.push(k); val.push(x); }
+    }
+    return { idx, val };
+  });
 }
 
 /* Composantes principales sur matrice creuse. Le centrage se fait implicitement : former la
@@ -5268,6 +5397,8 @@ function dessinerBioregions() {
 
   v.querySelectorAll('[data-deplier]').forEach(b =>
     b.addEventListener('click', () => ouvrirGroupeBio(+b.dataset.deplier)));
+
+
 
   $('#bio-recadrer').addEventListener('click', cadrerBio);
   $('#bio-fond').addEventListener('click', () => {
@@ -5911,6 +6042,42 @@ async function interrogerPointComm(ev, membres, teinte) {
   }
 }
 
+/* Prédiction de répartition. Pour une espèce donnée, on estime dans chaque cellule ce que sa
+   présence « devrait » valoir au vu des espèces qu'on y observe et de leurs corrélations
+   géographiques avec elle. Comparée à sa répartition réelle, cette attente désigne les
+   cellules où l'espèce est probable mais non signalée — celles où il vaut la peine d'aller
+   chercher, ou bien celles où elle a été manquée.
+
+   Le raisonnement est un pari sur les compagnes : une plante de tourbière est attendue là où
+   se trouvent les autres plantes de tourbière. Il échoue sur les espèces à écologie large,
+   dont les compagnes ne disent rien, et sur celles dont la répartition tient à l'histoire
+   plutôt qu'au milieu — une endémique locale sera prédite partout où son milieu existe. */
+function predireEspece(idEspece) {
+  if (!bio || !bio.donneesBrutes || !bio.rang) return null;
+  const j = bio.rang.get(idEspece);
+  if (j === undefined) return null;
+
+  const { lignes, nEsp } = bio.donneesBrutes;
+  if (!bio.corr) bio.corr = matriceCorrelation(lignes, nEsp);
+  const { C, P } = bio.corr;
+  if (j >= P) return null;
+
+  const attendu = new Float64Array(lignes.length);
+  const observe = new Uint8Array(lignes.length);
+  for (let i = 0; i < lignes.length; i++) {
+    const l = lignes[i];
+    let s2 = 0, norme = 0;
+    for (let z = 0; z < l.idx.length; z++) {
+      const k = l.idx[z];
+      if (k === j) { observe[i] = 1; continue; }   // on ne se prédit pas soi-même
+      if (k < P) s2 += l.val[z] * C[k][j];
+      norme += l.val[z] * l.val[z];
+    }
+    attendu[i] = norme ? s2 / Math.sqrt(norme) : 0;
+  }
+  return { attendu, observe };
+}
+
 /* Répartition d'une communauté. Chaque cellule est teintée selon la part de ses observations
    appartenant à cette communauté — non selon leur nombre brut, qui ne dirait que la densité
    de prospection. Une cellule où la communauté représente les trois quarts des signalements
@@ -6157,6 +6324,172 @@ function dessinerCommunautes() {
   }
 }
 
+
+
+/* ============================================================
+   Prédiction : où une espèce devrait se trouver
+   ============================================================ */
+
+let predEspece = null, cartePredOnglet = null;
+
+/* Dégradé du bleu au jaune. Une échelle à deux teintes se lit mieux qu'une variation
+   d'opacité : l'œil distingue mal une couleur pâle d'une couleur diluée sur un fond de carte,
+   alors qu'un changement de teinte reste net même à faible saturation. */
+function teinteAttendue(v) {
+  const p = [[0.00, [58, 99, 184]], [0.35, [56, 160, 168]],
+             [0.65, [140, 198, 63]], [1.00, [240, 200, 40]]];
+  let a = p[0], b = p[p.length - 1];
+  for (let i = 0; i < p.length - 1; i++) if (v >= p[i][0] && v <= p[i + 1][0]) { a = p[i]; b = p[i + 1]; }
+  const f = (v - a[0]) / ((b[0] - a[0]) || 1);
+  const c = a[1].map((x, i) => Math.round(x + (b[1][i] - x) * f));
+  return 'rgb(' + c.join(',') + ')';
+}
+
+function dessinerPrediction() {
+  const v = $('#v-pred');
+  if (!v) return;
+  if (!bio) {
+    v.innerHTML = `<div class="vide"><strong>${t('oPred')}</strong>${t('videPred')}</div>`;
+    return;
+  }
+
+  const parId = new Map(etat.especes.map(e => [e.id, e]));
+  const choisie = predEspece && parId.get(predEspece);
+  const p = predEspece ? predireEspece(predEspece) : null;
+
+  v.innerHTML = `
+    <div class="outils">
+      <input type="text" id="pred-rech" class="rech" placeholder="${echap(t('commRech'))}"
+        autocomplete="off">
+      <span class="compte">${choisie ? echap(nomCourt(choisie.nom, choisie.nomFr))
+        + ' · ' + nb(choisie.nZone) + ' ' + t('obs') : t('predChoisir')}</span>
+    </div>
+    <div id="pred-resultats" class="jetons" style="margin-bottom:8px"></div>
+    <div class="carte-boite">
+      <div id="carte-pred-onglet"></div>
+      <button id="pred-fond" class="sur-carte" data-tt="cFond">
+        <svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true">
+          <path d="M10 2.4 2.6 6.2 10 10l7.4-3.8z" fill="none" stroke="currentColor"
+            stroke-width="1.5" stroke-linejoin="round"/>
+          <path d="M3.4 9.6 10 13l6.6-3.4M3.4 13.2 10 16.6l6.6-3.4" fill="none"
+            stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+    <div class="legende" style="margin-top:10px">
+      <span><i style="background:${teinteAttendue(0)}"></i> ${t('predFaible')}</span>
+      <span><i style="background:${teinteAttendue(0.5)}"></i></span>
+      <span><i style="background:${teinteAttendue(1)}"></i> ${t('predForte')}</span>
+      <span><i style="background:transparent; box-shadow:inset 0 0 0 1.5px #14231C"></i>
+        ${t('bioObserve')}</span>
+    </div>
+    <p class="note">${t('bioPredNote')}</p>`;
+
+  const pr = $('#pred-rech');
+  if (pr) pr.addEventListener('input', () => {
+    const q = pr.value.trim().toLowerCase();
+    const cible = $('#pred-resultats');
+    if (q.length < 2) { cible.innerHTML = ''; return; }
+    const trouves = [];
+    for (const id of bio.rang.keys()) {
+      if (trouves.length >= 12) break;
+      const e = parId.get(id);
+      if (!e) continue;
+      const nom = nomCourt(e.nom, e.nomFr);
+      if (nom.toLowerCase().includes(q)) trouves.push({ id, nom });
+    }
+    cible.innerHTML = trouves.map(x =>
+      `<span class="jeton" data-pred="${x.id}" style="cursor:pointer">${echap(x.nom)}</span>`).join('');
+    cible.querySelectorAll('[data-pred]').forEach(b =>
+      b.addEventListener('click', () => { predEspece = +b.dataset.pred; dessinerPrediction(); }));
+  });
+
+  const bf = $('#pred-fond');
+  if (bf) bf.addEventListener('click', () => {
+    predFond = (predFond + 1) % ORDRE_FONDS.length;
+    bf.classList.toggle('actif', predFond > 0);
+    tracerCartePrediction(p);
+  });
+
+  setTimeout(() => tracerCartePrediction(p), 40);
+}
+
+let predFond = 0, coucheFondPred = null, couchePred = null, coucheReelle = null;
+
+async function tracerCartePrediction(p) {
+  const cible = document.getElementById('carte-pred-onglet');
+  if (!cible || !bio) return;
+
+  if (!cartePredOnglet || cartePredOnglet.getContainer() !== cible) {
+    if (cartePredOnglet) cartePredOnglet.remove();
+    cartePredOnglet = L.map(cible, { scrollWheelZoom:true });
+    coucheFondPred = null;
+  }
+  if (coucheFondPred) { cartePredOnglet.removeLayer(coucheFondPred); coucheFondPred = null; }
+  const f = FONDS[ORDRE_FONDS[predFond % ORDRE_FONDS.length]];
+  coucheFondPred = L.tileLayer(f.url, { attribution:f.attribution,
+    maxZoom:f.maxZoom || 19, className:f.classe }).addTo(cartePredOnglet);
+  coucheFondPred.bringToBack();
+  cartePredOnglet.invalidateSize();
+
+  if (couchePred) { cartePredOnglet.removeLayer(couchePred); couchePred = null; }
+  if (coucheReelle) { cartePredOnglet.removeLayer(coucheReelle); coucheReelle = null; }
+  if (!p) { cadrerPred(); return; }
+
+  let anneaux = [];
+  try { anneaux = await chargerContoursLieu(); } catch (e) { anneaux = []; }
+
+  const G = bio.grille;
+  const sommet = Math.max(...p.attendu, 1e-9);
+  const toile = L.canvas({ padding:0.3 });
+  const formes = [];
+  bio.cellules.forEach((c, i) => {
+    const force = Math.max(0, p.attendu[i]) / sommet;
+    const couleur = teinteAttendue(force);
+    for (const k of c.cases) {
+      const a = Math.floor(k / G.nj), j = k % G.nj;
+      const boite = { ax:G.x0 + a * G.pasX, ay:G.y0 + j * G.pasY,
+                      bx:G.x0 + (a + 1) * G.pasX, by:G.y0 + (j + 1) * G.pasY };
+      const parts = cellulesCoupees(boite, anneaux);
+      if (!parts.length) continue;
+      formes.push(L.polygon(parts, { renderer:toile, weight:0,
+        fillColor:couleur, fillOpacity:0.66 })
+        .bindTooltip(pourcent(force * 100)));
+    }
+  });
+  couchePred = L.layerGroup(formes).addTo(cartePredOnglet);
+
+  /* Répartition réelle : la couche de tuiles d'iNaturalist, posée par-dessus la prédiction.
+     Elle est exacte et complète, s'affiche instantanément et ne consomme aucune requête de
+     notre file — là où lire les observations une à une coûtait une quinzaine de secondes
+     pour un résultat approximatif. Les zones colorées sans points sont les lacunes. */
+  if (predEspece) {
+    const q = new URLSearchParams();
+    for (const [k, val] of Object.entries(filtres(true))) {
+      if (k === 'locale' || k === 'per_page') continue;
+      q.set(k, val);
+    }
+    q.set('taxon_id', predEspece);
+    q.set('color', '#14231C');
+    coucheReelle = L.tileLayer(API + '/points/{z}/{x}/{y}.png?' + q.toString(),
+      { maxZoom:19, opacity:0.95, keepBuffer:1, updateWhenIdle:true }).addTo(cartePredOnglet);
+  }
+  cadrerPred();
+}
+
+function cadrerPred() {
+  if (!cartePredOnglet || !bio) return;
+  const G = bio.grille;
+  let b = null;
+  for (const c of bio.cellules) for (const k of c.cases) {
+    const a = Math.floor(k / G.nj), j = k % G.nj;
+    const r = L.latLngBounds([G.y0 + j * G.pasY, G.x0 + a * G.pasX],
+      [G.y0 + (j + 1) * G.pasY, G.x0 + (a + 1) * G.pasX]);
+    b = b ? b.extend(r) : r;
+  }
+  cartePredOnglet.invalidateSize();
+  if (b) cartePredOnglet.fitBounds(b, { padding:[16, 16] });
+}
 
 /* ============================================================
    Choisir un lieu sur une carte
@@ -6422,13 +6755,13 @@ function dessinerDecouvertes() {
     return;
   }
   let toutes = decouvertes || [];
-  if (decIntro !== 'tout' && etat.introduites)
+  if (decIntro !== 'tout')
     toutes = toutes.filter(x => estIntroduite(x.e.id) === (decIntro === 'seul'));
   const liste = decMondiales ? toutes.filter(x => x.mondiale) : toutes;
 
   v.innerHTML = `
     <div class="outils">
-      ${etat.introduites ? `<select id="d-intro">
+      ${true ? `<select id="d-intro">
         <option value="tout"${decIntro === 'tout' ? ' selected' : ''}>${t('filtreIntroTout')}</option>
         <option value="sans"${decIntro === 'sans' ? ' selected' : ''}>${t('filtreIntroSans')}</option>
         <option value="seul"${decIntro === 'seul' ? ' selected' : ''}>${t('filtreIntroSeul')}</option>
