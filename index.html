@@ -120,6 +120,10 @@ section.vue{display:none} section.vue.actif{display:block}
 .alerte{background:#FBF3DC; border-left:3px solid var(--ocre); padding:11px 15px; font-size:14px; margin-bottom:20px}
 
 .outils{display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:18px}
+/* Case à cocher des barres d'outils : même hauteur et même gris que les menus voisins. */
+.coche{display:inline-flex; align-items:center; gap:6px; font-size:13px;
+  color:var(--encre-2); cursor:pointer; user-select:none}
+.coche input{cursor:pointer; accent-color:var(--vert)}
 .outils input[type=text]{width:210px}
 select option:disabled{color:var(--encre-3)}
 select{padding:8px 10px; border:1px solid var(--trait); border-radius:var(--r); background:#fff; font:inherit}
@@ -465,11 +469,13 @@ footer{border-top:1px solid var(--trait); margin-top:60px; padding:22px 0 44px;
       </div>
     </div>
     <div class="barre-actions">
-      <button class="primaire" id="lancer" data-t="charger">Charger</button>
+      <!-- Le niveau précède le bouton : il détermine l'inventaire à charger, il n'est plus
+           un filtre d'affichage appliqué après coup. -->
       <select id="f-qualite" aria-label="Niveau de validation des observations">
         <option value="research" data-t="valid">Observations validées</option>
         <option value="toutes" data-t="toutesObs">Toutes les observations</option>
       </select>
+      <button class="primaire" id="lancer" data-t="charger">Charger</button>
       <select id="f-nommage" aria-label="Nomenclature affichée">
         <option value="sci" data-t="nomsSci" selected>Noms scientifiques</option>
         <option value="fr" data-t="nomsCom">Noms vernaculaires</option>
@@ -1427,7 +1433,6 @@ Object.entries({
   bioRecadrer:{fr:"Recadrer",en:"Reframe",es:"Reencuadrar",pt:"Reenquadrar",it:"Inquadra",de:"Neu ausrichten"},
   bioRecollecter:{fr:"Recollecter les données",en:"Collect data again",es:"Recoger los datos de nuevo",pt:"Recolher os dados de novo",it:"Raccogli di nuovo i dati",de:"Daten neu sammeln"},
   bioCache:{fr:"données en mémoire",en:"data from memory",es:"datos en memoria",pt:"dados em memória",it:"dati in memoria",de:"Daten aus dem Speicher"},
-  bioLissage:{fr:"Correction du biais",en:"Bias correction",es:"Corrección del sesgo",pt:"Correção do viés",it:"Correzione del bias",de:"Bias-Korrektur"},
   bioK:{fr:"Groupes",en:"Groups",es:"Grupos",pt:"Grupos",it:"Gruppi",de:"Gruppen"},
   bioIndic:{fr:"Espèces caractéristiques",en:"Characteristic species",es:"Especies características",pt:"Espécies características",it:"Specie caratteristiche",de:"Kennzeichnende Arten"},
   bioPlafond:{fr:"Plafond de 10 000 observations atteint : l'analyse porte sur les plus récentes.",en:"Cap of 10,000 records reached: the analysis covers the most recent ones.",es:"Límite de 10 000 registros alcanzado: el análisis cubre los más recientes.",pt:"Limite de 10 000 registos atingido: a análise cobre os mais recentes.",it:"Limite di 10 000 segnalazioni raggiunto: l'analisi riguarda le più recenti.",de:"Obergrenze von 10 000 Nachweisen erreicht: Die Analyse umfasst die jüngsten."},
@@ -1928,6 +1933,7 @@ function cleInventaire() {
     etat.taxons.map(t => t.id).sort((a, b) => a - b).join('.'),
     etat.zone ? Object.values(etat.zone).join(',') : '',
     etat.reference ? etat.reference.id : 'monde',
+    etat.qualite,          // les deux niveaux de validation sont deux inventaires distincts
     langue, VERSION_DONNEES
   ].join('|');
 }
@@ -1939,6 +1945,7 @@ function enregistrer() {
     // De quoi rejouer la sélection telle quelle depuis le panneau de mémoire.
     lieux: etat.lieux, taxons: etat.taxons, zone: etat.zone, reference: etat.reference,
     especes: etat.especes, ancetres: [...etat.ancetres],
+    refFaite: etat.refFaite,
     seriesCache: etat.seriesCache, tronque: etat.tronque, decouvertes, disparitions,
     decMois, disMois,          // la fenêtre retenue fait partie du résultat
     panier: etat.panier,
@@ -1961,6 +1968,7 @@ async function restaurer(gen) {
   etat.mensuel = (etat.seriesCache[etat.qualite] || {}).mensuel || null;
   etat.tronque = d.tronque;
   etat.panier = d.panier || [];
+  etat.refFaite = d.refFaite || { toutes:false, research:false };
   decouvertes = d.decouvertes || null;
   disparitions = d.disparitions || null;
   if (d.decMois) decMois = d.decMois;
@@ -1995,6 +2003,13 @@ async function restaurer(gen) {
 /* Les enregistrements d'avant le stockage de la sélection ne gardent que la clé, qui contient
    les identifiants. On les traduit en noms : une requête pour tous les lieux, une pour tous
    les groupes, quel que soit le nombre d'inventaires listés. */
+/* Niveau de validation d'un enregistrement, repéré par sa valeur plutôt que par sa position :
+   la clé a gagné des champs au fil du temps et un indice figé se décalerait. Les
+   enregistrements antérieurs à la séparation des niveaux sont supposés validés. */
+function niveauDeCle(d) {
+  return String(d.cle || '').split('|').includes('toutes') ? 'toutes' : 'research';
+}
+
 async function nommerDepuisCle(liste) {
   const aNommer = liste.filter(d => !d.lieux && typeof d.cle === 'string');
   if (!aNommer.length) return;
@@ -2067,6 +2082,7 @@ async function listerMemoire() {
       <div class="quoi">
         <b>${noms.length ? echap(noms.join(' · ')) : t('memAncien')}</b>
         <div class="quand">${nb((d.especes || []).length)} ${t('especes')} · ${
+          t(niveauDeCle(d) === 'research' ? 'valid' : 'toutesObs').toLowerCase()} · ${
           jours ? t('mJours', jours) : t('mAujourdhui')}</div>
       </div>
       <div style="flex:none">
@@ -2081,6 +2097,9 @@ async function listerMemoire() {
     const d = liste[+b.dataset.ouvrir];
     etat.lieux = d.lieux || []; etat.taxons = d.taxons || [];
     etat.zone = d.zone || null; etat.reference = d.reference || null;
+    // Le niveau fait partie de l'identité de l'inventaire : l'ouvrir, c'est l'adopter.
+    etat.qualite = niveauDeCle(d);
+    $('#f-qualite').value = etat.qualite;
     $('#r-ref').value = etat.reference ? etat.reference.nom : '';
     majBoutonRef();
     dessinerJetons();
@@ -2104,7 +2123,8 @@ async function viderMemoire() {
 
   cache.clear();
   etat.lieux = []; etat.taxons = []; etat.zone = null; etat.reference = null;
-  etat.panier = []; cachePhotos.clear(); vocabulaire = null; vocabulairePour = null;
+  etat.panier = []; cachePhotos.clear();
+  etat.refFaite = { toutes:false, research:false }; vocabulaire = null; vocabulairePour = null;
   etat.charge = false;
   document.body.classList.add('attente');
   apiV2 = null; especesV2 = null;
@@ -2202,6 +2222,7 @@ const etat = {
   seriesCache: { research:{}, toutes:{} },
   moisCache: new Map(),
   moisTronque: null,        // mois dont la liste d'espèces est restée incomplète
+  refFaite: { toutes:false, research:false },   // les effectifs de référence ont-ils été demandés
   compEstimee: false,       // la complétude mensuelle a-t-elle été demandée
   phenologie: null,   // Map(idEspèce -> 12 effectifs mensuels), niveau courant
   phenoCache: { research:null, toutes:null },
@@ -2212,10 +2233,18 @@ const vue = { noeud:null, texte:'', tri:'obs', mois:0, deplies:new Set(), nommag
 
 /* Un même taxon a deux noms possibles. On choisit lequel porte l'information principale,
    l'autre passe en second, et la mise en forme suit : le latin reste toujours en italique. */
+/* Les noms vernaculaires arrivent d'iNaturalist tantôt capitalisés, tantôt non — « Chêne
+   kermès » mais « dicotylédones ». On impose la majuscule initiale. Le nom scientifique, lui,
+   a sa casse fixée par la nomenclature et n'est pas touché. */
+function capitaliser(x) {
+  return x ? x.charAt(0).toUpperCase() + x.slice(1) : x;
+}
+
 function libelles(sci, fr) {
+  const v = capitaliser(fr);
   return vue.nommage === 'sci'
-    ? { principal:sci, secondaire:fr || '', latinDevant:true }
-    : { principal:fr || sci, secondaire:fr ? sci : '', latinDevant:!fr };
+    ? { principal:sci, secondaire:v || '', latinDevant:true }
+    : { principal:v || sci, secondaire:v ? sci : '', latinDevant:!v };
 }
 
 function blocNoms(sci, fr) {
@@ -2408,37 +2437,16 @@ $('#f-nommage').addEventListener('change', e => {
   majLegende();          // la légende de la carte porte des noms d'espèces
 });
 
-$('#f-qualite').addEventListener('change', async e => {
+$('#f-qualite').addEventListener('change', e => {
+  /* Le niveau fait partie de l'identité de l'inventaire : le changer ne recharge rien, il
+     prépare le prochain chargement. Relancer d'office plusieurs minutes de requêtes sur un
+     simple changement de menu serait une mauvaise surprise, et le bouton est juste à côté. */
   etat.qualite = e.target.value;
   majURL();
-  const nom = t(etat.qualite === 'research' ? 'valid' : 'toutesObs').toLowerCase();
-  if (!etat.especes.length) { majCarte(); return; }
-
-  // Liste, arbre, responsabilité et carte : instantanés, les deux niveaux sont déjà en mémoire.
-  appliquerQualite();
-  etat.phenologie = etat.phenoCache[etat.qualite];
-  construireArbre();
-  vue.mois = 0;
-  dessinerListe();
-  dessinerResponsabilite();
   majCarte();
-
-  // Seules les séries et les découvertes demandent des requêtes : elles prennent leur tour
-  // dans la file plutôt que de s'intercaler dans un chargement en cours.
-  enTache(async () => {
-    try {
-      await chargerAnnees();
-      await chargerMensuel();
-      dessinerSaison();
-      decouvertes = null; disparitions = null;
-      await chargerDecouvertes();
-      await chargerDisparitions();
-      progression(t('mAffichage', nom), null);
-    } catch (err) {
-      if (!(err instanceof Annule)) progression(t('mStatsIndispo'), null);
-    }
-  });
+  if (etat.especes.length) $('#etat').textContent = t('pret');
 });
+
 
 /* ============================================================
    4. Chargement
@@ -2454,10 +2462,11 @@ function reinitialiser() {
   etat.moisCache.clear(); moisV2 = null;
   etat.phenologie = null;
   etat.panier = []; cachePhotos.clear();
+  etat.refFaite = { toutes:false, research:false };
   indexEspeces = null;
   decouvertes = null;
   disparitions = null;
-  bio = null; bioTente = false; carteBio = null; anneauxLieu = null;
+  bio = null; bioTente = false; carteBio = null; vueBio = null; anneauxLieu = null;
   comm = null; commArbre = null;
   predEspece = null; cartePredOnglet = null;
   etat.phenoCache = { research:null, toutes:null };
@@ -2539,7 +2548,10 @@ async function completerManquant(gen) {
     if (!etat.annees) {
       await chargerAnnees(); verifier(gen); dessinerListe(); fait = true;
     }
-    if (etat.especes.some(e => e.nm[q] === null || e.nm[q] === undefined)) {
+    /* On se fie à un drapeau plutôt qu'aux valeurs : une espèce sans effectif de référence
+       garde légitimement la valeur nulle, et la relire comme « jamais demandé » relançait
+       tout le chargement à chaque ouverture d'un inventaire en mémoire. */
+    if (!etat.refFaite[q]) {
       await chargerEffectifsMondiaux(); verifier(gen);
       dessinerResponsabilite(); if (vue.tri === 'resp') dessinerListe(); fait = true;
     }
@@ -2575,9 +2587,10 @@ async function completer(gen) {
   }
 }
 
-/* Les deux niveaux de validation sont chargés en une fois. Le surcoût est faible — quelques
-   pages de plus — et il rend la bascule instantanée au lieu de relancer tout l'inventaire. */
-const NIVEAUX = ['toutes', 'research'];
+/* Un seul niveau de validation par inventaire. Charger les deux d'un coup rendait la bascule
+   instantanée, mais doublait chaque requête pour un niveau qu'on ne consultera peut-être
+   jamais. Ce sont deux inventaires distincts, avec leur propre entrée en mémoire. */
+function niveaux() { return [etat.qualite]; }
 
 /* Une page de species_counts, allégée si la v2 le permet. Le premier lot sert de contrôle :
    sans nom ni rang ni chaîne d'ancêtres exploitables, on renonce à la v2 pour cette requête. */
@@ -2602,7 +2615,7 @@ async function chargerEspeces() {
   const parId = new Map();
   etat.tronque = false;
 
-  for (const q of NIVEAUX) {
+  for (const q of niveaux()) {
     const f = filtres(true, q);
     let page = 1, total = null;
     while (page <= 20) {
@@ -2788,8 +2801,23 @@ function noeudExiste(n, id) {
   return false;
 }
 
+/* La recherche porte sur le nom et sur la lignée : taper « Asteraceae » retient toutes les
+   espèces du clade. Le même prédicat sert à la grille et à la taxonomie, qui doivent montrer
+   le même ensemble — sinon l'arbre annonce des effectifs que la grille ne montre plus. */
+function correspondRecherche(e) {
+  const q = (vue.texte || '').toLowerCase();
+  if (!q) return true;
+  if (e.nom.toLowerCase().includes(q) || (e.nomFr || '').toLowerCase().includes(q)) return true;
+  return e.anc.some(id => {
+    const a = etat.ancetres.get(id);
+    return a && ((a.nom || '').toLowerCase().includes(q)
+              || (a.nomFr || '').toLowerCase().includes(q));
+  });
+}
+
 function especesPourArbre() {
   let l = etat.especes.filter(e => e.nZone > 0);
+  if (vue.texte) l = l.filter(correspondRecherche);
   if (vue.intro !== 'tout')
     l = l.filter(e => estIntroduite(e.id) === (vue.intro === 'seul'));
   if (vue.mois && etat.phenologie)
@@ -2888,7 +2916,7 @@ async function chargerEffectifsMondiaux() {
   const paquets = [];
   for (let i = 0; i < etat.especes.length; i += 200) paquets.push(etat.especes.slice(i, i + 200));
 
-  for (const q of NIVEAUX) {
+  for (const q of niveaux()) {
     const f = filtres(false, q);
     const parId = new Map();
     for (let i = 0; i < paquets.length; i++) {
@@ -2932,6 +2960,8 @@ async function chargerEffectifsMondiaux() {
          fin de tableau au lieu d'en occuper la tête avec un pourcentage absurde. */
       if (e.nm[q] < e.nz[q]) { e.nm[q] = e.nz[q]; e.douteux = true; }
     }
+    // Le niveau est traité : les valeurs nulles qu'il laisse sont des absences réelles.
+    etat.refFaite[q] = true;
   }
   appliquerQualite();
 }
@@ -3086,20 +3116,7 @@ function especesVisibles() {
   if (vue.intro !== 'tout') {
     liste = liste.filter(e => estIntroduite(e.id) === (vue.intro === 'seul'));
   }
-  if (vue.texte) {
-    /* La recherche porte aussi sur la lignée : taper « Asteraceae » ou « Papilionoidea »
-       retient toutes les espèces de ce clade, sans avoir à naviguer dans l'arbre. */
-    const q = vue.texte.toLowerCase();
-    const correspond = e => {
-      if (e.nom.toLowerCase().includes(q) || e.nomFr.toLowerCase().includes(q)) return true;
-      return e.anc.some(id => {
-        const a = etat.ancetres.get(id);
-        return a && ((a.nom || '').toLowerCase().includes(q)
-                  || (a.nomFr || '').toLowerCase().includes(q));
-      });
-    };
-    liste = liste.filter(correspond);
-  }
+  if (vue.texte) liste = liste.filter(correspondRecherche);
   if (vue.tri === 'nom') return [...liste].sort((a, b) => a.nom.localeCompare(b.nom, langue));
   if (vue.tri === 'resp') {
     // Les espèces sous le seuil d'effectif passent en fin de liste plutôt que d'en sortir.
@@ -3307,6 +3324,7 @@ function brancherListe() {
   $('#f-texte').addEventListener('input', e => {
     const pos = e.target.selectionStart;
     vue.texte = e.target.value;
+    reconstruireArbre();      // la taxonomie suit la recherche
     dessinerListe();
     const n = $('#f-texte'); n.focus(); n.setSelectionRange(pos, pos);
   });
@@ -4573,7 +4591,6 @@ const BIO_AXES = 10;
    Contrepartie à garder en tête : la matrice de corrélation étant tirée de ces mêmes données,
    le lissage renforce les structures qu'elles contiennent déjà, y compris celles qui viennent
    des habitudes d'observation. Les groupes obtenus sont donc plus nets qu'ils ne le méritent. */
-const bioLissage = 1;
 let bioGroupes = null;       // fixé par la méthode du coude, puis par la glissière
 
 /* Périmètre taxonomique de la collecte. Restreindre aux espèces les plus fréquentes densifie
@@ -4784,7 +4801,10 @@ function analyserBio(pts) {
      centaines de mètres, un massif en cellules de quelques kilomètres — et la grille compte
      toujours le même ordre de grandeur de cases, quelle que soit l'étendue. */
   const grandCoteKm = Math.max((x1 - x0) * kmParDegLon, (y1 - y0) * kmParDegLat);
-  const cote = Math.max(grandCoteKm / 100, 0.05);
+  /* Un deux-centième du plus grand côté : la grille de départ est quatre fois plus fine.
+     Elle ne coûte presque rien — seules les cases occupées sont créées — mais laisse à
+     l'agrégation une matière bien plus fine à assembler. */
+  const cote = Math.max(grandCoteKm / 200, 0.02);
   const pasX = cote / kmParDegLon, pasY = cote / kmParDegLat;
   const ni = Math.ceil((x1 - x0) / pasX) + 1, nj = Math.ceil((y1 - y0) / pasY) + 1;
   const N = ni * nj;
@@ -4921,25 +4941,51 @@ function analyserBio(pts) {
   /* Lignes creuses : normalisation par cellule puis logarithme. La normalisation met sur un
      pied d'égalité une cellule visitée mille fois et une autre visitée cinquante ; le
      logarithme empêche quelques espèces très photographiées de dominer les composantes. */
-  const lignes = retenues.map(c => {
+  /* Chaîne de traitement, en cinq temps.
+
+     1. Fréquences relatives : l'effectif de chaque espèce divisé par le total de sa cellule,
+        de sorte que toutes les cellules pèsent le même poids quel que soit l'effort.
+     2. Logarithme décimal, après division par la plus petite valeur non nulle — l'échelle
+        démarre ainsi à zéro plutôt qu'en négatif.
+     3. Corrélations de Pearson entre espèces, établies sur ces valeurs logarithmiques.
+     4. Correction appliquée aux fréquences brutes et non aux logarithmes : multiplier des
+        logarithmes par des corrélations mêlait deux échelles sans signification commune.
+        Chaque cellule reçoit alors une valeur pour toutes les espèces, y compris absentes.
+     5. Retour au logarithme sur les valeurs corrigées, pour l'analyse. */
+  const brut = retenues.map(c => {
     const idx = [], val = [];
     let total = 0;
     for (const [id, n] of c.esp) if (rang.has(id)) total += n;
     for (const [id, n] of c.esp) {
       if (!rang.has(id)) continue;
       idx.push(rang.get(id));
-      /* Fréquence relative de l'espèce dans sa cellule, passée au logarithme. La division par
-         le total met sur un pied d'égalité une cellule visitée mille fois et une autre visitée
-         trente : seule leur composition les distingue, non l'effort qu'on y a mis. Le
-         logarithme empêche ensuite quelques espèces très photographiées de dominer. */
-      val.push(Math.log1p((n / total) * 100));
+      val.push(n / (total || 1));
     }
     return { idx, val };
   });
 
-  const lissees = lisserParCorrelation(lignes, especes.length);
-  // Conservées pour la prédiction de répartition, qui réutilise la même matrice.
+  const logNorm = (l2) => {
+    let mini = Infinity;
+    for (const l of l2) for (const x of l.val) if (x > 0 && x < mini) mini = x;
+    if (!isFinite(mini) || mini <= 0) mini = 1;
+    return l2.map(l => {
+      const idx = [], val = [];
+      for (let z = 0; z < l.idx.length; z++) {
+        const y = l.val[z] > 0 ? Math.log10(l.val[z] / mini) : 0;
+        if (y > 0) { idx.push(l.idx[z]); val.push(y); }
+      }
+      return { idx, val };
+    });
+  };
+
+  const lignes = logNorm(brut);
+  /* Correction du biais par corrélation entre espèces : mise en sommeil. Le code reste — la
+     fonction corrigerParCorrelation et la matrice qu'elle emploie — mais l'analyse travaille
+     sur les valeurs brutes. Rétablir la correction demande une ligne :
+       const lissees = logNorm(corrigerParCorrelation(lignes, brut, especes.length)); */
+  const lissees = lignes;
   const donneesBrutes = { lignes, nEsp:especes.length };
+
   const scores = acpCreuse(lissees, especes.length, BIO_AXES);
   /* Nombre de régions suggéré par la méthode du coude, comme pour les communautés : les
      coûts de fusion croissent doucement tant qu'on réunit des cellules semblables, puis
@@ -5005,46 +5051,40 @@ function matriceCorrelation(lignes, p) {
   for (let a = 0; a < P; a++) {
     C[a][a] = 1;
     for (let b = a + 1; b < P; b++) {
+      /* Les colonnes sont centrées et ramenées à une norme unité : leur produit scalaire
+         vaut exactement le coefficient de Pearson. Je le divisais en plus par le nombre de
+         cellules, ce qui rendait toutes les corrélations des centaines de fois trop petites —
+         la matrice se confondait avec l'identité et la correction ne changeait rien. */
       let r = 0;
       const ca = col[a], cb = col[b];
       for (let i = 0; i < n; i++) r += ca[i] * cb[i];
-      r /= n;
       C[a][b] = r; C[b][a] = r;
     }
   }
   return { C, P };
 }
 
-function lisserParCorrelation(lignes, p) {
-  const { C, P } = matriceCorrelation(lignes, p);
-  const norme = v => { let s2 = 0; for (const x of v) s2 += x * x; return Math.sqrt(s2) || 1; };
-
-  return lignes.map(l => {
-    const dense = new Float64Array(p);
-    for (let z = 0; z < l.idx.length; z++) dense[l.idx[z]] = l.val[z];
-
-    const diffuse = new Float64Array(p);
+/* Correction du biais d'échantillonnage. Les corrélations viennent des valeurs
+   logarithmiques, qui décrivent mieux les associations, mais s'appliquent aux fréquences
+   brutes. Chaque cellule reçoit ensuite une valeur pour toutes les espèces, y compris celles
+   qu'on n'y a pas vues — c'est l'objet même de la correction. Les corrélations négatives sont
+   conservées : une exclusion mutuelle sépare les milieux aussi bien qu'une association. */
+function corrigerParCorrelation(pourCorrelation, abondances, p) {
+  const { C, P } = matriceCorrelation(pourCorrelation, p);
+  return abondances.map(l => {
+    const sortie = new Float64Array(p);
     for (let z = 0; z < l.idx.length; z++) {
-      const j = l.idx[z];
-      if (j >= P) { diffuse[j] += l.val[z]; continue; }   // hors matrice : valeur inchangée
-      const v = l.val[z], ligne = C[j];
-      for (let k = 0; k < P; k++) diffuse[k] += v * ligne[k];
+      const j = l.idx[z], v = l.val[z];
+      if (j >= P) { sortie[j] += v; continue; }   // hors matrice : valeur inchangée
+      const ligne = C[j];
+      for (let k = 0; k < P; k++) sortie[k] += v * ligne[k];
     }
-
-    // Les deux profils sont ramenés à la même norme avant d'être mélangés.
-    const n1 = norme(dense), n2 = norme(diffuse);
     const idx = [], val = [];
-    for (let k = 0; k < p; k++) {
-      const x = (1 - bioLissage) * (dense[k] / n1) + bioLissage * (diffuse[k] / n2);
-      // On garde aussi les valeurs négatives, qui portent les exclusions entre espèces.
-      if (Math.abs(x) > 1e-6) { idx.push(k); val.push(x); }
-    }
+    for (let k = 0; k < p; k++) if (Math.abs(sortie[k]) > 1e-9) { idx.push(k); val.push(sortie[k]); }
     return { idx, val };
   });
 }
 
-/* Composantes principales sur matrice creuse. Le centrage se fait implicitement : former la
-   matrice dense coûterait des dizaines de mégaoctets pour rien. */
 function acpCreuse(lignes, p, k) {
   const n = lignes.length;
   const moy = new Float64Array(p);
@@ -5250,6 +5290,7 @@ function regrouperBio() {
 }
 
 let carteBio = null, coucheBio = null, fondBio = null;
+let vueBio = null;      // cadrage conservé d'un redessin à l'autre
 let bioSatellite = 0;   // indice dans ORDRE_FONDS
 
 let reperesBio = null;
@@ -5400,6 +5441,7 @@ function dessinerBioregions() {
 
 
 
+
   $('#bio-recadrer').addEventListener('click', cadrerBio);
   $('#bio-fond').addEventListener('click', () => {
     bioSatellite = (bioSatellite + 1) % ORDRE_FONDS.length;
@@ -5518,6 +5560,9 @@ async function tracerCarteBio() {
   if (!cible || !bio) return;
   const anneaux = await chargerContoursLieu();
 
+  /* Le contenu de l'onglet est réécrit à chaque changement de réglage, donc la carte est
+     recréée à chaque fois. On mémorise le cadrage courant pour le restituer, sans quoi tout
+     déplacement serait perdu au moindre ajustement. */
   let neuve = false;
   if (!carteBio || carteBio.getContainer() !== cible) {
     neuve = true;
@@ -5525,6 +5570,10 @@ async function tracerCarteBio() {
     fondBio = null;
     majFondBio();
     coucheBio = null;
+    if (vueBio) { carteBio.setView(vueBio.centre, vueBio.zoom); neuve = false; }
+    carteBio.on('moveend zoomend', () => {
+      vueBio = { centre:carteBio.getCenter(), zoom:carteBio.getZoom() };
+    });
   }
   carteBio.invalidateSize();
 
