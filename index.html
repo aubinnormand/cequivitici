@@ -178,7 +178,7 @@ select{padding:8px 10px; border:1px solid var(--trait); border-radius:var(--r); 
    180 degrés, plus courte à écrire, inversait l'ordre des colonnes et les collait à droite. */
 #cp-defil{overflow-x:auto; overflow-y:hidden; height:14px; margin-bottom:6px}
 #cp-defil div{height:1px}
-.colonne{background:var(--carte); border:1px solid var(--trait); border-radius:var(--r);
+.colonne{position:relative; background:var(--carte); border:1px solid var(--trait); border-radius:var(--r);
   overflow:hidden}
 .colonne .entete{display:flex; align-items:flex-start; justify-content:space-between; gap:8px;
   padding:10px 11px; border-bottom:1px solid var(--trait)}
@@ -268,15 +268,32 @@ select{padding:8px 10px; border:1px solid var(--trait); border-radius:var(--r); 
 .fiche .plus:hover{border-color:var(--vert); color:var(--vert)}
 /* Le fuchsia d'iNaturalist pour les espèces introduites, et un décalage vers la droite :
    le coin supérieur gauche est déjà occupé par le numéro de la fiche. */
-.fiche .intro{position:absolute; top:6px; left:44px; z-index:1; width:20px; height:20px;
+/* Pastille des espèces introduites, commune à tous les contextes. Le centrage se fait par
+   flexbox et non par hauteur de ligne : celle-ci dépend du contexte typographique, ce qui
+   faisait déborder le point d'exclamation sous la pastille selon les endroits. */
+.intro{position:absolute; top:6px; left:6px; z-index:3; width:20px; height:20px;
+  display:inline-flex; align-items:center; justify-content:center; line-height:1;
   border-radius:50%; background:#D62F8A; color:#fff; font-weight:700; font-size:13px;
-  line-height:20px; text-align:center; cursor:help;
+  text-align:center; cursor:help; box-shadow:0 1px 3px rgba(20,35,28,.35)}
+/* Décalage explicite, demandé seulement là où un numéro d'ordre occupe le coin. */
+.intro.decale{left:44px}
+/* Variante posée dans le flux : en tête de colonne, la pastille recouvrirait le nom de
+   l'espèce si elle était placée en absolu dans le coin. */
+.intro.enligne{position:static; margin-top:4px}
   box-shadow:0 1px 3px rgba(20,35,28,.35)}
-.fiche .choisir, .tuile .choisir{position:absolute; top:6px; right:6px; z-index:2; width:24px; height:24px;
+/* Bouton de sélection, identique dans tout le site : carré posé en haut à droite de l'image,
+   vert une fois coché. Le style ne dépend plus du conteneur — il divergeait selon les onglets
+   au fil des ajouts. */
+.cocher{width:34px; padding-right:0}
+/* Seule exception : dans le tableau de responsabilité, aucune image ne sert de support, la
+   case revient donc dans le flux de la cellule. */
+td.cocher .choisir{position:static; width:22px; height:22px}
+
+.choisir{position:absolute; top:6px; right:6px; z-index:2; width:24px; height:24px;
   border:1px solid rgba(20,35,28,.25); background:rgba(255,255,255,.92); color:var(--encre-2);
   border-radius:4px; cursor:pointer; font-size:14px; line-height:1; padding:0}
-.fiche .choisir:hover, .tuile .choisir:hover{border-color:var(--vert); color:var(--vert)}
-.fiche .choisir.pris, .tuile .choisir.pris{background:var(--vert); border-color:var(--vert); color:#fff}
+.choisir:hover{border-color:var(--vert); color:var(--vert)}
+.choisir.pris{background:var(--vert); border-color:var(--vert); color:#fff}
 .fiche .taxo{position:absolute; inset:0; background:rgba(251,252,249,.975); padding:9px 10px;
   overflow:auto; display:none; z-index:2; cursor:pointer}
 .fiche.ouvert .taxo{display:block}
@@ -305,7 +322,8 @@ select{padding:8px 10px; border:1px solid var(--trait); border-radius:var(--r); 
   .fiche .sci{font-size:11px; line-height:1.25}
   .fiche .n{font-size:10.5px; padding-top:5px}
   .fiche .num{font-size:9px; padding:1px 4px; top:4px; left:4px}
-  .fiche .intro{width:17px; height:17px; line-height:17px; font-size:11px; top:4px; left:34px}
+  .intro{width:17px; height:17px; font-size:11px; top:4px}
+  .intro.decale{left:34px}
     .fiche .statut{bottom:4px; right:4px}
   .fiche .statut .iucn{font-size:9px; padding:1px 4px 1px 3px; gap:3px}
   .fiche .credit{font-size:8.5px; padding:0 8px 7px; white-space:normal;
@@ -707,8 +725,6 @@ const TEXTES = {
     mRecompteEchec: "Le recomptage a échoué. Réessaie.",
     mFiltreMois: "Lecture des espèces vues en {0}…",
     mFiltreApp: "Filtre appliqué : {0}.",
-    mAffichage: "Affichage : {0}.",
-    mStatsIndispo: "Statistiques indisponibles pour ce niveau. Réessaie.",
     cAutour: "Autour de ce point",
     cRecherche: "Recherche dans un rayon de {0}…",
     cAucune: "Aucune observation dans {0}.",
@@ -826,8 +842,6 @@ const TEXTES = {
     mRecompteEchec: "Recount failed. Try again.",
     mFiltreMois: "Reading species seen in {0}…",
     mFiltreApp: "Filter applied: {0}.",
-    mAffichage: "Showing: {0}.",
-    mStatsIndispo: "Statistics unavailable at this level. Try again.",
     cAutour: "Around this point",
     cRecherche: "Searching within {0}…",
     cAucune: "No observations within {0}.",
@@ -945,8 +959,6 @@ const TEXTES = {
     mRecompteEchec: "El recuento ha fallado. Inténtalo de nuevo.",
     mFiltreMois: "Leyendo especies vistas en {0}…",
     mFiltreApp: "Filtro aplicado: {0}.",
-    mAffichage: "Mostrando: {0}.",
-    mStatsIndispo: "Estadísticas no disponibles en este nivel. Reinténtalo.",
     cAutour: "Alrededor de este punto",
     cRecherche: "Buscando en un radio de {0}…",
     cAucune: "Ninguna observación en {0}.",
@@ -1064,8 +1076,6 @@ const TEXTES = {
     mRecompteEchec: "Il riconteggio è fallito. Riprova.",
     mFiltreMois: "Lettura specie viste in {0}…",
     mFiltreApp: "Filtro applicato: {0}.",
-    mAffichage: "Visualizzazione: {0}.",
-    mStatsIndispo: "Statistiche non disponibili a questo livello. Riprova.",
     cAutour: "Intorno a questo punto",
     cRecherche: "Ricerca entro {0}…",
     cAucune: "Nessuna osservazione entro {0}.",
@@ -1183,8 +1193,6 @@ const TEXTES = {
     mRecompteEchec: "Neuzählung fehlgeschlagen. Bitte erneut.",
     mFiltreMois: "Arten im {0} werden gelesen…",
     mFiltreApp: "Filter angewendet: {0}.",
-    mAffichage: "Anzeige: {0}.",
-    mStatsIndispo: "Statistik auf dieser Stufe nicht verfügbar. Erneut versuchen.",
     cAutour: "Um diesen Punkt",
     cRecherche: "Suche im Umkreis von {0}…",
     cAucune: "Keine Beobachtungen innerhalb von {0}.",
@@ -1303,8 +1311,6 @@ const TEXTES = {
     mRecompteEchec: "A recontagem falhou. Tenta de novo.",
     mFiltreMois: "Leitura das espécies vistas em {0}…",
     mFiltreApp: "Filtro aplicado: {0}.",
-    mAffichage: "Exibição: {0}.",
-    mStatsIndispo: "Estatísticas indisponíveis para este nível. Tenta de novo.",
     cAutour: "Em torno deste ponto",
     cRecherche: "Busca num raio de {0}…",
     cAucune: "Nenhuma observação em {0}.",
@@ -1387,7 +1393,6 @@ Object.entries({
   predChoisir:{fr:"Choisis une espèce pour voir où elle est attendue.",en:"Pick a species to see where it is expected.",es:"Elige una especie para ver dónde se espera.",pt:"Escolhe uma espécie para ver onde é esperada.",it:"Scegli una specie per vedere dove è attesa.",de:"Wähle eine Art, um zu sehen, wo sie erwartet wird."},
   predFaible:{fr:"peu attendue",en:"unlikely",es:"poco esperada",pt:"pouco esperada",it:"poco attesa",de:"unwahrscheinlich"},
   predForte:{fr:"très attendue",en:"very likely",es:"muy esperada",pt:"muito esperada",it:"molto attesa",de:"sehr wahrscheinlich"},
-  predEcart:{fr:"{0} cellules attendues sans observation",en:"{0} expected cells without records",es:"{0} celdas esperadas sin registros",pt:"{0} células esperadas sem registos",it:"{0} celle attese senza segnalazioni",de:"{0} erwartete Zellen ohne Nachweis"},
   oComm:{fr:"Communautés",en:"Communities",es:"Comunidades",pt:"Comunidades",it:"Comunità",de:"Gemeinschaften"},
   videComm:{fr:"L'inverse des biorégions : au lieu de regrouper les cellules qui partagent des espèces, on regroupe les espèces qui partagent des cellules. Lance d'abord l'analyse des biorégions, dont cet onglet réutilise les données.",en:"The reverse of bioregions: instead of grouping cells that share species, it groups species that share cells. Run the bioregion analysis first — this tab reuses its data.",es:"Lo contrario de las biorregiones: en lugar de agrupar celdas que comparten especies, agrupa especies que comparten celdas. Ejecuta antes el análisis de biorregiones, cuyos datos reutiliza esta pestaña.",pt:"O inverso das biorregiões: em vez de agrupar células que partilham espécies, agrupa espécies que partilham células. Executa primeiro a análise de biorregiões, cujos dados esta aba reutiliza.",it:"L'inverso delle bioregioni: invece di raggruppare le celle che condividono specie, raggruppa le specie che condividono celle. Avvia prima l'analisi delle bioregioni, di cui questa scheda riusa i dati.",de:"Die Umkehrung der Bioregionen: statt Zellen mit gemeinsamen Arten werden Arten mit gemeinsamen Zellen gruppiert. Starte zuerst die Bioregionen-Analyse, deren Daten dieser Reiter nutzt."},
   commTri:{fr:"Classer par",en:"Sort by",es:"Ordenar por",pt:"Ordenar por",it:"Ordina per",de:"Sortieren nach"},
@@ -1397,7 +1402,9 @@ Object.entries({
   commCarte:{fr:"Voir sa répartition",en:"See its distribution",es:"Ver su distribución",pt:"Ver a sua distribuição",it:"Vedi la sua distribuzione",de:"Verbreitung ansehen"},
   commPart:{fr:"Part des observations de la cellule appartenant à cette communauté",en:"Share of the cell's records belonging to this community",es:"Proporción de los registros de la celda que pertenecen a esta comunidad",pt:"Parcela dos registos da célula pertencentes a esta comunidade",it:"Quota delle segnalazioni della cella appartenenti a questa comunità",de:"Anteil der Nachweise der Zelle, die zu dieser Gemeinschaft gehören"},
   commAussi:{fr:"Aussi proche de : {0}",en:"Also close to: {0}",es:"También cercana a: {0}",pt:"Também próxima de: {0}",it:"Vicina anche a: {0}",de:"Ebenso nah an: {0}"},
-  commNiveau:{fr:"Finesse",en:"Granularity",es:"Finura",pt:"Granularidade",it:"Finezza",de:"Feinheit"},
+  commLarge:{fr:"Grands ensembles",en:"Broad groupings",es:"Grandes conjuntos",pt:"Grandes conjuntos",it:"Grandi insiemi",de:"Große Einheiten"},
+  commMoyen:{fr:"Intermédiaire",en:"Intermediate",es:"Intermedio",pt:"Intermédio",it:"Intermedio",de:"Mittel"},
+  commFin:{fr:"Communautés fines",en:"Fine communities",es:"Comunidades finas",pt:"Comunidades finas",it:"Comunità fini",de:"Feine Gemeinschaften"},
   commTitre:{fr:"Communauté {0}",en:"Community {0}",es:"Comunidad {0}",pt:"Comunidade {0}",it:"Comunità {0}",de:"Gemeinschaft {0}"},
   commEsp:{fr:"{0} espèces",en:"{0} species",es:"{0} especies",pt:"{0} espécies",it:"{0} specie",de:"{0} Arten"},
   commPeu:{fr:"moins de {0} obs.",en:"fewer than {0} records",es:"menos de {0} registros",pt:"menos de {0} registos",it:"meno di {0} segnalazioni",de:"weniger als {0} Nachweise"},
@@ -1410,6 +1417,7 @@ Object.entries({
   bioDuree:{fr:"L'analyse collecte plusieurs milliers d'observations : compte quelques minutes.",en:"The analysis collects several thousand records: allow a few minutes.",es:"El análisis recoge varios miles de registros: cuenta con unos minutos.",pt:"A análise recolhe vários milhares de registos: conta com alguns minutos.",it:"L'analisi raccoglie diverse migliaia di segnalazioni: conta qualche minuto.",de:"Die Analyse sammelt mehrere tausend Nachweise: rechne mit einigen Minuten."},
   lancerRecherche:{fr:"Lancer la recherche",en:"Run the search",es:"Iniciar la búsqueda",pt:"Iniciar a pesquisa",it:"Avvia la ricerca",de:"Suche starten"},
   coutRequetes:{fr:"environ {0} requêtes",en:"about {0} requests",es:"unas {0} peticiones",pt:"cerca de {0} pedidos",it:"circa {0} richieste",de:"etwa {0} Abfragen"},
+  bioCharger:{fr:"Charger les données",en:"Load the data",es:"Cargar los datos",pt:"Carregar os dados",it:"Carica i dati",de:"Daten laden"},
   bioLancer:{fr:"Lancer l'analyse",en:"Run the analysis",es:"Ejecutar el análisis",pt:"Executar a análise",it:"Avvia l'analisi",de:"Analyse starten"},
   bioCharge:{fr:"Collecte des observations : {0}",en:"Collecting records: {0}",es:"Recogida de observaciones: {0}",pt:"Recolha de observações: {0}",it:"Raccolta delle osservazioni: {0}",de:"Sammle Nachweise: {0}"},
   bioCalcul:{fr:"Calcul en cours…",en:"Computing…",es:"Calculando…",pt:"A calcular…",it:"Calcolo in corso…",de:"Berechnung läuft…"},
@@ -1418,7 +1426,6 @@ Object.entries({
   bioGroupe:{fr:"Groupe {0}",en:"Group {0}",es:"Grupo {0}",pt:"Grupo {0}",it:"Gruppo {0}",de:"Gruppe {0}"},
   bioCellules:{fr:"{0} cellules",en:"{0} cells",es:"{0} celdas",pt:"{0} células",it:"{0} celle",de:"{0} Zellen"},
   fermer:{fr:"Fermer",en:"Close",es:"Cerrar",pt:"Fechar",it:"Chiudi",de:"Schließen"},
-  bioPeu:{fr:"Données insuffisantes",en:"Not enough data",es:"Datos insuficientes",pt:"Dados insuficientes",it:"Dati insufficienti",de:"Zu wenige Daten"},
   bioTout:{fr:"Tout",en:"Everything",es:"Todo",pt:"Tudo",it:"Tutto",de:"Alles"},
   bioRapide:{fr:"Rapide",en:"Quick",es:"Rápido",pt:"Rápido",it:"Rapido",de:"Schnell"},
   bioMoyen:{fr:"Moyen",en:"Medium",es:"Medio",pt:"Médio",it:"Medio",de:"Mittel"},
@@ -1426,8 +1433,6 @@ Object.entries({
   bioDetail:{fr:"{0} observations, environ {1}",en:"{0} records, about {1}",es:"{0} registros, unos {1}",pt:"{0} registos, cerca de {1}",it:"{0} osservazioni, circa {1}",de:"{0} Nachweise, etwa {1}"},
   bioSec:{fr:"{0} s",en:"{0} s",es:"{0} s",pt:"{0} s",it:"{0} s",de:"{0} s"},
   bioMin:{fr:"{0} min",en:"{0} min",es:"{0} min",pt:"{0} min",it:"{0} min",de:"{0} Min."},
-  bioVolume:{fr:"Observations",en:"Records",es:"Registros",pt:"Registos",it:"Osservazioni",de:"Nachweise"},
-  bioAttendu:{fr:"Présence attendue",en:"Expected presence",es:"Presencia esperada",pt:"Presença esperada",it:"Presenza attesa",de:"Erwartetes Vorkommen"},
   bioObserve:{fr:"Déjà observée",en:"Already recorded",es:"Ya registrada",pt:"Já registada",it:"Già segnalata",de:"Bereits nachgewiesen"},
   bioPredNote:{fr:"L'intensité indique où l'espèce est attendue au vu de ses compagnes habituelles ; le liseré marque les cellules où elle a déjà été signalée. Une cellule intense et sans liseré est une piste de prospection — ou une lacune de la base. Le raisonnement échoue sur les espèces à écologie large, dont les compagnes ne disent rien.",en:"The intensity shows where the species is expected given its usual companions; the outline marks cells where it has already been recorded. An intense cell without outline is a survey lead — or a gap in the database. The reasoning fails for wide-ranging species, whose companions say nothing.",es:"La intensidad indica dónde se espera la especie según sus acompañantes habituales; el borde marca las celdas donde ya se registró. Una celda intensa sin borde es una pista de prospección, o una laguna de la base. El razonamiento falla en especies de ecología amplia.",pt:"A intensidade indica onde a espécie é esperada face às suas acompanhantes habituais; o contorno marca as células onde já foi registada. Uma célula intensa sem contorno é uma pista de prospeção, ou uma lacuna da base. O raciocínio falha em espécies de ecologia ampla.",it:"L'intensità indica dove la specie è attesa viste le sue compagne abituali; il bordo segna le celle in cui è già stata segnalata. Una cella intensa senza bordo è una pista di ricerca, o una lacuna della base. Il ragionamento fallisce sulle specie a ecologia ampia.",de:"Die Intensität zeigt, wo die Art aufgrund ihrer üblichen Begleiter erwartet wird; der Rand markiert Zellen mit vorhandenem Nachweis. Eine intensive Zelle ohne Rand ist ein Suchhinweis – oder eine Lücke in der Datenbank. Bei weit verbreiteten Arten versagt die Überlegung."},
   bioRecadrer:{fr:"Recadrer",en:"Reframe",es:"Reencuadrar",pt:"Reenquadrar",it:"Inquadra",de:"Neu ausrichten"},
@@ -2402,7 +2407,10 @@ autocompletion('#q-lieu', '#p-lieu', '/places/autocomplete',
   p => { if (!etat.lieux.some(x => x.id === p.id)) { etat.lieux.push(p); dessinerJetons(); } });
 
 autocompletion('#q-taxon', '#p-taxon', '/taxa/autocomplete',
-  t => ({ id:t.id, nom:t.preferred_common_name || t.name, detail:t.rank + ' · ' + t.name }),
+  // Le nom scientifique est conservé à part : le jeton affiche le nom vernaculaire, mais
+  // l'appariement avec d'autres référentiels ne peut se faire que sur le nom savant.
+  t => ({ id:t.id, nom:t.preferred_common_name || t.name, sci:t.name,
+          detail:t.rank + ' · ' + t.name }),
   t => { if (!etat.taxons.some(x => x.id === t.id)) { etat.taxons.push(t); dessinerJetons(); } });
 
 function dessinerJetons() {
@@ -2556,7 +2564,10 @@ async function completerManquant(gen) {
       dessinerResponsabilite(); if (vue.tri === 'resp') dessinerListe(); fait = true;
     }
     if (!etat.phenologie) {
-      await chargerMensuel(); verifier(gen); dessinerSaison(); fait = true;
+      await chargerMensuel(); verifier(gen);
+      dessinerSaison();
+      dessinerListe();          // le menu des mois cesse d'être grisé
+      fait = true;
     }
 
     if (fait) { progression(t('mComplet'), null); enregistrer(); }
@@ -2575,6 +2586,7 @@ async function completer(gen) {
     if (vue.tri === 'resp') dessinerListe();
     await chargerMensuel();               verifier(gen);
     dessinerSaison();
+    dessinerListe();            // le menu des mois cesse d'être grisé
     // Découvertes et disparitions attendent une demande explicite : ensemble elles coûtent
     // une quarantaine de requêtes, souvent pour des onglets qu'on n'ouvrira pas.
     progression(t('mComplet'), null);
@@ -3239,6 +3251,18 @@ function especeParId(id) {
    La fiche, elle, est celle du lieu interrogé ou de son ancêtre le plus proche, ce qui est
    exactement ce qu'on veut. Son absence signifie qu'aucun statut n'a été saisi : on ne conclut
    alors rien, plutôt que de présumer une introduction. */
+/* Pastille d'espèce introduite, identique partout : même icône, même position en haut à
+   gauche, décalée pour ne pas recouvrir un numéro ou une case à cocher. */
+function pastilleIntro(id, decale, enLigne) {
+  /* Le décalage n'est demandé que là où un numéro d'ordre occupe déjà le coin — la grille de
+     l'onglet Liste. Le lier au contexte par le style était trompeur : les fiches des
+     découvertes et des disparitions n'ont pas de numéro, et la pastille y flottait. */
+  return estIntroduite(id)
+    ? `<span class="intro${decale ? ' decale' : ''}${enLigne ? ' enligne' : ''}" title="${echap(t('introTitre')
+        + (origineDe(id) ? ' — ' + origineDe(id) : ''))}">!</span>`
+    : '';
+}
+
 function estIntroduite(id) {
   const e = especeParId(id);
   return !!(e && e.etab && e.etab.statut === 'introduced');
@@ -3284,8 +3308,7 @@ function ficheHTML(e, i) {
         <span class="num">${String(i + 1).padStart(3, '0')}</span>
       </a>
       ${boutonPanier(e.id)}
-      ${estIntroduite(e.id) ? `<span class="intro" title="${
-        echap(t('introTitre') + (origineDe(e.id) ? ' — ' + origineDe(e.id) : ''))}">!</span>` : ''}
+      ${pastilleIntro(e.id, true)}
       <div class="corps">
         ${blocNoms(e.nom, e.nomFr)}
         <div class="bas">
@@ -3881,7 +3904,7 @@ function dessinerResponsabilite() {
   v.innerHTML = `
     ${deborde ? `<div class="alerte">${t('debordeRef', echap(nomRef))}</div>` : ''}
     <table>
-      <thead><tr>${Object.entries(COLONNES).map(([k, col]) => {
+      <thead><tr><th class="cocher"></th>${Object.entries(COLONNES).map(([k, col]) => {
         const fleche = triResp.col === k ? `<span class="fleche">${triResp.sens < 0 ? '↓' : '↑'}</span>` : '';
         return `<th data-col="${k}"${k === 'part' ? ' style="width:30%"' : ''}>${
           echap(col.titre || nomRef)} ${fleche}</th>`;
@@ -3891,6 +3914,7 @@ function dessinerResponsabilite() {
         const p = palier(pct);
         return `
         <tr>
+          <td class="cocher">${boutonPanier(l.id)}</td>
           <td class="esp"${l.douteux ? ' title="' + echap(t('respDouteux')) + '"' : ''}
             ><a href="${lienTaxon(l.id, false)}" target="_blank" rel="noopener">
             ${blocNoms(l.nom, l.nomFr)}</a></td>
@@ -3909,6 +3933,8 @@ function dessinerResponsabilite() {
     <div class="niveaux">${Object.keys(IUCN).sort((a, b) => b - a)
       .map(code => `<span>${pastilleIUCN(+code)} ${echap(IUCN[code].n)}</span>`).join('')}</div>
     <p class="note">${t('noteFloutage')}</p>`;
+
+  brancherPanier(v);
 
   const pages = Math.ceil(lignes.length / RESP_PAR_PAGE);
   if (pages > 1) {
@@ -4162,6 +4188,7 @@ function dessinerDisparitions() {
          ${IUCN[x.e.iucn] ? `style="border-color:${IUCN[x.e.iucn].bg};
            box-shadow:inset 0 0 0 1px ${IUCN[x.e.iucn].bg}"` : ''}>
         ${boutonPanier(x.e.id)}
+        ${pastilleIntro(x.e.id)}
         <a class="img" href="https://www.inaturalist.org/observations/${x.obs}"
            target="_blank" rel="noopener">${x.e.photo
           ? `<img src="${vignette(x.e)}" loading="lazy" decoding="async" alt="">`
@@ -4458,6 +4485,7 @@ async function dessinerComparaison() {
             <a href="${lienTaxon(e.id, true)}" target="_blank" rel="noopener"
                style="text-decoration:none">${blocNoms(e.nom, e.nomFr)}</a>
             <div class="freq">${nb(e.nZone)} ${t('obs')}</div>
+            ${pastilleIntro(e.id, false, true)}
           </div>
           <div class="actions">
             <button class="plus" data-bouger="${i}:-1" aria-label="${echap(t('cpGauche'))}"
@@ -4653,6 +4681,10 @@ const BIO_TEINTES = ['#2F6B4F', '#C97E2B', '#3A63B8', '#7B3B52',
 /* Les observations collectées sont enregistrées à part, sous leur propre clé : elles pèsent
    plusieurs centaines de kilooctets et n'ont pas à alourdir l'inventaire, qui est relu à
    chaque chargement. Relancer l'analyse repart de cette réserve, sans un seul appel. */
+/* Le mode sans filtre ne figure pas dans la clé : les observations déjà collectées servent
+   dans les deux cas, seules les exclusions d'analyse changent. Il ne force donc pas de
+   nouvelle collecte — seul le bouton « Recollecter » en déclenche une, si l'on veut aussi la
+   longue traîne des espèces que le filtre écartait avant téléchargement. */
 function cleBio() { return cleInventaire() + '|bio|' + bioMax; }
 
 async function chargerBioregions(forcer = false) {
@@ -4907,6 +4939,9 @@ function analyserBio(pts) {
 
   const vivantes = unites.filter(u => u.vive && u.n >= BIO_MIN_OBS);
   const retenues = vivantes.map(u => ({ n:u.n, esp:u.esp, cases:u.cases }));
+  /* Depuis que la fusion se poursuit jusqu'à ce que toutes les unités atteignent le seuil,
+     aucune cellule ne reste sous la barre : le tableau des cellules trop maigres est vide par
+     construction. Il subsiste pour la compatibilité des enregistrements en mémoire. */
   const maigres = [];
   if (retenues.length < bioGroupes * 2) return null;
 
@@ -4929,6 +4964,10 @@ function analyserBio(pts) {
   const parAbondance = [...abondance].sort((a, b) => b[1] - a[1]);
   const tetes = new Set(parAbondance.slice(0, Math.floor(parAbondance.length * 0.02)).map(([id]) => id));
 
+  /* Le filtre des introduites porte ici, sur les espèces retenues, et non sur le comptage des
+     observations : le découpage en cellules reste ainsi rigoureusement identique dans les deux
+     cas, seule leur composition change. On compare alors deux analyses des mêmes unités, et
+     non deux découpages différents. */
   const especes = [...compte]
     .filter(([id, n]) => n >= BIO_MIN_CELL && n <= plafond && !tetes.has(id))
     .map(([id]) => id);
@@ -5333,14 +5372,24 @@ async function releverMemoireBio() {
    après coup obligerait à relancer une analyse de plusieurs minutes pour rien. */
 function reglagesBio() {
   return `
-    <select id="bio-volume">${[[1000, 'bioRapide'], [5000, 'bioMoyen'], [20000, 'bioFin'],
-      [200000, 'bioTout']]
+    <select id="bio-volume">${(() => {
+      /* Volume réellement disponible : la somme des effectifs des espèces qui franchissent le
+         seuil de collecte. Au-delà, un palier plus élevé ramènerait exactement la même chose
+         en annonçant une durée plus longue — autant le griser. Le premier palier qui couvre
+         tout reste proposé, c'est lui qui collecte l'intégralité. */
+      const seuil = seuilBio();
+      const dispo = etat.especes.reduce((a, e) => a + (e.nZone >= seuil ? e.nZone : 0), 0);
+      const paliers = [[1000, 'bioRapide'], [5000, 'bioMoyen'], [20000, 'bioFin'],
+                       [200000, 'bioTout']];
+      const premierCouvrant = (paliers.find(([v]) => v >= dispo) || paliers[paliers.length - 1])[0];
+      return paliers.filter(([v]) => v <= premierCouvrant);
+    })()
       .map(([v, k]) => {
-        /* Estimation calée sur la durée réellement constatée. La cadence entre requêtes n'en
-           représente qu'une part : s'y ajoutent le temps de réponse de chacune, les deux
-           appels de bornage, et le calcul qui suit la collecte. Mieux vaut annoncer un peu
-           trop que de faire attendre le double du temps promis. */
-        const s = Math.round(6 + (v / BIO_PAR_APPEL) * 2.8);
+        /* Estimation ajustée sur deux mesures réelles : mille observations en vingt secondes,
+           cinq mille en soixante. La droite qui passe par ces deux points donne dix secondes
+           de préparation et deux secondes par page — la cadence d'une requête par seconde ne
+           représente donc que la moitié du temps, le reste étant le délai de réponse. */
+        const s = Math.round(10 + (v / BIO_PAR_APPEL) * 2.0);
         const duree = s < 90 ? t('bioSec', s) : t('bioMin', Math.round(s / 60));
         const garde = bioEnMemoire.has(v);
         return `<option value="${v}"${v === bioMax ? ' selected' : ''}
@@ -5353,14 +5402,22 @@ function reglagesBio() {
    bouton qui décide. Enclencher plusieurs minutes de requêtes sur un simple changement de
    menu était une mauvaise surprise. */
 function brancherReglagesBio() {
+  /* Le relevé de la mémoire commande le libellé du bouton : il faut le rafraîchir avant de
+     redessiner, sans quoi il annoncerait un chargement pour un niveau déjà en réserve. */
   const refaire = () => {
     bio = null; comm = null; commArbre = null;
-    dessinerBioregions();
+    releverMemoireBio().then(dessinerBioregions);
   };
+
+  /* Le palier mémorisé peut ne plus figurer dans la liste — après un changement de zone ou de
+     seuil. Le menu affiche alors le premier de la liste, mais la variable garde l'ancienne
+     valeur : on la réaligne sur ce qui est réellement montré. */
   const bv = $('#bio-volume');
+  if (bv && bv.value && +bv.value !== bioMax) bioMax = +bv.value;
   if (bv) bv.addEventListener('change', e => { bioMax = +e.target.value; refaire(); });
 
 }
+
 
 function dessinerBioregions() {
   const v = $('#v-bio');
@@ -5374,7 +5431,7 @@ function dessinerBioregions() {
     v.innerHTML = `
       <div class="outils">
         <button class="primaire" id="bio-lancer"${bioEnCours ? ' disabled' : ''}
-          >${t('bioLancer')}</button>
+          >${t(bioEnMemoire.has(bioMax) ? 'bioLancer' : 'bioCharger')}</button>
         ${reglagesBio()}
         <span class="compte">${bioEnCours ? t('bioCalcul') : ''}</span>
       </div>
@@ -5416,9 +5473,6 @@ function dessinerBioregions() {
         </svg>
       </button>
     </div>
-    <div class="legende" style="margin-top:12px">
-      <span><i style="background:#B7C1B9"></i> ${t('bioPeu')}</span>
-    </div>
     <div class="planche" style="margin-top:18px">${groupes.map(g => {
       const G = bio.indicatrices.get(g);
       const teinte = BIO_TEINTES[g % BIO_TEINTES.length];
@@ -5438,6 +5492,8 @@ function dessinerBioregions() {
 
   v.querySelectorAll('[data-deplier]').forEach(b =>
     b.addEventListener('click', () => ouvrirGroupeBio(+b.dataset.deplier)));
+
+
 
 
 
@@ -5578,7 +5634,6 @@ async function tracerCarteBio() {
   carteBio.invalidateSize();
 
   if (coucheBio) { carteBio.removeLayer(coucheBio); coucheBio = null; }
-  /* Les cellules trop maigres sont tracées d'abord, en gris, pour rester sous les autres. */
   /* Chaque case est tracée séparément, avec son liseré : le quadrillage reste visible et
      l'on voit la granularité réelle de l'analyse. Les milliers de formes que cela représente
      passent par le rendu en canevas, seul capable de les afficher sans ralentir la carte. */
@@ -5666,6 +5721,7 @@ function fenetreEspeces(titre, especes, teinte) {
     <div class="k" style="margin:14px 0 8px">${t('bioIndic')}</div>
     <div class="mosaique">${especes.map(e => `
       <div class="tuile">
+        ${pastilleIntro(e.id)}
         <a href="https://www.inaturalist.org/taxa/${e.id}" target="_blank" rel="noopener"
            ${e.aussi !== undefined ? `title="${echap(t('commAussi', e.aussiNom || ''))}"` : ''}>
           ${e.photo ? `<img src="${echap(e.photoGrande || e.photo)}" loading="lazy" alt="">` : ''}
@@ -5682,10 +5738,27 @@ function fenetreEspeces(titre, especes, teinte) {
 
 function cadrerBio() {
   if (!carteBio || !bio || !bio.cellules.length) return;
+
+  /* On cadre sur l'emprise des cellules et non sur celle de la grille : cette dernière est le
+     rectangle englobant de toutes les observations, arrondi au cran supérieur, et déborde
+     donc de ce qui est réellement dessiné. */
   const G = bio.grille;
-  const b = L.latLngBounds([G.y0, G.x0],
-    [G.y0 + G.nj * G.pasY, G.x0 + G.ni * G.pasX]);
-  if (b) carteBio.fitBounds(b, { padding:[16, 16] });
+  let imin = Infinity, imax = -Infinity, jmin = Infinity, jmax = -Infinity;
+  for (const u of bio.cellules) for (const k of u.cases) {
+    const i = Math.floor(k / G.nj), j = k % G.nj;
+    if (i < imin) imin = i; if (i > imax) imax = i;
+    if (j < jmin) jmin = j; if (j > jmax) jmax = j;
+  }
+  if (!isFinite(imin)) return;
+
+  const b = L.latLngBounds(
+    [G.y0 + jmin * G.pasY, G.x0 + imin * G.pasX],
+    [G.y0 + (jmax + 1) * G.pasY, G.x0 + (imax + 1) * G.pasX]);
+
+  // Le conteneur vient d'apparaître : sans cette remesure, le cadrage se fait sur une taille
+  // périmée et la vue tombe à côté.
+  carteBio.invalidateSize();
+  carteBio.fitBounds(b, { padding:[16, 16] });
 }
 
 
@@ -5703,7 +5776,14 @@ function cadrerBio() {
    n'ayant pas vocation à se rattacher progressivement à des ensembles emboîtés. */
 
 let comm = null, commArbre = null;
-let commNiveau = null;       // position sur l'échelle logarithmique ; le coude la fixe
+/* Trois niveaux plutôt qu'une glissière continue. Les repères sont choisis d'après les
+   ordres de grandeur de la phytosociologie : une association compte typiquement quinze à
+   cinquante espèces, une alliance quelques dizaines, une classe plusieurs centaines. On vise
+   donc une taille moyenne de communauté, dont on déduit le nombre de coupes. */
+const NIVEAUX_COMM = { large:120, moyen:45, fin:18 };   // espèces visées par communauté
+
+
+let commNiveau = 'moyen';
 let commPage = 0;
 let commTri = 'obs';         // « obs », « esp », ou « bio:N » pour une biorégion donnée
 /* Vingt observations dans l'inventaire : c'est aussi le seuil de collecte, si bien que toute
@@ -5730,6 +5810,10 @@ function profilsEspeces() {
      peut n'en avoir que huit ici, et serait écartée à tort. C'est bien la quantité de données
      disponibles sur l'espèce qui décide si sa répartition veut dire quelque chose. */
   const inventaire = new Map(etat.especes.map(e => [e.id, e.nZone]));
+  /* Le filtre des introduites s'applique aussi ici. Depuis qu'il porte sur les espèces
+     retenues plutôt que sur le comptage — pour que le découpage en cellules reste identique
+     dans les deux cas —, la composition brute des cellules les contient toujours, et les
+     communautés les auraient reprises sans cette exclusion. */
   let ids = [...totalParEsp]
     .filter(([id]) => (inventaire.get(id) || 0) >= seuilComm())
     .sort((a, b) => (inventaire.get(b[0]) || 0) - (inventaire.get(a[0]) || 0))
@@ -5846,12 +5930,6 @@ function hauteurPourGroupes(fusions, n, k) {
   return tri[i];
 }
 
-/* Le curseur suit une échelle logarithmique du nombre de groupes : à gauche un seul groupe,
-   à droite autant que d'espèces. Une échelle linéaire consacrerait ses neuf dixièmes aux
-   partitions très fines, indiscernables entre elles. */
-function groupesPourPosition(n, position) {
-  return Math.max(1, Math.min(n, Math.round(Math.pow(n, position))));
-}
 
 function couperArbreHauteur(fusions, n, hauteur) {
   const parent = new Int32Array(n).map((_, i) => i);
@@ -5898,10 +5976,11 @@ function analyserCommunautes() {
     const fusions = wardArbre(profils);
     commArbre = { n:ids.length, seuil:seuilComm(), fusions, coude:coudeDeWard(fusions) };
     // Première ouverture : on se place d'emblée sur le découpage que les données suggèrent.
-    if (commNiveau === null)
-      commNiveau = Math.log(commArbre.coude) / Math.log(Math.max(ids.length, 2));
+
   }
-  const vise = groupesPourPosition(ids.length, commNiveau === null ? 0.35 : commNiveau);
+  // Nombre de communautés déduit de la taille moyenne visée, borné par le nombre d'espèces.
+  const cible = NIVEAUX_COMM[commNiveau] || NIVEAUX_COMM.moyen;
+  const vise = Math.max(2, Math.min(ids.length, Math.round(ids.length / cible)));
   const appartient = couperArbreHauteur(commArbre.fusions, ids.length,
     hauteurPourGroupes(commArbre.fusions, ids.length, vise));
   const parId = new Map(etat.especes.map(e => [e.id, e]));
@@ -6131,12 +6210,19 @@ function predireEspece(idEspece) {
    appartenant à cette communauté — non selon leur nombre brut, qui ne dirait que la densité
    de prospection. Une cellule où la communauté représente les trois quarts des signalements
    est bien son domaine, qu'elle compte trente observations ou trois cents. */
+/* Les communautés n'empruntent plus les teintes des biorégions. Les deux notions se lisent
+   côte à côte et une même couleur y désignait des choses différentes — une région
+   géographique d'un côté, un groupe d'espèces de l'autre —, ce qui laissait croire à une
+   correspondance inexistante. Les fiches de communautés portent donc un gris neutre, et seuls
+   les rubans de répartition conservent les teintes des biorégions, où elles ont un sens. */
+const TEINTE_COMM = '#5D6E63';
+
 let carteComm = null, coucheComm = null;
 
 function carteCommunaute(i) {
   const G = comm && comm[i];
   if (!G || !bio) return;
-  const teinte = BIO_TEINTES[i % BIO_TEINTES.length];
+  const teinte = TEINTE_COMM;
   const membres = new Set(G.especes.filter(e => !e.emprunt).map(e => e.id));
 
   const f = $('#bio-fen');
@@ -6207,8 +6293,12 @@ function carteCommunaute(i) {
       if (voulu === rendu) return;
       rendu = voulu;
       if (coucheComm) { carteComm.removeLayer(coucheComm); coucheComm = null; }
+      /* Mêmes couleurs que l'onglet Carte : la grille garde le dégradé de densité d'iNaturalist,
+         orange, et les points prennent le vert du site. Teinter la grille de la couleur de la
+         communauté la rendait illisible — ce dégradé porte l'information d'effectif, et le
+         remplacer par une teinte unie revenait à la perdre. */
       const p = new URLSearchParams(base);
-      p.set('color', teinte);
+      if (rendu === 'points') p.set('color', '#2F6B4F');
       coucheComm = L.tileLayer(API + '/' + rendu + '/{z}/{x}/{y}.png?' + p.toString(),
         { maxZoom:19, opacity:0.9, keepBuffer:1, updateWhenIdle:true,
           updateWhenZooming:false }).addTo(carteComm);
@@ -6256,14 +6346,9 @@ function dessinerCommunautes() {
 
   v.innerHTML = `
     <div class="outils">
-      <label class="glissiere"><span>${t('commNiveau')}</span>
-        <input type="range" id="comm-k" min="0" max="1000" step="1" list="comm-crans"
-          value="${Math.round(commNiveau * 1000)}">
-        <datalist id="comm-crans">${[10, 100, 1000]
-          .filter(v => v < commTotal)
-          .map(v => `<option value="${Math.round(Math.log(v) / Math.log(commTotal) * 1000)}"
-            label="${v}"></option>`).join('')}</datalist>
-        <b id="comm-k-val">${nb(comm.length)}</b></label>
+      <select id="comm-k">${[['large', 'commLarge'], ['moyen', 'commMoyen'], ['fin', 'commFin']]
+        .map(([v, k]) => `<option value="${v}"${commNiveau === v ? ' selected' : ''}
+          >${t(k)}</option>`).join('')}</select>
       <select id="comm-tri">
         <option value="obs"${commTri === 'obs' ? ' selected' : ''}>${t('commTriObs')}</option>
         <option value="esp"${commTri === 'esp' ? ' selected' : ''}>${t('commTriEsp')}</option>
@@ -6278,9 +6363,8 @@ function dessinerCommunautes() {
     <div id="comm-resultats" class="jetons" style="margin-bottom:6px"></div>
     <div class="planche">${comm.slice(commPage * 12, commPage * 12 + 12).map((G, iRel) => {
       const i = commPage * 12 + iRel;
-      const teinte = BIO_TEINTES[i % BIO_TEINTES.length];
       const parts = [...G.parBio.entries()].sort((a, b) => b[1] - a[1]);
-      return `<div class="colonne" style="border-left:10px solid ${teinte}">
+      return `<div class="colonne" style="border-left:10px solid ${TEINTE_COMM}">
         <div class="entete"><div>
           <div class="k" style="margin:0 0 3px">${t('commTitre', i + 1)}</div>
           <div class="fr">${echap(G.nom || '')}</div>
@@ -6320,7 +6404,7 @@ function dessinerCommunautes() {
     const i = +b.dataset.comm;
     fenetreEspeces((comm[i].nom || t('commTitre', i + 1))
       + ' · ' + t('commEsp', nb(comm[i].nMembres)),
-      comm[i].especes.slice(0, 24), BIO_TEINTES[i % BIO_TEINTES.length]);
+      comm[i].especes.slice(0, 24), TEINTE_COMM);
   }));
 
   /* Recherche d'espèce : elle porte sur les seules espèces retenues par l'analyse, donc
@@ -6353,7 +6437,7 @@ function dessinerCommunautes() {
       const i = +b.dataset.ouvrirComm;
       fenetreEspeces((comm[i].nom || t('commTitre', i + 1))
         + ' · ' + t('commEsp', nb(comm[i].nMembres)),
-        comm[i].especes.slice(0, 24), BIO_TEINTES[i % BIO_TEINTES.length]);
+        comm[i].especes.slice(0, 24), TEINTE_COMM);
     }));
   });
 
@@ -6363,11 +6447,12 @@ function dessinerCommunautes() {
     commTri = e.target.value; commPage = 0; dessinerCommunautes();
   });
 
+
   const ck = $('#comm-k');
   if (ck) {
     // L'arbre est conservé : changer de niveau ne coûte qu'une coupe, jamais un recalcul.
     ck.addEventListener('change', e => {
-      commNiveau = +e.target.value / 1000;
+      commNiveau = e.target.value;
       comm = null; commPage = 0; dessinerCommunautes();
     });
   }
@@ -6394,8 +6479,11 @@ function teinteAttendue(v) {
   return 'rgb(' + c.join(',') + ')';
 }
 
+/* Onglet Prédiction, retiré de l'interface mais conservé : la section correspondante n'existe
+   plus dans le document, d'où la vérification. */
 function dessinerPrediction() {
-  const v = $('#v-pred');
+  const v = document.querySelector('#v-pred');
+  if (!v) return;
   if (!v) return;
   if (!bio) {
     v.innerHTML = `<div class="vide"><strong>${t('oPred')}</strong>${t('videPred')}</div>`;
@@ -6539,6 +6627,7 @@ function cadrerPred() {
   cartePredOnglet.invalidateSize();
   if (b) cartePredOnglet.fitBounds(b, { padding:[16, 16] });
 }
+
 
 /* ============================================================
    Choisir un lieu sur une carte
@@ -6827,6 +6916,7 @@ function dessinerDecouvertes() {
       (decPage + 1) * DEC_PAR_PAGE).map(x => `
       <div class="fiche${x.mondiale ? ' mondiale' : ''}">
         ${boutonPanier(x.e.id)}
+        ${pastilleIntro(x.e.id)}
         <a class="img" href="https://www.inaturalist.org/observations/${x.obs}"
            target="_blank" rel="noopener">${x.e.photo
           ? `<img src="${vignette(x.e)}" loading="lazy" decoding="async" alt="">`
@@ -6920,6 +7010,7 @@ function panneauChercher() {
       (picPage + 1) * PIC_PAR_PAGE).map(x => `
       <div class="fiche">
         ${boutonPanier(x.e.id)}
+        ${pastilleIntro(x.e.id, true)}
         <a class="img" href="${lienTaxon(x.e.id, true)}" target="_blank" rel="noopener">${x.e.photo
           ? `<img src="${vignette(x.e)}" loading="lazy" decoding="async" alt="">`
           : ''}<span class="num">${Math.round(x.part * 100)} %</span></a>
