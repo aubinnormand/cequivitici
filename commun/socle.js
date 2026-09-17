@@ -1241,6 +1241,9 @@ function dessiner(opt = {}) {
     if (opt.tot && !m.tot) continue;
     essayer(m, 'dessiner', m.dessiner);
   }
+  /* Les pastilles suivent l'état des données : une phase de chargement qui se termine sans
+     message de progression laissait sinon un onglet marqué comme vide alors qu'il était prêt. */
+  majOnglets();
 }
 
 function dessinerUn(...ids) {

@@ -648,19 +648,22 @@ function seuilBio() {
 }
 
 function taxonsBio() {
-  /* Les espèces introduites ne sont plus écartées d'office. Le statut vient des listes
-     d'établissement d'iNaturalist, renseignées par la communauté lieu par lieu, et il est
-     souvent faux : des méditerranéennes strictement indigènes comme le chêne kermès ou le
-     ciste cotonneux y figurent comme introduites, sans doute parce qu'un statut saisi pour
-     un autre territoire remonte par héritage. Les exclure automatiquement retirait donc de
-     l'analyse des espèces parfaitement caractéristiques du milieu — un tort bien plus grave
-     que celui de garder quelques exotiques. */
+  /* Les espèces introduites sont écartées de la collecte, et donc des biorégions comme des
+     communautés : ce que ces deux analyses cherchent est la composition du milieu naturel,
+     qu'une exotique plantée ou échappée décrit mal.
+
+     La réserve : le statut d'établissement d'iNaturalist est saisi territoire par territoire
+     et remonte parfois d'un territoire lointain, si bien que des espèces indigènes y figurent
+     comme introduites. Quelques espèces caractéristiques peuvent donc manquer à l'analyse ;
+     c'est le prix de l'exclusion, et il se vérifie d'un coup d'œil dans la planche, avec le
+     menu « Introduites seulement ». */
   const seuil = seuilBio();
   const tries = etat.especes
-    .filter(e => e.nZone >= seuil)
+    .filter(e => e.nZone >= seuil && !estIntroduite(e.id))
     .sort((a, b) => b.nZone - a.nZone);
+  const exclues = etat.especes.filter(e => e.nZone >= seuil && estIntroduite(e.id)).length;
   console.info('Biorégions : seuil de ' + seuil + ' obs. par espèce, '
-    + tries.length + ' espèces retenues.');
+    + tries.length + ' espèces retenues, ' + exclues + ' introduites écartées.');
   if (!tries.length) return null;
   let choix = tries;
 
@@ -688,7 +691,9 @@ const BIO_TEINTES = ['#2F6B4F', '#C97E2B', '#3A63B8', '#7B3B52',
    dans les deux cas, seules les exclusions d'analyse changent. Il ne force donc pas de
    nouvelle collecte — seul le bouton « Recollecter » en déclenche une, si l'on veut aussi la
    longue traîne des espèces que le filtre écartait avant téléchargement. */
-function cleBio() { return cleInventaire() + '|bio|' + bioMax; }
+/* « bio2 » : les réserves d'avant l'exclusion des introduites contiennent leurs observations,
+   et donneraient un découpage différent de celui qu'on annonce. Elles ne sont plus relues. */
+function cleBio() { return cleInventaire() + '|bio2|' + bioMax; }
 
 async function chargerBioregions(forcer = false) {
   if (bioEnCours || !etat.especes.length) return;
@@ -810,6 +815,9 @@ async function chargerBioregions(forcer = false) {
 
 /* Grille, matrice, composantes principales et regroupement : aucune requête. */
 function analyserBio(pts) {
+  /* Les réserves écrites avant l'exclusion peuvent encore contenir des introduites : on les
+     retire ici aussi, pour que le découpage ne dépende pas de l'âge de la collecte. */
+  pts = pts.filter(p => !estIntroduite(p.t));
   if (pts.length < 200) return null;
 
   // Emprise réelle des observations.
@@ -966,10 +974,6 @@ function analyserBio(pts) {
   const parAbondance = [...abondance].sort((a, b) => b[1] - a[1]);
   const tetes = new Set(parAbondance.slice(0, Math.floor(parAbondance.length * 0.02)).map(([id]) => id));
 
-  /* Le filtre des introduites porte ici, sur les espèces retenues, et non sur le comptage des
-     observations : le découpage en cellules reste ainsi rigoureusement identique dans les deux
-     cas, seule leur composition change. On compare alors deux analyses des mêmes unités, et
-     non deux découpages différents. */
   const especes = [...compte]
     .filter(([id, n]) => n >= BIO_MIN_CELL && n <= plafond && !tetes.has(id))
     .map(([id]) => id);
@@ -979,20 +983,21 @@ function analyserBio(pts) {
   if (especes.length < 10) return null;
   const rang = new Map(especes.map((id, k) => [id, k]));
 
-  /* Lignes creuses : normalisation par cellule puis logarithme. La normalisation met sur un
-     pied d'égalité une cellule visitée mille fois et une autre visitée cinquante ; le
-     logarithme empêche quelques espèces très photographiées de dominer les composantes. */
-  /* Chaîne de traitement, en cinq temps.
+  /* Chaîne de traitement, en trois temps.
 
      1. Fréquences relatives : l'effectif de chaque espèce divisé par le total de sa cellule,
-        de sorte que toutes les cellules pèsent le même poids quel que soit l'effort.
-     2. Logarithme décimal, après division par la plus petite valeur non nulle — l'échelle
-        démarre ainsi à zéro plutôt qu'en négatif.
-     3. Corrélations de Pearson entre espèces, établies sur ces valeurs logarithmiques.
-     4. Correction appliquée aux fréquences brutes et non aux logarithmes : multiplier des
-        logarithmes par des corrélations mêlait deux échelles sans signification commune.
-        Chaque cellule reçoit alors une valeur pour toutes les espèces, y compris absentes.
-     5. Retour au logarithme sur les valeurs corrigées, pour l'analyse. */
+        ce total ne comptant que les espèces retenues pour l'analyse. Toutes les cellules
+        pèsent ainsi le même poids, qu'elles aient été visitées cinquante fois ou mille.
+     2. Division par la plus petite fréquence non nulle de toute la zone, un seul minimum
+        commun : l'échelle ne dépend plus de la taille des cellules.
+     3. log10(1 + x). Le logarithme empêche quelques espèces très photographiées de dominer
+        les composantes ; le « 1 + » garde toute présence strictement positive. Avec log10(x)
+        seul, la présence au minimum exact valait log10(1) = 0 et se confondait avec une
+        absence.
+
+     Une correction par les corrélations de Pearson entre espèces (réinjecter dans chaque
+     cellule les espèces liées à celles qu'on y trouve) a été essayée puis mise en sommeil :
+     les valeurs vont directement à l'analyse en composantes principales. */
   const brut = retenues.map(c => {
     const idx = [], val = [];
     let total = 0;
@@ -1012,18 +1017,17 @@ function analyserBio(pts) {
     return l2.map(l => {
       const idx = [], val = [];
       for (let z = 0; z < l.idx.length; z++) {
-        const y = l.val[z] > 0 ? Math.log10(l.val[z] / mini) : 0;
-        if (y > 0) { idx.push(l.idx[z]); val.push(y); }
+        if (!(l.val[z] > 0)) continue;
+        idx.push(l.idx[z]); val.push(Math.log10(1 + l.val[z] / mini));
       }
       return { idx, val };
     });
   };
 
   const lignes = logNorm(brut);
-  const lissees = lignes;
   const donneesBrutes = { lignes, nEsp:especes.length };
 
-  const scores = acpCreuse(lissees, especes.length, BIO_AXES);
+  const scores = acpCreuse(lignes, especes.length, BIO_AXES);
   /* Nombre de régions suggéré par la méthode du coude, comme pour les communautés : les
      coûts de fusion croissent doucement tant qu'on réunit des cellules semblables, puis
      brusquement quand il faut rapprocher des ensembles distincts. On ne l'applique qu'au
@@ -1563,8 +1567,10 @@ async function tracerCarteBio() {
       const parts = cellulesCoupees(boite, anneaux);
       if (!parts.length) continue;
       const couleur = BIO_TEINTES[g % BIO_TEINTES.length];
+      /* Presque opaques : à 0,62, deux teintes voisines posées sur un fond irrégulier —
+         relief, satellite — devenaient difficiles à départager. Le fond reste deviné. */
       formes.push(L.polygon(parts, { renderer:toile, weight:0,
-        fillColor:couleur, fillOpacity:0.62 })
+        fillColor:couleur, fillOpacity:0.88 })
         .bindTooltip(t('bioGroupe', g + 1))
         .on('click', () => ouvrirGroupeBio(g)));
     }
@@ -1620,6 +1626,13 @@ function brancherFermeture(f) {
   const x = f.querySelector('#bio-fen-x');
   if (x) x.addEventListener('click', () => { f.hidden = true; });
   f.onclick = ev => { if (ev.target === f) f.hidden = true; };
+  // La touche d'échappement ferme aussi : le gestionnaire se retire de lui-même.
+  const clavier = ev => {
+    if (ev.key !== 'Escape') return;
+    f.hidden = true;
+    document.removeEventListener('keydown', clavier);
+  };
+  document.addEventListener('keydown', clavier);
 }
 
 function fenetreEspeces(titre, especes, teinte) {
@@ -1683,16 +1696,15 @@ function cadrerBio() {
    n'ayant pas vocation à se rattacher progressivement à des ensembles emboîtés. */
 
 let comm = null, commArbre = null;
-/* Trois niveaux plutôt qu'une glissière continue. Les repères sont choisis d'après les
-   ordres de grandeur de la phytosociologie : une association compte typiquement quinze à
-   cinquante espèces, une alliance quelques dizaines, une classe plusieurs centaines. On vise
-   donc une taille moyenne de communauté, dont on déduit le nombre de coupes. */
-const NIVEAUX_COMM = { large:120, moyen:45, fin:18 };   // espèces visées par communauté
+/* Un seul niveau de découpage, fin, sans menu. Le repère vient des ordres de grandeur de la
+   phytosociologie : une association compte typiquement quinze à cinquante espèces. On vise
+   une taille moyenne de communauté de dix-huit espèces, dont on déduit le nombre de coupes.
+   Les niveaux plus larges (45 et 120 espèces) ont été retirés : ils mélangeaient des milieux
+   que les biorégions séparent déjà. */
+const COMM_CIBLE = 18;       // espèces visées par communauté
 
-
-let commNiveau = 'moyen';
 let commPage = 0;
-let commTri = 'obs';         // « obs », « esp », ou « bio:N » pour une biorégion donnée
+let commBio = null;          // biorégion affichée seule, ou null pour toutes
 /* Vingt observations dans l'inventaire : c'est aussi le seuil de collecte, si bien que toute
    espèce ramenée est classable. En deçà, la répartition d'une espèce ne mesure que le hasard
    du prélèvement. */
@@ -1717,10 +1729,8 @@ function profilsEspeces() {
      peut n'en avoir que huit ici, et serait écartée à tort. C'est bien la quantité de données
      disponibles sur l'espèce qui décide si sa répartition veut dire quelque chose. */
   const inventaire = new Map(etat.especes.map(e => [e.id, e.nZone]));
-  /* Le filtre des introduites s'applique aussi ici. Depuis qu'il porte sur les espèces
-     retenues plutôt que sur le comptage — pour que le découpage en cellules reste identique
-     dans les deux cas —, la composition brute des cellules les contient toujours, et les
-     communautés les auraient reprises sans cette exclusion. */
+  /* Les introduites ont été écartées dès la collecte : rien à filtrer ici, les cellules n'en
+     contiennent pas. */
   let ids = [...totalParEsp]
     .filter(([id]) => (inventaire.get(id) || 0) >= seuilComm())
     .sort((a, b) => (inventaire.get(b[0]) || 0) - (inventaire.get(a[0]) || 0))
@@ -1886,8 +1896,7 @@ function analyserCommunautes() {
 
   }
   // Nombre de communautés déduit de la taille moyenne visée, borné par le nombre d'espèces.
-  const cible = NIVEAUX_COMM[commNiveau] || NIVEAUX_COMM.moyen;
-  const vise = Math.max(2, Math.min(ids.length, Math.round(ids.length / cible)));
+  const vise = Math.max(2, Math.min(ids.length, Math.round(ids.length / COMM_CIBLE)));
   const appartient = couperArbreHauteur(commArbre.fusions, ids.length,
     hauteurPourGroupes(commArbre.fusions, ids.length, vise));
   const parId = new Map(etat.especes.map(e => [e.id, e]));
@@ -1978,6 +1987,22 @@ function analyserCommunautes() {
       G.total += n;
     }
   });
+
+  /* Part corrigée de l'effort. Compter brut avantageait les biorégions les plus observées :
+     une communauté répandue partout tombait « dominante » dans la région où l'on photographie
+     le plus, grande ou très prospectée. On rapporte donc chaque effectif au total de la
+     biorégion (toutes communautés confondues), ce qui donne une densité relative, puis on
+     ramène ces densités à cent pour cent. Une communauté également répartie obtient la même
+     part partout ; une communauté propre à une région y concentre sa part, même si la région
+     est peu observée. */
+  const totBio = new Map();
+  for (const G of groupes.values())
+    for (const [g, n] of G.parBio) totBio.set(g, (totBio.get(g) || 0) + n);
+  for (const G of groupes.values()) {
+    const dens = [...G.parBio].map(([g, n]) => [g, n / (totBio.get(g) || 1)]);
+    const somme = dens.reduce((a, [, d]) => a + d, 0) || 1;
+    G.partBio = new Map(dens.map(([g, d]) => [g, d / somme]));
+  }
 
   // De la plus fournie à la plus modeste, comme pour les biorégions.
   // Classement par masse d'observations : une communauté nombreuse mais confidentielle
@@ -2183,18 +2208,19 @@ function carteCommunaute(i) {
   }, 40);
 }
 
-/* Classement des communautés. Trier par prédominance dans une biorégion donnée répond à une
-   question précise : quelles communautés font la spécificité de cette région ? C'est la part
-   des observations de la communauté qui tombe dans cette biorégion, non leur nombre. */
+/* La biorégion où une communauté pèse le plus, d'après sa part corrigée de l'effort. */
+function dominante(G) {
+  let g = -1, max = 0;
+  for (const [b, x] of (G.partBio || [])) if (x > max) { max = x; g = b; }
+  return { g, part:max };
+}
+
+/* Classement des communautés : de la plus observée à la moins observée, sans plus. Le
+   découpage par biorégion se fait par les boutons de filtre, pas par l'ordre de la liste —
+   regrouper et trier en même temps donnait une vue d'ensemble où les grosses communautés se
+   perdaient derrière l'ordre des régions. */
 function ordonnerCommunautes(liste) {
-  const c = [...liste];
-  if (commTri === 'esp') c.sort((a, b) => b.nMembres - a.nMembres);
-  else if (commTri.startsWith('bio:')) {
-    const g = +commTri.slice(4);
-    const part = G => (G.parBio.get(g) || 0) / (G.total || 1);
-    c.sort((a, b) => part(b) - part(a));
-  } else c.sort((a, b) => b.obs - a.obs);
-  return c;
+  return [...liste].sort((a, b) => b.obs - a.obs);
 }
 
 function dessinerCommunautes() {
@@ -2211,29 +2237,48 @@ function dessinerCommunautes() {
     return;
   }
 
+  const groupesBio = [...new Set(bio.cellules.map(c => c.groupe))].sort((a, b) => a - b);
+  const compte = new Map(groupesBio.map(g => [g, comm.filter(G => dominante(G).g === g).length]));
+  if (commBio !== null && !compte.get(commBio)) commBio = null;
+
+  /* Un bouton par biorégion plutôt qu'une longue liste continue : passé une dizaine de
+     communautés, faire défiler pour retrouver celles d'une région ne marchait plus. « Toutes »
+     garde la lecture d'ensemble, avec ses intertitres. */
+  /* Filtré sur une biorégion : les communautés dont elle est la dominante, de celle qui y
+     concentre la plus grande part de ses observations à la plus partagée. C'est l'ordre qui
+     répond à « qu'est-ce qui fait la spécificité de cette région ». */
+  const liste = commBio === null ? comm
+    : comm.filter(G => dominante(G).g === commBio)
+          .sort((a, b) => (b.partBio.get(commBio) || 0) - (a.partBio.get(commBio) || 0));
+  const pages = Math.max(1, Math.ceil(liste.length / 12));
+  if (commPage >= pages) commPage = 0;
+  const page = liste.slice(commPage * 12, commPage * 12 + 12);
+
   v.innerHTML = `
     <div class="outils">
-      <select id="comm-k">${[['large', 'commLarge'], ['moyen', 'commMoyen'], ['fin', 'commFin']]
-        .map(([v, k]) => `<option value="${v}"${commNiveau === v ? ' selected' : ''}
-          >${t(k)}</option>`).join('')}</select>
-      <select id="comm-tri">
-        <option value="obs"${commTri === 'obs' ? ' selected' : ''}>${t('commTriObs')}</option>
-        <option value="esp"${commTri === 'esp' ? ' selected' : ''}>${t('commTriEsp')}</option>
-        ${[...new Set(bio.cellules.map(c => c.groupe))].sort((a, b) => a - b).map(g =>
-          `<option value="bio:${g}"${commTri === 'bio:' + g ? ' selected' : ''}
-            >${t('commTriBio', g + 1)}</option>`).join('')}
-      </select>
+      <div class="comm-filtres">
+        <button class="jeton-bio${commBio === null ? ' actif' : ''}" data-bio="">${
+          t('commToutes')} <b>${nb(comm.length)}</b></button>
+        ${groupesBio.map(g => `<button class="jeton-bio${commBio === g ? ' actif' : ''}" data-bio="${g}"
+          ><i style="background:${BIO_TEINTES[g % BIO_TEINTES.length]}"></i>${
+          t('bioGroupe', g + 1)} <b>${nb(compte.get(g) || 0)}</b></button>`).join('')}
+      </div>
+    </div>
+    <div class="outils">
       <input type="text" id="comm-rech" class="rech" data-tp="commRech"
         placeholder="${echap(t('commRech'))}" autocomplete="off">
       <span class="compte">${t('commEsp', nb(comm.reduce((a, G) => a + G.nMembres, 0)))}</span>
     </div>
     <div id="comm-resultats" class="jetons" style="margin-bottom:6px"></div>
-    <div class="planche">${comm.slice(commPage * 12, commPage * 12 + 12).map((G, iRel) => {
-      const i = commPage * 12 + iRel;
-      const parts = [...G.parBio.entries()].sort((a, b) => b[1] - a[1]);
-      return `<div class="colonne" style="border-left:10px solid ${TEINTE_COMM}">
+    <div class="planche">${page.map(G => {
+      const i = comm.indexOf(G);
+      const parts = [...(G.partBio || new Map()).entries()].sort((a, b) => b[1] - a[1]);
+      const dom = dominante(G);
+      return `<div class="colonne">
         <div class="entete"><div>
           <div class="k" style="margin:0 0 3px">${t('commTitre', i + 1)}</div>
+          ${dom.g >= 0 ? `<div class="comm-dom" title="${echap(t('commPartTitre'))}"><i style="background:${
+            BIO_TEINTES[dom.g % BIO_TEINTES.length]}"></i>${t('bioGroupe', dom.g + 1)} · ${pourcent(dom.part * 100)}</div>` : ''}
           <div class="fr">${echap(G.nom || '')}</div>
           <div class="freq">${t('commEsp', nb(G.especes.length))}<br>${nb(G.obs)} ${t('obs')}</div>
         </div></div>
@@ -2243,22 +2288,25 @@ function dessinerCommunautes() {
         <div style="padding:10px 12px">
           <button class="discret" data-carte-comm="${i}"
             style="width:100%; margin-bottom:10px">${t('commCarte')}</button>
-          <div class="rubans">${parts.map(([g, n]) => `
-            <span style="width:${Math.max(2, (n / (G.total || 1)) * 100).toFixed(1)}%;
+          <div class="rubans">${parts.map(([g, x]) => `
+            <span style="width:${Math.max(2, x * 100).toFixed(1)}%;
               background:${BIO_TEINTES[g % BIO_TEINTES.length]}"
-              title="${t('bioGroupe', g + 1)} · ${pourcent((n / (G.total || 1)) * 100)}"></span>`).join('')}</div>
+              title="${t('bioGroupe', g + 1)} · ${pourcent(x * 100)}"></span>`).join('')}</div>
         </div>
       </div>`;
     }).join('')}</div>
-    ${comm.length > 12 ? `<div class="outils" style="margin-top:16px">
+    ${pages > 1 ? `<div class="outils" style="margin-top:16px">
       <button class="discret" id="comm-prec"${commPage === 0 ? ' disabled' : ''}>‹</button>
-      <span class="compte" style="margin-left:0">${commPage + 1} / ${
-        Math.ceil(comm.length / 12)}</span>
-      <button class="discret" id="comm-suiv"${(commPage + 1) * 12 >= comm.length
-        ? ' disabled' : ''}>›</button>
+      <span class="compte" style="margin-left:0">${commPage + 1} / ${pages}</span>
+      <button class="discret" id="comm-suiv"${commPage + 1 >= pages ? ' disabled' : ''}>›</button>
     </div>` : ''}
     <p class="note">${t('commNote')}</p>`;
 
+  v.querySelectorAll('[data-bio]').forEach(b => b.addEventListener('click', () => {
+    commBio = b.dataset.bio === '' ? null : +b.dataset.bio;
+    commPage = 0;
+    dessinerCommunautes();
+  }));
   const cp = $('#comm-prec'), cn = $('#comm-suiv');
   if (cp) cp.addEventListener('click', () => { commPage--; dessinerCommunautes(); });
   if (cn) cn.addEventListener('click', () => { commPage++; dessinerCommunautes(); });
@@ -2271,7 +2319,7 @@ function dessinerCommunautes() {
     const i = +b.dataset.comm;
     fenetreEspeces((comm[i].nom || t('commTitre', i + 1))
       + ' · ' + t('commEsp', nb(comm[i].nMembres)),
-      comm[i].especes.slice(0, 24), TEINTE_COMM);
+      comm[i].especes, TEINTE_COMM);
   }));
 
   /* Recherche d'espèce : elle porte sur les seules espèces retenues par l'analyse, donc
@@ -2304,25 +2352,11 @@ function dessinerCommunautes() {
       const i = +b.dataset.ouvrirComm;
       fenetreEspeces((comm[i].nom || t('commTitre', i + 1))
         + ' · ' + t('commEsp', nb(comm[i].nMembres)),
-        comm[i].especes.slice(0, 24), TEINTE_COMM);
+        comm[i].especes, TEINTE_COMM);
     }));
   });
 
 
-  const ct = $('#comm-tri');
-  if (ct) ct.addEventListener('change', e => {
-    commTri = e.target.value; commPage = 0; dessinerCommunautes();
-  });
-
-
-  const ck = $('#comm-k');
-  if (ck) {
-    // L'arbre est conservé : changer de niveau ne coûte qu'une coupe, jamais un recalcul.
-    ck.addEventListener('change', e => {
-      commNiveau = e.target.value;
-      comm = null; commPage = 0; dessinerCommunautes();
-    });
-  }
 }
 
 

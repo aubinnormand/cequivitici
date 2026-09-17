@@ -862,8 +862,7 @@ function dessinerCandidats() {
   v.innerHTML = barreCandidats(liste.length) +
     `<p class="note">${t('qNote', nomPeriode(quandVoir), nb(total))}</p>
      ${etat.panier.length ? barrePanier() : ''}
-     <div class="expl">${panneauArbre()}<div>${corps}
-       <div id="q-attendues" class="attendues">${htmlAttendues()}</div></div></div>
+     <div class="expl">${panneauArbre()}<div>${corps}</div></div>
      <p class="note">${t('qBiais')}</p>`;
 
   brancherCandidats();
@@ -871,12 +870,10 @@ function dessinerCandidats() {
   brancherLignage('#v-candidats');
   const p = v.querySelector('.arbre');
   if (p) p.scrollTop = defil;
-  for (const e of attendues.liste) especesHors.set(e.id, e);
   /* Au point, toutes les espèces affichées sont sondées : c'est ce qui permet de filtrer. */
   const aSonder = auPoint() ? etat.especes.filter(e => e.nZone > 0).map(e => e.id).slice(0, 400)
                             : liste.slice(0, 60).map(e => e.id);
   sonderGeo([...aSonder, ...etat.panier]);
-  chercherAttendues();
 }
 
 function barreCandidats(n) {
@@ -954,122 +951,6 @@ function brancherCandidats() {
     }));
   brancherPanier('#v-candidats', majPanier);
 }
-
-/* ---- Attendues, jamais observées dans la zone ----------------------------- */
-
-/* La liste des candidats ne contient que ce qui a été observé dans la zone. Or une espèce
-   discrète peut y vivre sans que personne ne l'ait jamais notée. On cherche donc les espèces
-   du même groupe observées aux alentours, pendant la même période, et l'on garde celles que
-   le modèle géographique attend dans la zone. Elles viennent en fin de liste, à part : ce
-   sont des hypothèses, pas des constats. */
-
-const ATT_MAX = 60;                   // espèces des alentours soumises au modèle
-let attendues = { cle:'', etat:'rien', liste:[], faits:0, total:0, rayon:0 };
-
-function cleAttendues() {
-  return [cleZoneGeo(), etat.taxons.map(x => x.id).join(','), quandVoir, etat.qualite,
-          dateReference || ''].join('|');
-}
-
-function rayonAlentours() {
-  const b = bornesLocales();
-  if (!b || !b.isValid()) return null;
-  const c = b.getCenter();
-  const demi = c.distanceTo(b.getNorthEast()) / 1000;
-  return { lat:+c.lat.toFixed(4), lng:+c.lng.toFixed(4),
-           rayon:Math.round(Math.max(25, Math.min(150, demi * 3))) };
-}
-
-async function chercherAttendues() {
-  const cle = cleAttendues();
-  if (attendues.cle === cle && attendues.etat !== 'rien') return;
-  const zone = rayonAlentours();
-  if (!zone) return;
-  attendues = { cle, etat:'cours', liste:[], faits:0, total:0, rayon:zone.rayon };
-  majAttendues();
-
-  try {
-    const p = { lat:zone.lat, lng:zone.lng, radius:zone.rayon, captive:'false', verifiable:'true',
-                per_page:200, locale:langue };
-    if (etat.qualite === 'research') p.quality_grade = 'research';
-    if (etat.taxons.length) p.taxon_id = etat.taxons.map(x => x.id).join(',');
-    if (quandVoir === FENETRE && !fenetreIndispo()) p.week = semainesFenetre().join(',');
-    else if (quandVoir > 0) p.month = quandVoir;
-    const d = await appel('/observations/species_counts', p, false, true);
-    if (attendues.cle !== cle) return;
-
-    const locales = new Set(etat.especes.filter(e => e.nZone > 0).map(e => e.id));
-    const pool = (d.results || [])
-      .filter(r => r.taxon && (r.taxon.rank_level || 99) <= 10 && !locales.has(r.taxon.id))
-      .slice(0, ATT_MAX);
-    attendues.total = pool.length;
-    majAttendues();
-
-    await Promise.all(pool.map(async r => {
-      const v = await presenceAttendue(r.taxon.id);
-      if (attendues.cle !== cle) return;
-      attendues.faits++;
-      if (v === 'oui') {
-        const tx = r.taxon, ph = tx.default_photo;
-        attendues.liste.push({
-          id:tx.id, nom:tx.name, nomFr:tx.preferred_common_name || '', rang:tx.rank,
-          anc:tx.ancestor_ids || [], nZone:0, nz:{ toutes:0, research:0 },
-          nAlentours:r.count,
-          photo: ph ? (ph.medium_url || String(ph.url || '').replace('/square.', '/medium.')) : null,
-          photoPetite: ph ? (ph.square_url || ph.url) : null,
-          iucn:null, attendue:true
-        });
-      }
-      if (attendues.faits % 6 === 0) majAttendues();
-    }));
-    if (attendues.cle !== cle) return;
-    attendues.liste.sort((a, b) => b.nAlentours - a.nAlentours);
-    attendues.etat = 'fait';
-  } catch (e) {
-    if (attendues.cle === cle) attendues.etat = 'erreur';
-  }
-  majAttendues();
-}
-
-function ficheAttendue(e) {
-  const img = vignette(e);
-  return `<div class="fiche attendue">
-    <a class="img" href="${lienTaxon(e.id, false)}" target="_blank" rel="noopener">
-      ${img ? `<img src="${echap(img)}" loading="lazy" decoding="async" alt="">` : ''}
-    </a>
-    ${boutonPanier(e.id)}
-    <div class="corps">
-      ${blocNoms(e.nom, e.nomFr)}
-      <div><span class="marque attendue">${t('attEtiquette')}</span></div>
-      <div class="bas"><span class="n">${t('attAlentours', nb(e.nAlentours), attendues.rayon)}</span></div>
-    </div>
-  </div>`;
-}
-
-function htmlAttendues() {
-  const a = attendues;
-  let liste = a.liste;
-  if (vue.noeud) liste = liste.filter(e => e.anc.includes(vue.noeud));
-  if (vue.texte) liste = liste.filter(correspondRecherche);
-  const entete = `<h3 class="titre-conf">${t(auPoint() ? 'attTitrePoint' : 'attTitre')}
-    <span class="compte">${a.etat === 'cours'
-      ? t('attEnCours', a.faits, a.total || '…') : nb(liste.length)}</span></h3>
-    <p class="note" style="margin-top:0">${t(auPoint() ? 'attNotePoint' : 'attNote', a.rayon)}</p>`;
-  if (a.etat === 'erreur') return entete + `<p class="note">${t('attErreur')}</p>`;
-  if (a.etat === 'fait' && !liste.length) return entete + `<p class="note">${t('attAucune')}</p>`;
-  return entete + (liste.length
-    ? `<div class="planche">${liste.map(ficheAttendue).join('')}</div>` : '');
-}
-
-function majAttendues() {
-  const boite = $('#q-attendues');
-  if (!boite) return;
-  boite.innerHTML = htmlAttendues();
-  for (const e of attendues.liste) especesHors.set(e.id, e);
-  brancherPanier(boite, majPanier);
-}
-
-
 
 /* Les espèces retenues, en colonne à gauche. Empilées les unes sous les autres, les fiches
    obligeaient à faire défiler pour comparer deux listes ; ici l'on bascule de l'une à
@@ -2146,7 +2027,6 @@ module({
   pret: () => periodePrete(),
   dessiner: dessinerCandidats,
   vider(carton) {
-    attendues = { cle:'', etat:'rien', liste:[], faits:0, total:0, rayon:0 };
     geoConnu.clear();
     if (!auPoint()) vueGeo = 'toutes';
     $('#v-candidats').innerHTML = carton;

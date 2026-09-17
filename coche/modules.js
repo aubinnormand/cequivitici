@@ -1080,11 +1080,31 @@ function dessinerCarteOu() {
       </div>` : ''}
     </div>
     <div id="g-detail"></div>
+    ${noteSansPoint()}
 `;
 
   brancherCarteOu();
   brancherChoix('#v-carte');
+  /* Les pastilles des onglets suivent l'état des données : sans cet appel, celle de « Où ? »
+     restait éteinte après une collecte reprise de la réserve, qui ne passe par aucun message
+     de progression. */
+  majOnglets();
   setTimeout(() => tracerGrille(max), 30);
+}
+
+/* Toutes les espèces de la lecture ne peuvent pas figurer sur la carte. Trois raisons, qui
+   tiennent à la collecte et non à la carte : iNaturalist floute la position des espèces
+   sensibles, et ces observations sont écartées plutôt que posées à un faux endroit ; les
+   introduites ne sont pas collectées ; et le plafond d'observations ne ramène qu'une part des
+   données quand la zone est très fournie. Le dire vaut mieux que de laisser croire à une
+   absence de terrain. */
+function noteSansPoint() {
+  if (!grille || !grillePts) return '';
+  const presentes = new Set(grillePts.map(p => p.t));
+  const attendues = etat.especes.filter(e => e.nZone > 0 && retenuCarte(e.id));
+  const sans = attendues.filter(e => !presentes.has(e.id)).length;
+  if (!sans) return '';
+  return `<p class="note">${t('gSansPoint', nb(sans), nb(attendues.length))}</p>`;
 }
 
 function brancherCarteOu() {

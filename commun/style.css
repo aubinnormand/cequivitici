@@ -100,9 +100,13 @@ nav.onglets button:hover{color:var(--encre)}
 nav.onglets button.actif{color:var(--encre); border-bottom-color:var(--vert); font-weight:700}
 /* Une pastille dit si l'onglet a ses données : brique tant qu'il faut les charger, verte
    ensuite. Elle évite d'ouvrir un onglet pour découvrir qu'il est vide. */
-nav.onglets button .pt{display:inline-block; width:6px; height:6px; border-radius:50%;
-  margin-left:7px; vertical-align:middle; background:var(--brique)}
-nav.onglets button.pret .pt{background:var(--vert)}
+/* Creuse tant que les données manquent, pleine quand l'onglet est prêt : dans l'outil Coche,
+   la brique et l'ocre de la teinte d'outil se ressemblaient trop pour qu'on voie la
+   différence. */
+nav.onglets button .pt{display:inline-block; width:7px; height:7px; border-radius:50%;
+  margin-left:7px; vertical-align:middle; background:transparent;
+  box-shadow:inset 0 0 0 1.5px var(--encre-3)}
+nav.onglets button.pret .pt{background:var(--vert); box-shadow:none}
 section.vue{display:none} section.vue.actif{display:block}
 
 .vide{border:1px dashed var(--trait); border-radius:var(--r); padding:52px 24px;
@@ -557,8 +561,6 @@ label.bascule input{accent-color:var(--vert)}
 
 /* Les espèces seulement attendues : présentées à part, et visiblement plus légères que
    celles qu'on a réellement signalées. */
-.planche.attendues .fiche{opacity:.72; border-style:dashed}
-.planche.attendues .fiche:hover{opacity:1}
 
 /* La marque des données servies depuis la réserve, dans la barre d'outils de la carte. */
 .en-memoire{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.06em;
@@ -853,12 +855,8 @@ button.maintenant.actif .pastille-ok{background:#fff}
 .do-obs{display:flex; gap:14px; align-items:flex-start; margin-top:6px}
 .do-obs img{width:120px; height:120px; object-fit:cover; border-radius:var(--r); display:block}
 
-/* ---- Candidats : présence attendue ---- */
 .fiche .geo:empty{display:none}
 .marque.hors-geo{background:rgba(180,85,58,.13); color:var(--brique); cursor:help}
-.marque.attendue{background:rgba(58,99,184,.13); color:#3A63B8}
-.attendues{margin-top:28px; padding-top:14px; border-top:1px dashed var(--trait)}
-.fiche.attendue{border-style:dashed}
 
 /* ---- Confusions : source annoncée ---- */
 .source-conf{font-size:13.5px; line-height:1.45; color:var(--encre-2); margin:6px 0 14px; padding:9px 12px;
@@ -889,7 +887,6 @@ button.maintenant.actif .pastille-ok{background:#fff}
   padding:10px; border:1px solid var(--trait); border-radius:var(--r); background:#fff; resize:vertical}
 .retenue.ecartee span{text-decoration:line-through; color:var(--encre-3)}
 @media(max-width:640px){.bilan-ligne{grid-template-columns:1fr}}
-.fiche .marque.attendue{white-space:normal; display:inline-block; line-height:1.35}
 
 .marque.geo-oui{background:rgba(47,107,79,.14); color:var(--vert); cursor:help}
 .marque.geo-muet{background:rgba(93,110,99,.12); color:var(--encre-2); cursor:help}
@@ -952,7 +949,7 @@ body[data-outil="quoi"]{--accent:var(--prune)}
 .marque-nom em{font-style:italic; color:#9CCBA9}
 a.marque-nom:hover em{color:#C3E2CB}
 .marque-outils{display:flex; flex-wrap:wrap; gap:4px}
-.marque-outils a,.marque-outils span{display:inline-flex; align-items:center; gap:8px; padding:6px 13px;
+.marque-outils > a,.marque-outils > span{display:inline-flex; align-items:center; gap:8px; padding:6px 13px;
   border-radius:999px; font-family:'IBM Plex Mono',monospace; font-size:11.5px; letter-spacing:.1em;
   text-transform:uppercase; text-decoration:none; color:#BCC7BC; transition:background .2s, color .2s}
 .marque-outils a:hover{background:rgba(255,255,255,.09); color:#fff}
@@ -972,7 +969,7 @@ header{background:var(--carte); border-bottom:1px solid var(--trait); padding:30
   .entete-outil select{align-self:flex-end}}
 
 nav.onglets button.actif{border-bottom-color:var(--accent)}
-nav.onglets button.pret .pt{background:var(--accent)}
+nav.onglets button.pret .pt{background:var(--accent); box-shadow:none}
 
 /* Accueil */
 header.accueil{box-shadow:none; padding:46px 0 34px; background:transparent; border-bottom:0; margin-bottom:0}
@@ -995,7 +992,7 @@ header.accueil .sub{font-size:17px; max-width:62ch; margin-top:16px}
 @media(max-width:640px){
   .marque-barre{gap:8px}
   .marque-outils{gap:2px}
-  .marque-outils a,.marque-outils span{padding:5px 9px; font-size:10.5px; letter-spacing:.05em; gap:6px}
+  .marque-outils > a,.marque-outils > span{padding:5px 9px; font-size:10.5px; letter-spacing:.05em; gap:6px}
 }
 
 /* En-tête d'outil : le nom de la plateforme en titre, l'outil en sous-titre, dans sa teinte. */
@@ -1031,3 +1028,18 @@ img.t-defaut{opacity:.4; filter:grayscale(.6)}
 .cr-recherche{margin:0 0 12px}
 .cr-recherche input[type="search"]{flex:1 1 320px; max-width:480px}
 .note-id mark.mot{background:color-mix(in srgb, var(--accent) 22%, transparent); outline:1px solid color-mix(in srgb, var(--accent) 45%, transparent)}
+.accueil-entete{display:flex; justify-content:space-between; align-items:flex-start; gap:18px}
+@media(max-width:640px){.accueil-entete{flex-direction:column-reverse; align-items:stretch}
+  .accueil-entete select{align-self:flex-end}}
+
+/* ---- Exploration, Communautés : filtres par biorégion ---- */
+.comm-dom i,.jeton-bio i{width:10px; height:10px; border-radius:2px; display:inline-block; flex:none}
+.comm-dom{display:flex; align-items:center; gap:5px; font-family:'IBM Plex Mono',monospace; font-size:10.5px;
+  color:var(--encre-2); margin:0 0 4px}
+.comm-filtres{display:flex; flex-wrap:wrap; gap:6px}
+.jeton-bio{display:inline-flex; align-items:center; gap:6px; padding:5px 11px; font-size:12.5px;
+  border:1px solid var(--trait); border-radius:999px; background:var(--carte); color:var(--encre);
+  cursor:pointer}
+.jeton-bio:hover{border-color:var(--vert)}
+.jeton-bio.actif{background:var(--encre); color:#F4F6F1; border-color:var(--encre)}
+.jeton-bio b{font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:500; opacity:.75}

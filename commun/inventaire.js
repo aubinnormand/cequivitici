@@ -21,7 +21,7 @@ function reinitialiser() {
   Object.assign(vue, { noeud:null, texte:'', mois:0 });
   vue.deplies.clear();
 
-  viderModules();
+  viderModules(cartonVide('chargeEnCours', 'chargeEnCoursD'));
 
   // On revient à la première vue : garder sous les yeux un onglet vide n'apprend rien.
   const premier = document.querySelector('nav.onglets button');

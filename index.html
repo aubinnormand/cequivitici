@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cequivitici — explorer, identifier, cocher le vivant</title>
+<title data-i="titre">Cequivitici — explorer, identifier, cocher le vivant</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Karla:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -15,56 +15,159 @@
   <div class="wrap marque-barre">
     <span class="marque-nom">Cequivit<em>ici</em></span>
     <div class="marque-outils">
-      <a class="o-ici" href="ici/" data-garder-etat><i></i>Exploration</a>
-      <a class="o-quoi" href="quoi/" data-garder-etat><i></i>Identification</a>
-      <a class="o-coche" href="coche/" data-garder-etat><i></i>Coche</a>
+      <a class="o-ici" href="ici/" data-outil><i></i><span data-i="outilIci">Exploration</span></a>
+      <a class="o-quoi" href="quoi/" data-outil><i></i><span data-i="outilQuoi">Identification</span></a>
+      <a class="o-coche" href="coche/" data-outil><i></i><span data-i="outilCoche">Coche</span></a>
     </div>
   </div>
 </nav>
 
 <header class="accueil">
-  <div class="wrap">
+  <div class="wrap accueil-entete">
+    <div>
     <h1 class="marque-titre">Cequivit<em>ici</em></h1>
-    <p class="sub">La biodiversité d'un lieu, lue à travers les millions d'observations
+    <p class="sub" data-i="accroche">La biodiversité d'un lieu, lue à travers les millions d'observations
       partagées par la communauté iNaturalist : ce qui y vit, ce que tu as vu, ce qu'il te
       reste à découvrir.</p>
+    </div>
+    <select id="f-langue" aria-label="Langue"></select>
   </div>
 </header>
 
 <div class="wrap">
 
   <div class="portes">
-    <a class="porte o-ici" href="ici/">
-      <h2>Exploration</h2>
-      <p>Choisis un lieu et découvre ce qui y vit : quelles espèces, à quelle saison, et ce
+    <a class="porte o-ici" href="ici/" data-outil>
+      <h2 data-i="outilIci">Exploration</h2>
+      <p data-i="descIci">Choisis un lieu et découvre ce qui y vit : quelles espèces, à quelle saison, et ce
         qu'on y trouve plus qu'ailleurs.</p>
-      <span class="ouvrir">Ouvrir →</span>
+      <span class="ouvrir" data-i="ouvrir">Ouvrir →</span>
     </a>
-    <a class="porte o-quoi" href="quoi/">
-      <h2>Identification</h2>
-      <p>Des espèces probables à la bonne réponse : ce qui vit là où tu as observé, les
+    <a class="porte o-quoi" href="quoi/" data-outil>
+      <h2 data-i="outilQuoi">Identification</h2>
+      <p data-i="descQuoi">Des espèces probables à la bonne réponse : ce qui vit là où tu as observé, les
         confusions possibles et les critères pour trancher.</p>
-      <span class="ouvrir">Ouvrir →</span>
+      <span class="ouvrir" data-i="ouvrir">Ouvrir →</span>
     </a>
-    <a class="porte o-coche" href="coche/">
-      <h2>Coche</h2>
-      <p>Les espèces d'un lieu que tu n'as encore jamais observées, et où et quand aller les
+    <a class="porte o-coche" href="coche/" data-outil>
+      <h2 data-i="outilCoche">Coche</h2>
+      <p data-i="descCoche">Les espèces d'un lieu que tu n'as encore jamais observées, et où et quand aller les
         chercher.</p>
-      <span class="ouvrir">Ouvrir →</span>
+      <span class="ouvrir" data-i="ouvrir">Ouvrir →</span>
     </a>
   </div>
 
   <div id="reprise" hidden>
-    <div class="tit" style="margin:0 0 10px">Inventaires en mémoire</div>
+    <div class="tit" style="margin:0 0 10px" data-i="memoire">Inventaires en mémoire</div>
     <div id="reprise-liste" class="jetons"></div>
   </div>
 
   <footer>
-    <span style="display:block; color:var(--encre-2); margin-bottom:6px">Site réalisé par Aubin Normand</span>
-    <span>Données et photographies : iNaturalist et ses contributeurs. Fond de carte :
+    <span style="display:block; color:var(--encre-2); margin-bottom:6px" data-i="auteur">Site réalisé par Aubin Normand</span>
+    <span data-i="pied">Données et photographies : iNaturalist et ses contributeurs. Fond de carte :
       OpenStreetMap. Chaque photographie reste soumise à la licence choisie par son auteur.</span>
   </footer>
 </div>
+
+<script>
+/* Traduction de l'accueil. La page ne charge pas le fichier de textes des outils — plus de
+   soixante-dix kilo-octets pour une dizaine de phrases : ses textes sont ici. La langue se
+   choisit comme dans les outils (paramètre ?lang, puis choix mémorisé, puis langue du
+   navigateur), et un changement fait ici vaut ensuite dans les trois outils. */
+const LANGUES = { fr:'Français', en:'English', es:'Español', pt:'Português', it:'Italiano', de:'Deutsch' };
+const TEXTES_ACCUEIL = {
+  titre:{
+    fr:"Cequivitici — explorer, identifier, cocher le vivant",
+    en:"Cequivitici — explore, identify, find your lifers",
+    es:"Cequivitici — explorar, identificar, descubrir lo que te falta por ver",
+    it:"Cequivitici — esplorare, identificare, scoprire ciò che resta da vedere",
+    de:"Cequivitici — erkunden, bestimmen, neue Arten entdecken",
+    pt:"Cequivitici — explorar, identificar, descobrir o que falta ver"},
+  accroche:{
+    fr:"La biodiversité d'un lieu, lue à travers les millions d'observations partagées par la communauté iNaturalist : ce qui y vit, ce que tu as vu, ce qu'il te reste à découvrir.",
+    en:"The biodiversity of a place, read through the millions of observations shared by the iNaturalist community: what lives there, what you have seen, what is left for you to discover.",
+    es:"La biodiversidad de un lugar, a través de los millones de observaciones compartidas por la comunidad de iNaturalist: lo que vive allí, lo que has visto y lo que te queda por descubrir.",
+    it:"La biodiversità di un luogo, letta attraverso i milioni di osservazioni condivise dalla comunità di iNaturalist: cosa ci vive, cosa hai visto, cosa ti resta da scoprire.",
+    de:"Die Biodiversität eines Ortes, gelesen aus den Millionen Beobachtungen der iNaturalist-Community: was dort lebt, was du schon gesehen hast und was du noch entdecken kannst.",
+    pt:"A biodiversidade de um lugar, lida através dos milhões de observações partilhadas pela comunidade iNaturalist: o que lá vive, o que já viste e o que te falta descobrir."},
+  outilIci:{fr:"Exploration", en:"Exploration", es:"Exploración", it:"Esplorazione", de:"Erkundung", pt:"Exploração"},
+  outilQuoi:{fr:"Identification", en:"Identification", es:"Identificación", it:"Identificazione", de:"Bestimmung", pt:"Identificação"},
+  outilCoche:{fr:"Coche", en:"Lifers", es:"Por ver", it:"Da vedere", de:"Neue Arten", pt:"Por ver"},
+  descIci:{
+    fr:"Choisis un lieu et découvre ce qui y vit : quelles espèces, à quelle saison, et ce qu'on y trouve plus qu'ailleurs.",
+    en:"Pick a place and discover what lives there: which species, in which season, and what is found there more than elsewhere.",
+    es:"Elige un lugar y descubre lo que vive allí: qué especies, en qué estación y qué se encuentra allí más que en otros sitios.",
+    it:"Scegli un luogo e scopri cosa ci vive: quali specie, in quale stagione e cosa vi si trova più che altrove.",
+    de:"Wähle einen Ort und entdecke, was dort lebt: welche Arten, zu welcher Jahreszeit und was dort häufiger ist als anderswo.",
+    pt:"Escolhe um lugar e descobre o que lá vive: que espécies, em que estação e o que lá se encontra mais do que noutros sítios."},
+  descQuoi:{
+    fr:"Des espèces probables à la bonne réponse : ce qui vit là où tu as observé, les confusions possibles et les critères pour trancher.",
+    en:"From likely species to the right answer: what lives where you made your observation, the possible look-alikes and the criteria to decide.",
+    es:"De las especies probables a la respuesta correcta: lo que vive donde observaste, las posibles confusiones y los criterios para decidir.",
+    it:"Dalle specie probabili alla risposta giusta: cosa vive dove hai osservato, le possibili confusioni e i criteri per decidere.",
+    de:"Von den wahrscheinlichen Arten zur richtigen Antwort: was dort lebt, wo du beobachtet hast, mögliche Verwechslungen und die Merkmale, die entscheiden.",
+    pt:"Das espécies prováveis à resposta certa: o que vive onde observaste, as confusões possíveis e os critérios para decidir."},
+  descCoche:{
+    fr:"Les espèces d'un lieu que tu n'as encore jamais observées, et où et quand aller les chercher.",
+    en:"The species of a place you have never recorded yet, and where and when to go and look for them.",
+    es:"Las especies de un lugar que todavía no has observado nunca, y dónde y cuándo ir a buscarlas.",
+    it:"Le specie di un luogo che non hai ancora mai osservato, e dove e quando andarle a cercare.",
+    de:"Die Arten eines Ortes, die du noch nie beobachtet hast – und wo und wann du sie suchen kannst.",
+    pt:"As espécies de um lugar que ainda nunca observaste, e onde e quando as procurar."},
+  ouvrir:{fr:"Ouvrir →", en:"Open →", es:"Abrir →", it:"Apri →", de:"Öffnen →", pt:"Abrir →"},
+  memoire:{fr:"Inventaires en mémoire", en:"Saved inventories", es:"Inventarios guardados", it:"Inventari salvati", de:"Gespeicherte Inventare", pt:"Inventários guardados"},
+  auteur:{fr:"Site réalisé par Aubin Normand", en:"Built by Aubin Normand", es:"Sitio creado por Aubin Normand", it:"Sito realizzato da Aubin Normand", de:"Erstellt von Aubin Normand", pt:"Site criado por Aubin Normand"},
+  pied:{
+    fr:"Données et photographies : iNaturalist et ses contributeurs. Fond de carte : OpenStreetMap. Chaque photographie reste soumise à la licence choisie par son auteur.",
+    en:"Data and photographs: iNaturalist and its contributors. Base map: OpenStreetMap. Each photograph remains under the licence chosen by its author.",
+    es:"Datos y fotografías: iNaturalist y sus colaboradores. Mapa base: OpenStreetMap. Cada fotografía sigue sujeta a la licencia elegida por su autor.",
+    it:"Dati e fotografie: iNaturalist e i suoi contributori. Mappa di base: OpenStreetMap. Ogni fotografia resta soggetta alla licenza scelta dal suo autore.",
+    de:"Daten und Fotos: iNaturalist und seine Beitragenden. Hintergrundkarte: OpenStreetMap. Jedes Foto unterliegt weiterhin der von seinem Urheber gewählten Lizenz.",
+    pt:"Dados e fotografias: iNaturalist e os seus contribuidores. Mapa de base: OpenStreetMap. Cada fotografia continua sujeita à licença escolhida pelo seu autor."}
+};
+
+function langueAccueil() {
+  try {
+    const m = new URLSearchParams(location.search).get('lang');
+    if (m && LANGUES[m]) return m;
+    const g = localStorage.getItem('langue');
+    if (g && LANGUES[g]) return g;
+  } catch (e) { /* navigation privée */ }
+  const n = String(navigator.language || 'fr').slice(0, 2).toLowerCase();
+  return LANGUES[n] ? n : 'fr';
+}
+
+let langueChoisie = langueAccueil();
+
+function traduireAccueil() {
+  const l = langueChoisie;
+  document.documentElement.lang = l;
+  document.querySelectorAll('[data-i]').forEach(el => {
+    const x = TEXTES_ACCUEIL[el.dataset.i];
+    if (x) el.textContent = x[l] || x.en;
+  });
+  /* Sans stockage (navigation privée), la langue suit par l'adresse. */
+  document.querySelectorAll('[data-outil]').forEach(a => {
+    const base = a.getAttribute('href').split('?')[0];
+    a.setAttribute('href', l === langueAccueil.naturelle ? base : base + '?lang=' + l);
+  });
+}
+
+langueAccueil.naturelle = (() => {
+  const n = String(navigator.language || 'fr').slice(0, 2).toLowerCase();
+  return LANGUES[n] ? n : 'fr';
+})();
+
+const choixLangue = document.getElementById('f-langue');
+choixLangue.innerHTML = Object.entries(LANGUES)
+  .map(([c, n]) => `<option value="${c}"${c === langueChoisie ? ' selected' : ''}>${n}</option>`).join('');
+choixLangue.addEventListener('change', () => {
+  langueChoisie = choixLangue.value;
+  try { localStorage.setItem('langue', langueChoisie); } catch (e) { /* sans effet */ }
+  traduireAccueil();
+});
+traduireAccueil();
+</script>
 
 <script>
 /* L'accueil ne charge ni Leaflet, ni le socle, ni la moindre donnée : il doit s'afficher
