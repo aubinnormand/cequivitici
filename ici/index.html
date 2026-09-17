@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Exploration · Cequivitici</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Karla:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="../commun/style.css">
+</head>
+<body class="attente" data-outil="ici">
+
+<nav class="marque-site" aria-label="Cequivitici">
+  <div class="wrap marque-barre">
+    <a class="marque-nom" href="../">Cequivit<em>ici</em></a>
+    <div class="marque-outils">
+      <span class="actif o-ici" aria-current="page"><i></i>Exploration</span>
+      <a class="o-quoi" href="../quoi/" data-garder-etat><i></i>Identification</a>
+      <a class="o-coche" href="../coche/" data-garder-etat><i></i>Coche</a>
+    </div>
+  </div>
+</nav>
+
+<header>
+  <div class="wrap entete-outil">
+    <div>
+      <h1 class="marque-titre-outil">Cequivit<em>ici</em></h1>
+      <p class="outil-nom">Exploration</p>
+      <p class="sub" data-t="sous"></p>
+    </div>
+    <select id="f-langue" aria-label="Langue"></select>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="panneau">
+
+    <div class="champs">
+      <div>
+        <label class="tit" for="q-taxon" data-t="groupes">Groupes</label>
+        <div class="saisie">
+          <input type="text" id="q-taxon" data-tp="phTaxon" autocomplete="off">
+          <div class="propositions" id="p-taxon"></div>
+        </div>
+        <div class="jetons" id="j-taxon"></div>
+      </div>
+      <div>
+        <label class="tit" for="q-lieu" data-t="lieux">Lieux</label>
+        <div class="saisie">
+          <input type="text" id="q-lieu" data-tp="phLieu" autocomplete="off">
+          <button id="ouvrir-carte" class="icone" data-tt="choisirCarte">
+            <svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true">
+              <path d="M10 1.6c-2.9 0-5.2 2.3-5.2 5.2 0 3.8 5.2 11.6 5.2 11.6s5.2-7.8 5.2-11.6
+                c0-2.9-2.3-5.2-5.2-5.2z" fill="none" stroke="currentColor" stroke-width="1.5"
+                stroke-linejoin="round"/>
+              <circle cx="10" cy="6.8" r="1.9" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            </svg>
+          </button>
+          <div class="propositions" id="p-lieu"></div>
+        </div>
+        <div class="jetons" id="j-lieu"></div>
+        <div id="selecteur" hidden>
+          <div class="outils" style="margin:10px 0 8px">
+            <button class="discret" id="ma-position" data-t="maPosition">Ma position</button>
+            <button class="discret" id="zone-vue" data-t="zoneVue">Utiliser cette vue</button>
+            <button class="discret rouge" id="fermer-carte" data-t="fermerCarte">Fermer</button>
+          </div>
+          <div id="carte-lieu"></div>
+          <div class="tit" style="margin:12px 0 6px" data-t="lieuxIci"></div>
+          <div id="lieux-trouves" class="jetons"></div>
+        </div>
+      </div>
+    </div>
+    <div class="barre-actions">
+      <!-- Le niveau précède le bouton : il détermine l'inventaire à charger, il n'est plus
+           un filtre d'affichage appliqué après coup. -->
+      <select id="f-qualite" aria-label="Niveau de validation des observations">
+        <option value="research" data-t="valid">Observations validées</option>
+        <option value="toutes" data-t="toutesObs">Toutes les observations</option>
+      </select>
+      <button class="primaire" id="lancer" data-t="charger">Charger</button>
+      <select id="f-nommage" aria-label="Nomenclature affichée">
+        <option value="sci" data-t="nomsSci" selected>Noms scientifiques</option>
+        <option value="fr" data-t="nomsCom">Noms vernaculaires</option>
+      </select>
+      <span class="etat" id="etat" data-t="choisirLieu"></span>
+      <button class="discret icone-liste" id="stop" data-tt="arreter" hidden>
+        <svg viewBox="0 0 20 20" width="14" height="14" aria-hidden="true">
+          <rect x="4.5" y="4.5" width="11" height="11" rx="1.5" fill="currentColor"/>
+        </svg>
+      </button>
+      <button class="discret icone-liste" id="voir-memoire" data-tt="memVoir">
+        <svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true">
+          <path d="M3.5 3.5h10L16.5 6.5v10h-13z" fill="none" stroke="currentColor"
+            stroke-width="1.5" stroke-linejoin="round"/>
+          <path d="M6.5 3.5v4h6v-4M6.5 16.5v-4h7v4" fill="none" stroke="currentColor"
+            stroke-width="1.5" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <div id="memoire" hidden>
+      <div class="tit" style="margin:0 0 8px" data-t="memTitre"></div>
+      <div id="memoire-liste"></div>
+      <button class="discret" id="vider" data-t="viderMem"
+        style="margin-top:12px">Vider la mémoire</button>
+    </div>
+
+    <div class="jauge" id="jauge"><i></i></div>
+  </div>
+
+  <nav class="onglets">
+    <button class="actif" data-vue="liste" data-t="oListe">Liste</button>
+    <button data-vue="responsabilite" data-t="oResp">Responsabilité</button>
+    <button data-vue="saison" data-t="oSaison">Saisonnalité</button>
+    <button data-vue="decouverte" data-t="oDecouverte">Découvertes</button>
+    <button data-vue="disparition" data-t="oDisparition">Disparitions</button>
+    <button data-vue="bio" data-t="oBio">Biorégions</button>
+    <button data-vue="comm" data-t="oComm">Communautés</button>
+  </nav>
+
+  <section class="vue actif" id="v-liste">
+    <div class="vide"><strong data-t="rienCharge"></strong><span data-t="videListe"></span></div>
+  </section>
+
+  <section class="vue" id="v-bio">
+    <div class="vide"><strong data-t="oBio"></strong><span data-t="videBio"></span></div>
+  </section>
+
+  <section class="vue" id="v-comm">
+    <div class="vide"><strong data-t="oComm"></strong><span data-t="videComm"></span></div>
+  </section>
+
+  <section class="vue" id="v-responsabilite">
+    <p class="note" style="margin:0 0 14px" data-t="respIntro"></p>
+    <div class="outils">
+      <label class="tit" for="r-ref" style="margin:0" data-t="comparerA">Comparer à</label>
+      <div class="saisie" style="width:240px">
+        <input type="text" id="r-ref" autocomplete="off" data-tp="phRef">
+        <div class="propositions" id="r-ref-liste"></div>
+      </div>
+      <button class="discret" id="r-vider" data-t="retirerRef" hidden>Revenir au monde entier</button>
+      <select id="f-seuil" aria-label="seuil"></select>
+      <select id="f-rouge">
+        <option value="0" data-t="toutesEsp">Toutes les espèces</option>
+        <option value="1" data-t="menaceesSeul">Menacées</option>
+      </select>
+      <span class="compte" id="r-compte"></span>
+    </div>
+    <div id="r-tableau">
+      <div class="vide"><strong data-t="rienCharge"></strong><span data-t="videResp"></span></div>
+    </div>
+  </section>
+  <section class="vue" id="v-decouverte">
+    <div class="vide"><strong data-t="rienCharge"></strong><span data-t="videDecouverte"></span></div>
+  </section>
+
+  <section class="vue" id="v-disparition">
+    <div class="vide"><strong data-t="rienCharge"></strong><span data-t="videDisparition"></span></div>
+  </section>
+
+  <section class="vue" id="v-saison">
+    <div class="vide"><strong data-t="rienCharge"></strong><span data-t="videSaison"></span></div>
+  </section>
+
+  <div id="bio-fen" hidden></div>
+
+  <footer>
+    <span data-t="auteur" style="display:block; color:var(--encre-2); margin-bottom:6px"></span>
+    <span data-t="piedPage"></span>
+  </footer>
+</div>
+
+<script src="../commun/textes.js"></script>
+<script src="../commun/socle.js"></script>
+<script src="../commun/inventaire.js"></script>
+<script src="modules.js"></script>
+</body>
+</html>

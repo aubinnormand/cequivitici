@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Identification · Cequivitici</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Karla:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="../commun/style.css">
+</head>
+<body class="attente" data-outil="quoi">
+
+<nav class="marque-site" aria-label="Cequivitici">
+  <div class="wrap marque-barre">
+    <a class="marque-nom" href="../">Cequivit<em>ici</em></a>
+    <div class="marque-outils">
+      <a class="o-ici" href="../ici/" data-garder-etat><i></i>Exploration</a>
+      <span class="actif o-quoi" aria-current="page"><i></i>Identification</span>
+      <a class="o-coche" href="../coche/" data-garder-etat><i></i>Coche</a>
+    </div>
+  </div>
+</nav>
+
+<header>
+  <div class="wrap entete-outil">
+    <div>
+      <h1 class="marque-titre-outil">Cequivit<em>ici</em></h1>
+      <p class="outil-nom">Identification</p>
+      <p class="sub" data-t="sousQuoi"></p>
+    </div>
+    <select id="f-langue" aria-label="Langue"></select>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="panneau">
+
+    <div class="champs">
+      <div>
+        <label class="tit" for="q-taxon" data-t="groupes">Groupes</label>
+        <div class="saisie">
+          <input type="text" id="q-taxon" data-tp="phTaxon" autocomplete="off">
+          <div class="propositions" id="p-taxon"></div>
+        </div>
+        <div class="jetons" id="j-taxon"></div>
+      </div>
+      <div>
+        <label class="tit" for="q-lieu" data-t="lieux">Lieux</label>
+        <div class="saisie">
+          <input type="text" id="q-lieu" data-tp="phLieu" autocomplete="off">
+          <button id="ouvrir-carte" class="icone" data-tt="choisirCarte">
+            <svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true">
+              <path d="M10 1.6c-2.9 0-5.2 2.3-5.2 5.2 0 3.8 5.2 11.6 5.2 11.6s5.2-7.8 5.2-11.6
+                c0-2.9-2.3-5.2-5.2-5.2z" fill="none" stroke="currentColor" stroke-width="1.5"
+                stroke-linejoin="round"/>
+              <circle cx="10" cy="6.8" r="1.9" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            </svg>
+          </button>
+          <div class="propositions" id="p-lieu"></div>
+        </div>
+        <div class="jetons" id="j-lieu"></div>
+        <div id="selecteur" hidden>
+          <div class="outils" style="margin:10px 0 8px">
+            <button class="discret" id="ma-position" data-t="maPosition">Ma position</button>
+            <button class="discret" id="zone-vue" data-t="zoneVue">Utiliser cette vue</button>
+            <button class="discret rouge" id="fermer-carte" data-t="fermerCarte">Fermer</button>
+          </div>
+          <div id="carte-lieu"></div>
+          <div class="tit" style="margin:12px 0 6px" data-t="lieuxIci"></div>
+          <div id="lieux-trouves" class="jetons"></div>
+        </div>
+      </div>
+    </div>
+    <!-- Départ facultatif : une observation à déterminer, ou un point et une date. Le panneau
+         ordinaire ci-dessus reste le fonctionnement par défaut. -->
+    <details id="depart-obs" class="depart-obs">
+      <summary data-t="doTitre">Partir d'une observation</summary>
+      <div class="do-corps">
+        <p class="note" style="margin:0 0 10px" data-t="doIntro"></p>
+        <div class="do-ligne">
+          <input type="text" id="do-lien" data-tp="doPhLien" autocomplete="off">
+          <button class="discret" id="do-lire" data-t="doLire">Lire l'observation</button>
+          <select id="do-niveau" data-tt="doNiveau">
+            <option value="kingdom" data-t="doN_kingdom">Son règne</option>
+            <option value="phylum" data-t="doN_phylum">Son embranchement</option>
+            <option value="class" data-t="doN_class">Sa classe</option>
+            <option value="order" data-t="doN_order" selected>L'ordre du taxon proposé</option>
+            <option value="family" data-t="doN_family">Sa famille</option>
+            <option value="genus" data-t="doN_genus">Son genre</option>
+          </select>
+        </div>
+        <div class="do-ligne">
+          <span class="tit" style="margin:0" data-t="doOuPoint">Ou un point et une date</span>
+          <button class="discret" id="do-point" data-t="doPoint">Choisir le point sur la carte</button>
+          <span class="compte" id="do-coord"></span>
+          <input type="date" id="do-date" aria-label="Date">
+          <select id="do-rayon" data-tt="doRayon">
+            <option value="auto" data-t="doAutoOpt" selected>Rayon automatique</option>
+            <option value="20">20 km</option>
+            <option value="50">50 km</option>
+            <option value="100">100 km</option>
+            <option value="200">200 km</option>
+            <option value="500">500 km</option>
+          </select>
+          <button class="primaire" id="do-appliquer" data-t="doAppliquer">Utiliser</button>
+        </div>
+        <div id="do-carte" hidden></div>
+        <div class="etat" id="do-message"></div>
+        <div id="do-fiche"></div>
+      </div>
+    </details>
+
+    <div class="barre-actions">
+      <!-- Le niveau précède le bouton : il détermine l'inventaire à charger, il n'est plus
+           un filtre d'affichage appliqué après coup. -->
+      <select id="f-qualite" aria-label="Niveau de validation des observations">
+        <option value="research" data-t="valid">Observations validées</option>
+        <option value="toutes" data-t="toutesObs">Toutes les observations</option>
+      </select>
+      <button class="primaire" id="lancer" data-t="charger">Charger</button>
+      <select id="f-nommage" aria-label="Nomenclature affichée">
+        <option value="sci" data-t="nomsSci" selected>Noms scientifiques</option>
+        <option value="fr" data-t="nomsCom">Noms vernaculaires</option>
+      </select>
+      <span class="etat" id="etat" data-t="choisirLieu"></span>
+      <button class="discret icone-liste" id="stop" data-tt="arreter" hidden>
+        <svg viewBox="0 0 20 20" width="14" height="14" aria-hidden="true">
+          <rect x="4.5" y="4.5" width="11" height="11" rx="1.5" fill="currentColor"/>
+        </svg>
+      </button>
+      <button class="discret icone-liste" id="voir-memoire" data-tt="memVoir">
+        <svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true">
+          <path d="M3.5 3.5h10L16.5 6.5v10h-13z" fill="none" stroke="currentColor"
+            stroke-width="1.5" stroke-linejoin="round"/>
+          <path d="M6.5 3.5v4h6v-4M6.5 16.5v-4h7v4" fill="none" stroke="currentColor"
+            stroke-width="1.5" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <div id="memoire" hidden>
+      <div class="tit" style="margin:0 0 8px" data-t="memTitre"></div>
+      <div id="memoire-liste"></div>
+      <button class="discret" id="vider" data-t="viderMem"
+        style="margin-top:12px">Vider la mémoire</button>
+    </div>
+
+    <div class="jauge" id="jauge"><i></i></div>
+  </div>
+
+  <nav class="onglets">
+    <button class="actif" data-vue="candidats" data-t="oCandidats">Candidats</button>
+    <button data-vue="taxonomie" data-t="oTaxonomie">Taxonomie</button>
+    <button data-vue="comparaison" data-t="oComparaison">Comparaison</button>
+    <button data-vue="confusions" data-t="oConfusions">Confusions</button>
+    <button data-vue="criteres" data-t="oCriteres">Critères</button>
+    <button data-vue="repartition" data-t="oRepartition">Répartition</button>
+    <button data-vue="bilan" data-t="oBilan">Bilan</button>
+  </nav>
+
+  <section class="vue actif" id="v-candidats">
+    <div class="vide"><strong data-t="rienCharge"></strong><span data-t="videCandidats"></span></div>
+  </section>
+
+  <section class="vue" id="v-taxonomie">
+    <div class="vide"><strong data-t="rienCharge"></strong><span data-t="videTaxonomie"></span></div>
+  </section>
+
+  <section class="vue" id="v-comparaison">
+    <div class="vide"><strong data-t="rienCharge"></strong><span data-t="videComparaison"></span></div>
+  </section>
+
+  <section class="vue" id="v-confusions">
+    <div class="vide"><strong data-t="rienCharge"></strong><span data-t="videConfusions"></span></div>
+  </section>
+
+  <section class="vue" id="v-criteres">
+    <div class="vide"><strong data-t="rienCharge"></strong><span data-t="videCriteres"></span></div>
+  </section>
+
+  <section class="vue" id="v-repartition">
+    <div class="vide"><strong data-t="rienCharge"></strong><span data-t="videRepartition"></span></div>
+  </section>
+
+  <section class="vue" id="v-bilan">
+    <div class="vide"><strong data-t="rienCharge"></strong><span data-t="videBilan"></span></div>
+  </section>
+
+  <button id="do-flottant" hidden></button>
+
+  <div id="loupe" hidden>
+    <button class="fleche" id="loupe-prec" aria-label="←">‹</button>
+    <div id="loupe-bande"></div>
+    <button class="fleche" id="loupe-suiv" aria-label="→">›</button>
+    <a id="loupe-lien" target="_blank" rel="noopener"></a>
+  </div>
+
+  <footer>
+    <span data-t="auteur" style="display:block; color:var(--encre-2); margin-bottom:6px"></span>
+    <span data-t="piedPage"></span>
+  </footer>
+</div>
+
+<script src="../commun/textes.js"></script>
+<script src="../commun/socle.js"></script>
+<script src="../commun/inventaire.js"></script>
+<script src="textes.js"></script>
+<script src="../commun/comparaison.js"></script>
+<script src="modules.js"></script>
+</body>
+</html>

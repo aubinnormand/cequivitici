@@ -1,0 +1,1030 @@
+:root{
+  --papier:#E9EDE5; --carte:#FBFCF9; --encre:#14231C; --encre-2:#5D6E63; --encre-3:#8B9990;
+  --trait:#C6CEC1; --vert:#2F6B4F; --ocre:#A87C14; --prune:#7B3B52; --brique:#B4553A; --r:3px;
+}
+*{box-sizing:border-box}
+/* Un sélecteur d'identifiant l'emporte sur la règle par défaut du navigateur : sans cette
+   ligne, tout élément « hidden » doté d'un display explicite reste visible. */
+[hidden]{display:none !important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0; background:var(--papier); color:var(--encre);
+  font-family:'Karla',system-ui,sans-serif; font-size:15px; line-height:1.6}
+h1,h2,h3{font-family:'Fraunces',Georgia,serif; font-weight:600; line-height:1.15; margin:0}
+a{color:inherit}
+.wrap{max-width:1240px; margin:0 auto; padding:0 24px}
+
+header{border-bottom:1px solid var(--trait); padding:38px 0 26px; margin-bottom:28px}
+h1{font-size:clamp(30px,4.4vw,46px); letter-spacing:-.015em}
+h1 em{font-style:italic; color:var(--vert)}
+.sub{color:var(--encre-2); max-width:60ch; margin-top:10px}
+
+.panneau{background:var(--carte); border:1px solid var(--trait); border-radius:var(--r);
+  padding:20px 22px; transition:border-color .5s, box-shadow .5s}
+
+/* Tant qu'aucun inventaire n'est chargé, la zone de sélection s'affirme : c'est la seule
+   action possible, et rien d'autre sur la page ne demande d'attention. Une teinte brique
+   plutôt qu'un rouge d'alerte — il s'agit d'inviter, pas de signaler une erreur. */
+body.attente .panneau{border-color:var(--brique); box-shadow:0 0 0 3px rgba(180,85,58,.10)}
+body.attente .champs .tit{color:var(--brique)}
+body.attente .saisie input{border-color:#D9A995}
+body.attente #lancer:not(:disabled){background:var(--brique);
+  animation:respire 2.4s ease-in-out infinite}
+@keyframes respire{
+  0%,100%{box-shadow:0 0 0 0 rgba(180,85,58,.34)}
+  50%{box-shadow:0 0 0 7px rgba(180,85,58,0)}
+}
+@media(prefers-reduced-motion:reduce){body.attente #lancer{animation:none}}
+.champs{display:grid; grid-template-columns:1fr 1fr; gap:22px}
+@media(max-width:720px){.champs{grid-template-columns:1fr}}
+label.tit{display:block; font-family:'IBM Plex Mono',monospace; font-size:11px;
+  letter-spacing:.12em; text-transform:uppercase; color:var(--encre-3); margin-bottom:7px}
+.saisie{position:relative}
+input[type=text]{width:100%; padding:9px 11px; border:1px solid var(--trait);
+  border-radius:var(--r); background:#fff; font:inherit; color:var(--encre)}
+input[type=text]:focus{outline:2px solid var(--vert); outline-offset:1px; border-color:var(--vert)}
+.propositions{position:absolute; z-index:900; left:0; right:0; top:calc(100% + 3px); background:#fff;
+  border:1px solid var(--trait); border-radius:var(--r); max-height:270px; overflow:auto; display:none;
+  box-shadow:0 6px 18px rgba(20,35,28,.09)}
+.propositions.on{display:block}
+.prop{padding:8px 11px; cursor:pointer; border-bottom:1px solid #EEF1EC; font-size:14px}
+.prop:last-child{border-bottom:0}
+.prop:hover,.prop.vise{background:#EDF2EC}
+.prop small{display:block; color:var(--encre-3); font-size:12px}
+#q-lieu{padding-right:36px}
+.saisie .icone{position:absolute; right:5px; top:50%; transform:translateY(-50%);
+  border:0; background:transparent; color:var(--encre-3); cursor:pointer;
+  padding:4px; line-height:0; border-radius:3px}
+.saisie .icone:hover{color:var(--vert); background:#EDF2EC}
+#memoire{margin:14px 0 4px; border:1px solid var(--trait); border-radius:var(--r);
+  padding:12px 14px; background:#F4F7F3}
+#memoire .ligne{display:flex; align-items:baseline; justify-content:space-between; gap:12px;
+  padding:7px 0; border-top:1px solid var(--trait)}
+#memoire .ligne:first-child{border-top:0}
+#memoire .quoi{flex:1; min-width:0}
+#memoire .quoi b{font-weight:700}
+#memoire .quand{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--encre-3)}
+#memoire button, #memoire a.discret{margin-left:8px}
+.icone-liste{padding:6px 8px; line-height:0}
+.discret.rouge{color:var(--brique); border-color:#D9A995}
+.discret.rouge:hover{background:#F7EDE9; border-color:var(--brique)}
+#voir-memoire.ouvert{color:var(--brique); border-color:#D9A995; background:#F7EDE9}
+#stop{color:var(--prune)}
+#stop:hover{border-color:var(--prune); background:#F6EEF3}
+.jetons{display:flex; flex-wrap:wrap; gap:7px; margin-top:9px; min-height:4px}
+.jeton{display:inline-flex; align-items:center; gap:7px; background:#E4EBE1; border:1px solid var(--trait);
+  border-radius:20px; padding:3px 5px 3px 12px; font-size:13px}
+.jeton button{border:0; background:transparent; cursor:pointer; color:var(--encre-2);
+  font-size:15px; line-height:1; padding:2px 5px; border-radius:50%}
+.jeton button:hover{background:#D2DCCE; color:var(--encre)}
+
+.barre-actions{display:flex; align-items:center; gap:14px; margin-top:20px; flex-wrap:wrap}
+button.primaire{background:var(--vert); color:#fff; border:0; border-radius:var(--r);
+  padding:11px 22px; font:inherit; font-weight:700; cursor:pointer}
+button.primaire:hover{background:#255840}
+button.primaire:disabled{background:var(--encre-3); cursor:not-allowed}
+button.discret, a.discret{background:#fff; color:var(--encre); border:1px solid var(--trait);
+  border-radius:var(--r); padding:8px 15px; font:inherit; cursor:pointer}
+button.discret:hover, a.discret:hover{border-color:var(--vert); color:var(--vert)}
+/* Un lien habillé en bouton : il garde ce qu'un bouton n'offre pas, le menu contextuel
+   « Ouvrir dans un nouvel onglet », le clic du milieu et Ctrl/Cmd + clic. */
+a.discret{display:inline-block; text-decoration:none; line-height:normal}
+.etat{font-size:13px; color:var(--encre-2); font-family:'IBM Plex Mono',monospace; flex:1 1 210px}
+.jauge{height:2px; background:var(--trait); margin-top:14px; overflow:hidden; display:none}
+.jauge.on{display:block}
+.jauge i{display:block; height:100%; background:var(--vert); width:0; transition:width .25s}
+
+nav.onglets{display:flex; gap:2px; border-bottom:1px solid var(--trait); margin:34px 0 24px; flex-wrap:wrap}
+nav.onglets button{border:0; background:transparent; font:inherit; cursor:pointer; padding:11px 18px;
+  color:var(--encre-2); border-bottom:2px solid transparent; margin-bottom:-1px}
+nav.onglets button:hover{color:var(--encre)}
+nav.onglets button.actif{color:var(--encre); border-bottom-color:var(--vert); font-weight:700}
+/* Une pastille dit si l'onglet a ses données : brique tant qu'il faut les charger, verte
+   ensuite. Elle évite d'ouvrir un onglet pour découvrir qu'il est vide. */
+nav.onglets button .pt{display:inline-block; width:6px; height:6px; border-radius:50%;
+  margin-left:7px; vertical-align:middle; background:var(--brique)}
+nav.onglets button.pret .pt{background:var(--vert)}
+section.vue{display:none} section.vue.actif{display:block}
+
+.vide{border:1px dashed var(--trait); border-radius:var(--r); padding:52px 24px;
+  text-align:center; color:var(--encre-2)}
+.vide strong{display:block; font-family:'Fraunces',serif; font-size:19px; color:var(--encre); margin-bottom:6px}
+.alerte{background:#FBF3DC; border-left:3px solid var(--ocre); padding:11px 15px; font-size:14px; margin-bottom:20px}
+
+.outils{display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:18px}
+/* Case à cocher des barres d'outils : même hauteur et même gris que les menus voisins. */
+.coche{display:inline-flex; align-items:center; gap:6px; font-size:13px;
+  color:var(--encre-2); cursor:pointer; user-select:none}
+.coche input{cursor:pointer; accent-color:var(--vert)}
+.outils input[type=text]{width:210px}
+select option:disabled{color:var(--encre-3)}
+select{padding:8px 10px; border:1px solid var(--trait); border-radius:var(--r); background:#fff; font:inherit}
+.compte{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--encre-3); margin-left:auto}
+
+.expl{display:grid; grid-template-columns:262px 1fr; gap:26px; align-items:start}
+@media(max-width:900px){.expl{grid-template-columns:1fr}}
+.arbre{background:var(--carte); border:1px solid var(--trait); border-radius:var(--r);
+  padding:12px 10px; position:sticky; top:14px; max-height:78vh; overflow:auto}
+@media(max-width:900px){.arbre{position:static; max-height:300px}}
+.arbre .entete{font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--encre-3); padding:2px 8px 10px}
+.n-ligne{display:flex; align-items:center; gap:2px; border-radius:2px}
+.n-ligne:hover{background:#EEF2EC}
+.n-ligne.sel{background:#E0EAE0}
+.n-ligne.sel .n-nom{color:var(--vert); font-weight:700}
+.n-plier{border:0; background:transparent; cursor:pointer; width:18px; padding:0; color:var(--encre-3);
+  font-size:10px; line-height:1; flex:none}
+.n-plier.creux{visibility:hidden}
+.n-nom{flex:1; border:0; background:transparent; font:inherit; font-size:13.5px; text-align:left;
+  cursor:pointer; padding:3px 2px; color:var(--encre); min-width:0;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.n-nb{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--encre-3); padding-right:6px; flex:none}
+.n-enfants{margin-left:13px; border-left:1px solid #E1E7DE; padding-left:3px}
+
+.n-rang{font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:var(--encre-3);
+  text-transform:uppercase; letter-spacing:.06em; margin-left:5px}
+
+#loupe{position:fixed; inset:0; z-index:2000; background:rgba(20,35,28,.88);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;
+  padding:24px; cursor:zoom-out}
+#loupe-bande{display:flex; overflow-x:auto; scroll-snap-type:x mandatory; width:100%;
+  scrollbar-width:none; border-radius:var(--r)}
+#loupe-bande::-webkit-scrollbar{display:none}
+#loupe-bande img{flex:0 0 100%; width:100%; max-height:78vh; object-fit:contain;
+  scroll-snap-align:center}
+#loupe .fleche{position:absolute; top:50%; transform:translateY(-50%); z-index:1;
+  border:0; background:rgba(251,252,249,.9); color:var(--encre); cursor:pointer;
+  width:38px; height:38px; border-radius:50%; font-size:22px; line-height:1; padding:0}
+#loupe-prec{left:16px} #loupe-suiv{right:16px}
+#loupe .fleche[hidden]{display:none !important}
+#loupe a{color:#fff; font-size:13px; border-bottom:1px dotted rgba(255,255,255,.6);
+  text-decoration:none}
+.colonne .actions{display:flex; gap:3px; flex:none}
+.colonne .freq{font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--vert);
+  margin-top:4px}
+.colonne .pheno{padding:6px 8px 2px; border-bottom:1px solid var(--trait)}
+.colonne .photos a{cursor:zoom-in}
+.colonnes{display:grid; grid-auto-flow:column; grid-auto-columns:minmax(210px,290px);
+  gap:16px; overflow-x:auto; align-items:start; justify-content:start}
+/* Barre de défilement dupliquée au-dessus, synchronisée avec les colonnes. La rotation à
+   180 degrés, plus courte à écrire, inversait l'ordre des colonnes et les collait à droite. */
+#cp-defil{overflow-x:auto; overflow-y:hidden; height:14px; margin-bottom:6px}
+#cp-defil div{height:1px}
+.colonne{position:relative; background:var(--carte); border:1px solid var(--trait); border-radius:var(--r);
+  overflow:hidden}
+.colonne .entete{display:flex; align-items:flex-start; justify-content:space-between; gap:8px;
+  padding:10px 11px; border-bottom:1px solid var(--trait)}
+.colonne .entete .plus{flex:none}
+.rech{padding:8px 10px; border:1px solid var(--trait); border-radius:var(--r);
+  font:inherit; background:#fff; width:210px}
+.rubans{display:flex; height:9px; border-radius:2px; overflow:hidden; background:var(--trait)}
+.rubans span{display:block; height:100%}
+.apercu4{display:grid; grid-template-columns:1fr 1fr; gap:2px; padding:0; border:0;
+  background:var(--trait); cursor:pointer; width:100%}
+.apercu4 span{aspect-ratio:1; background:#DDE4D9; display:block; overflow:hidden}
+.apercu4 img{width:100%; height:100%; object-fit:cover; display:block}
+.apercu4:hover{outline:2px solid var(--vert); outline-offset:-2px}
+#bio-fen{position:fixed; inset:0; z-index:1900; background:rgba(20,35,28,.72);
+  display:flex; align-items:center; justify-content:center; padding:24px}
+#bio-fen .boite{background:var(--carte); border-radius:var(--r); padding:20px 22px;
+  width:min(760px,100%); max-height:86vh; overflow-y:auto; position:relative}
+.mosaique{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px}
+.tuile{position:relative}
+.mosaique a{position:relative; display:block; aspect-ratio:1; background:#DDE4D9;
+  border-radius:var(--r); overflow:hidden; text-decoration:none}
+.mosaique img{width:100%; height:100%; object-fit:cover; display:block}
+.mosaique .transg{position:absolute; top:6px; left:6px; width:20px; height:20px;
+  border-radius:50%; background:rgba(251,252,249,.92); color:var(--prune);
+  font-size:12px; line-height:20px; text-align:center}
+.mosaique span{position:absolute; left:0; right:0; bottom:0; padding:14px 8px 6px;
+  color:#fff; font-size:12.5px; line-height:1.25;
+  background:linear-gradient(transparent, rgba(20,35,28,.82))}
+@media(max-width:640px){.mosaique{grid-template-columns:1fr 1fr}}
+#bio-fen .fermer{position:absolute; top:12px; right:14px}
+.ind{display:flex; align-items:center; gap:9px; padding:5px 0; font-size:13px;
+  color:var(--encre); text-decoration:none; border-top:1px solid var(--trait)}
+.ind:first-child{border-top:0}
+.ind:hover{color:var(--vert)}
+.ind .v{width:34px; height:34px; flex:none; border-radius:3px; overflow:hidden;
+  background:#DDE4D9; display:block}
+.ind .v img{width:100%; height:100%; object-fit:cover; display:block}
+.colonne .entete .fr{font-weight:700; font-size:14px; line-height:1.3}
+.colonne .entete .sci{font-family:'Fraunces',serif; font-style:italic; font-size:13px; color:var(--encre-2)}
+.colonne .photos{display:grid; gap:1px; background:var(--trait)}
+.colonne .obs{position:relative; background:#DDE4D9}
+/* Défilement latéral par accrochage : glisser au doigt sur téléphone, à la molette ou au
+   pavé sur ordinateur, sans aucun script. */
+.colonne .defile{display:flex; overflow-x:auto; scroll-snap-type:x mandatory;
+  scrollbar-width:none}
+.colonne .defile::-webkit-scrollbar{display:none}
+.colonne .defile img{flex:0 0 100%; width:100%; aspect-ratio:1; object-fit:cover; display:block;
+  scroll-snap-align:start; cursor:zoom-in}
+.colonne .pages{position:absolute; left:0; right:0; bottom:16px; display:flex;
+  justify-content:center; gap:4px; pointer-events:none}
+.colonne .pages i{width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,.5);
+  box-shadow:0 0 0 1px rgba(20,35,28,.35)}
+.colonne .pages i.on{background:#fff; box-shadow:0 0 0 1px rgba(20,35,28,.55)}
+.colonne .photos .credit{position:absolute; left:0; right:0; bottom:0; font-size:8.5px;
+  color:#fff; background:rgba(20,35,28,.55); padding:2px 5px; line-height:1.25;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+@media(max-width:640px){.colonnes{grid-auto-columns:minmax(150px,1fr)}}
+.planche{display:grid; grid-template-columns:repeat(auto-fill,minmax(172px,1fr)); gap:16px}
+.fiche{background:var(--carte); border:1px solid var(--trait); border-radius:var(--r);
+  overflow:hidden; display:flex; flex-direction:column; text-decoration:none; color:inherit;
+  transition:border-color .12s}
+.fiche:hover{border-color:var(--vert)}
+.fiche.mondiale{border-color:#C9A227; box-shadow:0 0 0 3px rgba(201,162,39,.28)}
+.fiche .drapeau{position:absolute; bottom:0; left:0; right:0; background:#C9A227; color:#3A2E06;
+  font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.06em;
+  text-align:center; padding:2px 4px; text-transform:uppercase}
+.fiche .date{font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--encre-2)}
+.fiche .img{aspect-ratio:1; background:#DDE4D9; position:relative; overflow:hidden}
+.fiche .img:empty::after, .fiche .img:not(:has(img))::after{content:'—'; position:absolute;
+  inset:0; display:flex; align-items:center; justify-content:center;
+  color:var(--encre-3); font-size:20px}
+.fiche .img img{width:100%; height:100%; object-fit:cover; display:block}
+.fiche .num{position:absolute; top:6px; left:6px; background:rgba(20,35,28,.72); color:#fff;
+  font-family:'IBM Plex Mono',monospace; font-size:10px; padding:2px 6px; border-radius:2px}
+.fiche .statut{position:absolute; bottom:6px; right:6px; z-index:1}
+.tuile .statut{position:absolute; bottom:6px; right:6px; z-index:2}
+.fiche .statut .iucn{font-size:10px; padding:2px 6px 2px 4px}
+.fiche{position:relative}
+.fiche .corps{padding:10px 11px 11px; display:flex; flex-direction:column; gap:3px; flex:1}
+.fiche .img{display:block}
+.fiche .bas{display:flex; align-items:flex-end; justify-content:space-between; gap:6px;
+  margin-top:auto; padding-top:6px}
+.fiche .n{text-decoration:none}
+.fiche .n:hover{text-decoration:underline}
+.fiche .plus{border:1px solid var(--trait); background:#fff; color:var(--encre-2); cursor:pointer;
+  width:20px; height:20px; border-radius:3px; line-height:1; font-size:14px; padding:0; flex:none}
+.fiche .plus:hover{border-color:var(--vert); color:var(--vert)}
+/* Le fuchsia d'iNaturalist pour les espèces introduites, et un décalage vers la droite :
+   le coin supérieur gauche est déjà occupé par le numéro de la fiche. */
+/* Pastille des espèces introduites, commune à tous les contextes. Le centrage se fait par
+   flexbox et non par hauteur de ligne : celle-ci dépend du contexte typographique, ce qui
+   faisait déborder le point d'exclamation sous la pastille selon les endroits. */
+.intro{position:absolute; top:6px; left:6px; z-index:3; width:20px; height:20px;
+  display:inline-flex; align-items:center; justify-content:center; line-height:1;
+  border-radius:50%; background:#D62F8A; color:#fff; font-weight:700; font-size:13px;
+  text-align:center; cursor:help; box-shadow:0 1px 3px rgba(20,35,28,.35)}
+/* Décalage explicite, demandé seulement là où un numéro d'ordre occupe le coin. */
+.intro.decale{left:44px}
+/* Variante posée dans le flux : en tête de colonne, la pastille recouvrirait le nom de
+   l'espèce si elle était placée en absolu dans le coin. */
+.intro.enligne{position:static; margin-top:4px}
+  box-shadow:0 1px 3px rgba(20,35,28,.35)}
+/* Bouton de sélection, identique dans tout le site : carré posé en haut à droite de l'image,
+   vert une fois coché. Le style ne dépend plus du conteneur — il divergeait selon les onglets
+   au fil des ajouts. */
+.cocher{width:34px; padding-right:0}
+/* Seule exception : dans le tableau de responsabilité, aucune image ne sert de support, la
+   case revient donc dans le flux de la cellule. */
+td.cocher .choisir{position:static; width:22px; height:22px}
+
+.choisir{position:absolute; top:6px; right:6px; z-index:2; width:24px; height:24px;
+  border:1px solid rgba(20,35,28,.25); background:rgba(255,255,255,.92); color:var(--encre-2);
+  border-radius:4px; cursor:pointer; font-size:14px; line-height:1; padding:0}
+.choisir:hover{border-color:var(--vert); color:var(--vert)}
+.choisir.pris{background:var(--vert); border-color:var(--vert); color:#fff}
+.fiche .taxo{position:absolute; inset:0; background:rgba(251,252,249,.975); padding:9px 10px;
+  overflow:auto; display:none; z-index:2; cursor:pointer}
+.fiche.ouvert .taxo{display:block}
+.fiche .lig{font-size:11.5px; line-height:1.35; color:var(--encre-2); border-left:3px solid;
+  margin-bottom:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.fiche .lig.actif{color:var(--encre); font-weight:700}
+.fiche .rg{font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--encre-3); display:block}
+.fiche .fr{font-weight:700; font-size:14px; line-height:1.3}
+.fiche .sci{font-family:'Fraunces',serif; font-style:italic; font-size:13px; color:var(--encre-2)}
+.fr.lat{font-family:'Fraunces',serif; font-style:italic; font-weight:400}
+.sci.romain{font-family:'Karla',sans-serif; font-style:normal}
+.n-nom.lat{font-family:'Fraunces',serif; font-style:italic}
+.fiche .n{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--vert); margin-top:auto; padding-top:6px}
+.fiche .credit{font-size:9px; color:var(--encre-3); line-height:1.3; padding:0 11px 8px;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+
+/* Sur téléphone, trois fiches par ligne. Les cartes se resserrent en conséquence :
+   texte plus petit, marges réduites, et le crédit photo passe sur deux lignes au lieu
+   d'être tronqué à un mot — l'attribution doit rester lisible. */
+@media(max-width:640px){
+  .wrap{padding:0 14px}
+  .planche{grid-template-columns:repeat(3,1fr); gap:9px}
+  .fiche .corps{padding:7px 8px 8px; gap:2px}
+  .fiche .fr{font-size:12px; line-height:1.25}
+  .fiche .sci{font-size:11px; line-height:1.25}
+  .fiche .n{font-size:10.5px; padding-top:5px}
+  .fiche .num{font-size:9px; padding:1px 4px; top:4px; left:4px}
+  .intro{width:17px; height:17px; font-size:11px; top:4px}
+  .intro.decale{left:34px}
+    .fiche .statut{bottom:4px; right:4px}
+  .fiche .statut .iucn{font-size:9px; padding:1px 4px 1px 3px; gap:3px}
+  .fiche .credit{font-size:8.5px; padding:0 8px 7px; white-space:normal;
+    max-height:2.6em; line-height:1.3}
+  .arbre{max-height:230px}
+  .outils{gap:9px}
+  .outils input[type=text]{width:100%}
+  .outils .saisie{width:100% !important}
+  .compte{margin-left:0}
+}
+
+table{width:100%; border-collapse:collapse; background:var(--carte); font-size:14px}
+th[data-col]{cursor:pointer; user-select:none}
+th[data-col]:hover{color:var(--encre)}
+th .fleche{color:var(--vert); font-size:11px}
+th{text-align:left; font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--encre-3); font-weight:500; padding:10px 12px;
+  border-bottom:1px solid var(--trait); white-space:nowrap}
+td{padding:9px 12px; border-bottom:1px solid #EDF0EA; vertical-align:middle}
+tr:hover td{background:#F3F6F1}
+td.esp .fr{font-weight:700} td.esp .sci{font-family:'Fraunces',serif; font-style:italic;
+  color:var(--encre-2); font-size:13px}
+td.esp a{text-decoration:none} td.esp a:hover .fr{color:var(--vert); text-decoration:underline}
+td.num{font-family:'IBM Plex Mono',monospace; text-align:right; white-space:nowrap}
+td.num a{color:inherit; text-decoration:none; border-bottom:1px dotted var(--trait)}
+td.num a:hover{color:var(--vert); border-bottom-color:var(--vert)}
+.mesure{display:flex; align-items:center; gap:9px}
+.mesure .rail{flex:1; height:6px; background:#E4EAE1; border-radius:3px; overflow:hidden;
+  min-width:52px; background-image:repeating-linear-gradient(90deg,
+    transparent 0 calc(33.333% - 1px), #CBD5C7 calc(33.333% - 1px) 33.333%)}
+.mesure .rail i{display:block; height:100%; background:var(--ocre)}
+.mesure .val{font-family:'IBM Plex Mono',monospace; font-size:12.5px; width:64px; text-align:right}
+.tag{font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.06em;
+  text-transform:uppercase; padding:2px 7px; border-radius:2px; white-space:nowrap}
+.tag.excl{background:#F1E1E7; color:var(--prune)}
+.tag.faible{background:#E7EAE5; color:var(--encre-3)}
+
+.iucn{display:inline-flex; align-items:center; gap:5px; font-family:'IBM Plex Mono',monospace;
+  font-size:10.5px; font-weight:500; letter-spacing:.04em; padding:2px 7px 2px 5px;
+  border-radius:2px; white-space:nowrap}
+.iucn svg{flex:none}
+.iucn.vide{background:transparent; color:var(--encre-3); padding-left:7px}
+.niveaux{display:flex; gap:16px; flex-wrap:wrap; font-size:12.5px; color:var(--encre-2); margin-top:14px}
+.niveaux span{display:flex; align-items:center; gap:6px}
+.niveaux i{width:13px; height:8px; border-radius:2px; display:inline-block}
+
+.chiffres{display:grid; grid-template-columns:repeat(auto-fit,minmax(168px,1fr)); gap:16px; margin-bottom:26px}
+.chiffre{background:var(--carte); border:1px solid var(--trait); border-radius:var(--r); padding:15px 17px}
+.chiffre.aide{cursor:help}
+.divergent{color:var(--ocre); border-bottom:1px dotted var(--ocre); cursor:help}
+.chiffre.aide .k{border-bottom:1px dotted var(--encre-3); display:inline-block; padding-bottom:1px}
+.chiffre .k{font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--encre-3)}
+.chiffre .v{font-family:'Fraunces',serif; font-size:30px; font-weight:600; line-height:1.1; margin-top:5px}
+.chiffre .d{font-size:12.5px; color:var(--encre-2); margin-top:3px}
+.graphe{background:var(--carte); border:1px solid var(--trait); border-radius:var(--r); padding:20px}
+
+.legende{display:flex; gap:22px; font-size:14px; color:var(--encre-2); margin-top:12px; flex-wrap:wrap}
+.legende span{display:flex; align-items:center; gap:7px}
+.legende i{width:18px; height:5px; border-radius:2px; display:inline-block}
+.note{font-size:13px; color:var(--encre-2); margin-top:16px; max-width:72ch}
+
+#carte-lieu{height:300px; border:1px solid var(--trait); border-radius:var(--r); background:#DDE4D9}
+#lieux-trouves .jeton{cursor:pointer}
+#lieux-trouves .jeton:hover{background:#D2DCCE; border-color:var(--vert)}
+#lieux-trouves .jeton small{color:var(--encre-3); font-size:11px; margin-left:6px}
+#comm-resultats .jeton small{color:var(--encre-3); font-size:11px; margin-left:6px}
+#comm-resultats .jeton:hover{background:#D2DCCE; border-color:var(--vert)}
+#comm-resultats .jeton.pale{opacity:.6; cursor:default}
+#comm-resultats .jeton.pale:hover{background:var(--carte); border-color:var(--trait)}
+/* Une légende posée sur la carte plutôt qu'en dessous : c'est là qu'on la cherche, et elle
+   reste visible pendant qu'on déplace la vue. */
+.carte-boite{position:relative}
+.sur-carte{position:absolute; top:10px; right:10px; z-index:500; width:32px; height:32px;
+  display:flex; align-items:center; justify-content:center; padding:0;
+  background:rgba(251,252,249,.94); border:1px solid var(--trait); border-radius:var(--r);
+  color:var(--encre-2); cursor:pointer; box-shadow:0 2px 8px rgba(20,35,28,.12)}
+.sur-carte:hover{color:var(--vert); border-color:var(--vert)}
+.sur-carte.actif{background:var(--vert); border-color:var(--vert); color:#fff}
+.discret.actif{background:var(--vert); border-color:var(--vert); color:#fff}
+
+#carte-bio{height:min(72vh,620px); border:1px solid var(--trait); border-radius:var(--r);
+  background:#DDE4D9}
+#carte{height:min(72vh,620px); border:1px solid var(--trait); border-radius:var(--r); background:#DDE4D9}
+.fond-clair{filter:grayscale(.92) brightness(1.07) contrast(.88)}
+
+.bascule{display:inline-flex; align-items:center; gap:7px; font-size:14px; color:var(--encre-2); cursor:pointer}
+.bascule input{accent-color:var(--vert); width:15px; height:15px; cursor:pointer}
+.pop-tit{font-weight:700; margin-bottom:2px}
+.pop-sous{color:#5D6E63; font-size:11.5px; margin-bottom:7px}
+.pop-liste{list-style:none; margin:0; padding:0; font-size:13px}
+.pop-liste li{display:flex; justify-content:space-between; gap:12px; padding:2px 0;
+  border-bottom:1px solid #EDF0EA}
+.pop-liste li:last-child{border-bottom:0}
+.pop-liste b{font-family:'IBM Plex Mono',monospace; font-weight:500; color:#2F6B4F}
+.pop-liste i{font-family:'Fraunces',serif; color:#5D6E63}
+.leaflet-container{font-family:'Karla',sans-serif; font-size:12px; background:#DDE4D9}
+
+footer{border-top:1px solid var(--trait); margin-top:60px; padding:22px 0 44px;
+  font-size:12.5px; color:var(--encre-3)}
+
+/* Accueil : les trois portes, et rien d'autre. */
+.portes{display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin:30px 0 34px}
+@media(max-width:760px){.portes{grid-template-columns:1fr}}
+.porte{display:block; text-decoration:none; background:var(--carte);
+  border:1px solid var(--trait); border-radius:var(--r); padding:22px 22px 24px;
+  transition:border-color .3s, box-shadow .3s}
+.porte:hover{border-color:var(--vert); box-shadow:0 4px 16px rgba(20,35,28,.07)}
+.porte h2{font-size:22px; margin-bottom:8px}
+.porte h2 em{font-style:italic; color:var(--vert)}
+.porte p{color:var(--encre-2); margin:0; font-size:14px}
+.porte .quoi{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--encre-3); display:block; margin-bottom:9px}
+.porte:nth-child(2):hover{border-color:var(--ocre)}
+.porte:nth-child(2) h2 em{color:var(--ocre)}
+.porte:nth-child(3):hover{border-color:var(--prune)}
+.porte:nth-child(3) h2 em{color:var(--prune)}
+
+/* ---- Ce qui me manque ---- */
+.champs.trois{grid-template-columns:1fr 1fr 1fr}
+@media(max-width:980px){.champs.trois{grid-template-columns:1fr 1fr}}
+@media(max-width:720px){.champs.trois{grid-template-columns:1fr}}
+
+.lignes{display:flex; flex-direction:column}
+
+/* Deux manques, deux teintes. Le prune marque la vraie coche — jamais vue nulle part ;
+   l'ocre, plus discret, ce qui manque seulement à la liste du lieu. */
+.marque{font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.08em;
+  text-transform:uppercase; padding:2px 6px; border-radius:2px; white-space:nowrap}
+.marque.jamais{background:rgba(123,59,82,.12); color:var(--prune)}
+.marque.ailleurs{background:rgba(168,124,20,.12); color:var(--ocre)}
+
+.outils.pages{margin-top:18px; flex-wrap:wrap}
+.outils.pages .discret.actif{background:var(--encre); color:var(--papier)}
+
+.barres{margin-top:16px}
+
+/* Carte « où aller », et l'état de coche porté par la fiche entière. */
+#carte-ou{height:min(62vh,560px); border-radius:var(--r); z-index:0}
+#g-legende{position:absolute; left:12px; bottom:12px; z-index:500; min-width:210px;
+  background:rgba(251,252,249,.94); border:1px solid var(--trait); border-radius:var(--r);
+  padding:7px 10px 6px; font-size:11.5px; color:var(--encre-2);
+  box-shadow:0 2px 10px rgba(20,35,28,.12)}
+#g-legende .quoi{display:block; font-family:'IBM Plex Mono',monospace; font-size:10px;
+  letter-spacing:.09em; text-transform:uppercase; color:var(--encre-3); margin-bottom:5px}
+#g-legende .barre{display:block; height:10px; border-radius:2px;
+  border:1px solid rgba(20,35,28,.15)}
+#g-legende .bornes{display:flex; justify-content:space-between; margin-top:3px;
+  font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--encre-3)}
+#g-legende .bornes b{font-weight:400; flex:1; text-align:right}
+
+/* La pastille est dans l'image et au-dessus d'elle. Fond opaque : une teinte translucide
+   posée sur une photo devient illisible dès que la photo est claire. */
+.fiche .coin{position:absolute; top:6px; left:6px; right:6px; z-index:3;
+  display:flex; justify-content:flex-start; pointer-events:none}
+.fiche .coin .marque{box-shadow:0 1px 5px rgba(20,35,28,.3)}
+.marque{background:#fff}
+.marque.jamais{background:var(--prune); color:#fff}
+.marque.ailleurs{background:var(--ocre); color:#fff}
+.marque.cochee{background:#DCE6DB; color:var(--vert)}
+
+/* Dans une planche de deux cents vignettes, c'est la bordure qu'on lit, pas le texte. Et le
+   déjà-vu est estompé : ce qui reste à voir doit sauter aux yeux. */
+.fiche.f-jamais{border-color:rgba(123,59,82,.5)}
+.fiche.f-jamais:hover{border-color:var(--prune)}
+.fiche.f-ailleurs{border-color:rgba(168,124,20,.5)}
+.fiche.f-ailleurs:hover{border-color:var(--ocre)}
+.fiche.f-vue .img img{opacity:.45; filter:saturate(.55)}
+.fiche.f-vue:hover .img img{opacity:1; filter:none}
+.fiche.f-cochee:hover{border-color:var(--vert)}
+
+/* Un outil annoncé mais pas encore écrit : visible, pour qu'on sache ce que la famille
+   contiendra, mais inerte — un lien vers un dossier absent donne une page d'erreur du
+   serveur, qu'on prend pour une panne du site. */
+
+/* Les trois états, expliqués sous la barre d'outils. C'est la seule chose à comprendre dans
+   cet outil, et un libellé de menu n'y suffisait pas. */
+.legende-statuts{display:flex; flex-wrap:wrap; align-items:center; gap:16px;
+  font-size:12.5px; color:var(--encre-2); margin:-4px 0 20px}
+.legende-statuts > span{display:flex; align-items:center; gap:7px}
+
+/* Les espèces portées sur la carte : la barre sert de légende, la pastille de couleur est
+   celle des points. */
+.choix-carte{display:flex; flex-wrap:wrap; align-items:center; gap:9px; margin:0 0 18px;
+  padding:10px 12px; background:var(--carte); border:1px solid var(--trait);
+  border-radius:var(--r)}
+.choix-carte .tit{margin:0}
+.jeton-esp{display:inline-flex; align-items:center; gap:6px; font-size:13px;
+  background:var(--papier); border:1px solid var(--trait); border-radius:var(--r);
+  padding:3px 4px 3px 7px}
+.jeton-esp i{width:11px; height:11px; border-radius:50%; display:block;
+  border:1px solid rgba(20,35,28,.2)}
+.jeton-esp button{border:0; background:transparent; cursor:pointer; font-size:15px;
+  line-height:1; color:var(--encre-3); padding:0 3px}
+.jeton-esp button:hover{color:var(--brique)}
+
+/* Ce que la personne a elle-même observé, sous le total de la zone. Discret : c'est un
+   rappel, pas le chiffre principal — sauf pour les espèces déjà vues, où il devient la
+   seule information utile de la fiche. */
+.mes-obs{display:block; margin-top:3px; font-family:'IBM Plex Mono',monospace;
+  font-size:11px; color:var(--encre-3); text-decoration:none;
+  border-bottom:1px dotted transparent; width:fit-content}
+.mes-obs:hover{color:var(--vert); border-bottom-color:var(--vert)}
+.fiche.f-cochee .mes-obs{color:var(--vert)}
+
+/* Dans cet outil, la pastille d'introduction partage le coin avec celle du statut : elles
+   se lisent côte à côte plutôt que l'une sur l'autre. */
+.fiche .coin{gap:5px}
+.fiche .coin .intro.enligne{margin-top:0; flex:none}
+
+/* Couverture déroulante : la même grille que les barres, augmentée d'un chevron et d'un
+   retrait qui suit la profondeur taxonomique. */
+.couv-ligne{display:grid; grid-template-columns:20px minmax(120px,1fr) 3fr auto; gap:10px;
+  align-items:center; padding:6px 0; border-bottom:1px solid #EEF1EC}
+.couv-ligne{padding-left:calc(var(--prof) * 18px)}
+.couv-ligne:hover{background:#F3F6F2}
+.couv-ligne .nom{font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  border:0; background:transparent; font:inherit; font-weight:500; text-align:left;
+  cursor:pointer; padding:2px; color:var(--encre); min-width:0}
+.couv-ligne .nom.lien{text-decoration:none; border-bottom:1px solid transparent}
+.couv-ligne .nom.lien:hover{color:var(--vert); border-bottom-color:var(--trait)}
+.couv-ligne.sel{background:#E0EAE0}
+.couv-ligne.sel .nom{color:var(--vert); font-weight:700}
+.couv-ligne .nom.lat{font-style:italic}
+.couv-ligne .nom .n-rang{font-family:'IBM Plex Mono',monospace; font-size:10px;
+  letter-spacing:.08em; text-transform:uppercase; color:var(--encre-3); margin-left:7px}
+.couv-ligne .piste{display:flex; height:11px; background:#E4EBE1; border-radius:2px;
+  overflow:hidden}
+.couv-ligne .piste i{display:block; height:100%}
+.couv-ligne .piste i.ailleurs{background:rgba(168,124,20,.55)}
+.couv-ligne .num{font-family:'IBM Plex Mono',monospace; font-size:12px;
+  color:var(--encre-3); white-space:nowrap}
+@media(max-width:700px){.couv-ligne{grid-template-columns:20px 1fr 2fr; }
+  .couv-ligne .num{grid-column:2/4; text-align:right}}
+
+/* La case d'une option expérimentale, dans une barre d'outils. */
+label.bascule{display:inline-flex; align-items:center; gap:6px; font-size:13px;
+  color:var(--encre-2); cursor:pointer}
+label.bascule input{accent-color:var(--vert)}
+
+/* Les espèces seulement attendues : présentées à part, et visiblement plus légères que
+   celles qu'on a réellement signalées. */
+.planche.attendues .fiche{opacity:.72; border-style:dashed}
+.planche.attendues .fiche:hover{opacity:1}
+
+/* La marque des données servies depuis la réserve, dans la barre d'outils de la carte. */
+.en-memoire{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.06em;
+  color:var(--vert); background:rgba(47,107,79,.1); border-radius:2px; padding:3px 7px;
+  white-space:nowrap}
+.outils .en-memoire{margin-left:0}
+
+/* La troisième ligne d'un bloc de chiffres : la précision qui dit de quoi il s'agit. */
+.chiffre .d{font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.07em;
+  text-transform:uppercase; color:var(--encre-3); margin-top:4px}
+
+/* La part d'un candidat dans sa branche : le chiffre qui transforme une liste de noms en
+   liste de probabilités. La barre se lit avant le nombre. */
+.fiche .part{display:flex; align-items:center; gap:7px; margin:5px 0 2px}
+.fiche .part .piste{flex:1; height:6px; background:#E4EBE1; border-radius:3px; overflow:hidden}
+.fiche .part .piste i{display:block; height:100%; background:var(--prune)}
+.fiche .part b{font-family:'IBM Plex Mono',monospace; font-size:11.5px; font-weight:500;
+  color:var(--prune); white-space:nowrap}
+
+/* Une ligne de confusion : vignette, noms, fréquence locale, bouton de panier. */
+/* Une ligne de confusion. La vignette est large : on y cherche une ressemblance, et une
+   image de quarante pixels ne permettait pas d'en juger. */
+.conf-ligne{display:grid; grid-template-columns:104px 1fr auto; gap:16px;
+  align-items:center; padding:12px 6px; border-bottom:1px solid #EEF1EC}
+.conf-ligne:hover{background:#EDF2EC}
+.conf-ligne .img{display:block; width:104px; height:104px; border-radius:var(--r);
+  overflow:hidden; background:#E4EBE1}
+.conf-ligne .img img{width:100%; height:100%; object-fit:cover; display:block;
+  transition:transform .4s}
+.conf-ligne:hover .img img{transform:scale(1.05)}
+.conf-ligne .quoi{min-width:0}
+.conf-ligne .noms .fr{font-size:16px}
+.conf-ligne .num{margin-top:5px; font-family:'IBM Plex Mono',monospace; font-size:11.5px;
+  color:var(--encre-3)}
+.conf-ligne .comparer{white-space:nowrap}
+.conf-ligne .comparer.pris{background:var(--vert); border-color:var(--vert); color:#fff}
+
+/* Une phrase qui dit quoi faire de ce qu'on a sous les yeux, en tête de section. */
+
+@media(max-width:640px){
+  .conf-ligne{grid-template-columns:72px 1fr; gap:12px}
+  .conf-ligne .img{width:72px; height:72px}
+  .conf-ligne .comparer{grid-column:1/3; justify-self:start}
+}
+
+#carte-rep{height:min(62vh,560px); border-radius:var(--r); z-index:0}
+
+/* Une note de détermination : le texte d'abord, sa provenance ensuite et en retrait. */
+.note-id{background:var(--carte); border:1px solid var(--trait); border-left:3px solid var(--prune);
+  border-radius:var(--r); padding:11px 14px; margin:10px 0}
+.note-id p{margin:0; font-size:14px; line-height:1.55; white-space:pre-wrap;
+  overflow-wrap:break-word}
+.note-id .qui{margin-top:7px; font-family:'IBM Plex Mono',monospace; font-size:10.5px;
+  letter-spacing:.06em; text-transform:uppercase; color:var(--encre-3)}
+.note-id .qui a{color:var(--vert); text-decoration:none; margin-left:8px}
+.note-id .qui a:hover{text-decoration:underline}
+
+/* Le nom d'une espèce confondue : un lien, comme sa vignette. */
+.conf-ligne .noms{text-decoration:none; color:inherit; display:block}
+.conf-ligne .noms:hover .fr, .conf-ligne .noms:hover .sci{color:var(--vert)}
+
+/* Une ligne de confusion : la vignette est le sujet, elle prend de la place. Le bouton dit
+   son intention en toutes lettres plutôt que d'être une case à deviner. */
+.conf-ligne{grid-template-columns:96px 1fr auto; gap:16px; padding:10px 4px}
+.conf-ligne .img{width:96px; height:96px}
+.conf-ligne .quoi{min-width:0}
+.conf-ligne .quoi .num{margin-top:5px; font-family:'IBM Plex Mono',monospace;
+  font-size:11.5px; color:var(--encre-3)}
+.conf-ligne .noms .fr{font-size:15px}
+.conf-ligne .comparer{white-space:nowrap}
+.conf-ligne .comparer.pris{background:var(--vert); border-color:var(--vert); color:#fff}
+
+/* Le menu des espèces retenues, à gauche de Confusions et Critères : même colonne que
+   l'arbre taxonomique, mais des vignettes plutôt que des rangs. */
+.arbre.retenues{padding:8px}
+.retenue{display:flex; align-items:center; gap:9px; width:100%; text-align:left;
+  background:transparent; border:0; border-radius:var(--r); padding:6px; cursor:pointer;
+  font:inherit; font-size:13.5px; color:var(--encre); margin-bottom:2px}
+.retenue:hover{background:#EDF2EC}
+.retenue.sel{background:#DCE6DB; font-weight:600; color:var(--vert)}
+.retenue img,.retenue .sans{width:34px; height:34px; border-radius:2px; object-fit:cover;
+  background:#E4EBE1; flex:none; display:block}
+.retenue span{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+
+.titre-conf{font-size:19px; display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;
+  padding-bottom:7px; border-bottom:1px solid var(--trait); margin-bottom:4px}
+.titre-conf .compte{font-family:'IBM Plex Mono',monospace; font-size:11px;
+  letter-spacing:.09em; text-transform:uppercase; color:var(--encre-3); margin-left:auto}
+
+/* Une confusion absente de la zone : gardée, mais visiblement en retrait. */
+.conf-ligne.absente{opacity:.72}
+.conf-ligne.absente:hover{opacity:1}
+/* Confusions rangées en deux groupes titrés : présentes dans la zone, puis absentes. */
+.groupe-conf{margin:18px 0 8px; padding-left:12px; border-left:3px solid var(--vert)}
+.groupe-conf.absentes{border-left-color:var(--trait)}
+.groupe-conf h4{font-size:15px; margin:0; display:flex; align-items:baseline; gap:8px}
+.groupe-conf h4 .compte{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--encre-3)}
+.groupe-conf > .note{margin:4px 0 8px}
+.marque.presente{background:rgba(47,107,79,.14); color:var(--vert)}
+.accord{cursor:help}
+/* Répartition : tableau-légende sous la carte. */
+.rep-legende{margin-top:14px; font-size:13.5px}
+.rep-legende th{text-align:left; font-weight:500; font-size:12px; color:var(--encre-2);
+  padding:6px 8px; border-bottom:1px solid var(--trait)}
+.rep-legende td{padding:6px 8px; border-bottom:1px solid var(--trait)}
+.rep-legende .rep-esp i{width:11px; height:11px; border-radius:50%; display:block; flex:none}
+.rep-legende tr.masquee .rep-esp span{text-decoration:line-through; color:var(--encre-3)}
+.rep-legende .dispo{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--encre-3); white-space:nowrap}
+.rep-legende .dispo.oui{color:var(--vert)}
+@media(max-width:640px){.rep-legende th:nth-child(4),.rep-legende td:nth-child(4){display:none}
+  .rep-legende .dispo{white-space:normal}}
+.pic{font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.05em;
+  color:var(--encre-3); margin-left:8px}
+.accord{display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:10px;
+  letter-spacing:.07em; text-transform:uppercase; padding:2px 7px; border-radius:2px;
+  margin-top:4px}
+.accord.oui{background:rgba(47,107,79,.14); color:var(--vert)}
+.accord.peu{background:rgba(168,124,20,.14); color:var(--ocre)}
+.accord.non{background:rgba(180,70,46,.13); color:var(--brique)}
+
+/* La force d'une confusion : le nombre de rectifications enregistrées entre les deux taxons. */
+.force{font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.05em;
+  color:var(--prune); background:rgba(123,59,82,.1); border-radius:2px; padding:2px 6px;
+  margin-left:8px}
+
+/* Le graphe des mois. Volontairement clair : des barres pleines et sombres écrasaient la
+   page, alors que l'information tient au rapport entre elles. Le SVG garde ses proportions
+   et se met à l'échelle — étiré, son texte se déformait. */
+.qd-graphe{background:var(--carte); border:1px solid var(--trait); border-radius:var(--r);
+  padding:14px 12px 6px; margin-bottom:10px}
+.qd-graphe svg{width:100%; height:auto; display:block; overflow:visible}
+
+.qd-repere line{stroke:var(--trait); stroke-width:1}
+.qd-repere text{font-family:'IBM Plex Mono',monospace; font-size:9px; fill:var(--encre-3);
+  text-anchor:end}
+.qd-axe{stroke:var(--trait); stroke-width:1.5}
+.qd-titre-axe{font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.07em;
+  text-transform:uppercase; fill:var(--encre-3); text-anchor:middle}
+
+.qd-barre .zone{fill:transparent}
+/* Deux teintes empilées : le prune pour ce qui reste à voir, un vert pâle pour l'acquis.
+   Le second est volontairement effacé — il sert d'échelle, pas de sujet. */
+.qd-barre .m{fill:var(--prune); opacity:.55; transition:opacity .15s}
+.qd-barre .v{fill:var(--vert); opacity:.16; transition:opacity .15s}
+.qd-barre .e{font-family:'IBM Plex Mono',monospace; font-size:10px; fill:var(--encre-3);
+  text-anchor:middle; text-transform:capitalize}
+.qd-barre:hover{cursor:pointer}
+.qd-barre:hover .m{opacity:.8}
+.qd-barre.sel .m{opacity:1}
+.qd-barre.sel .v{opacity:.3}
+.qd-barre.sel .e{fill:var(--prune); font-weight:600}
+.qd-barre.auj .e{fill:var(--encre); font-weight:600}
+
+.qd-legende{display:flex; gap:18px; justify-content:center; margin-top:2px;
+  font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--encre-3)}
+.qd-legende span{display:inline-flex; align-items:center; gap:6px}
+.qd-legende i{width:11px; height:11px; border-radius:2px; display:block}
+.qd-legende i.m{background:rgba(123,59,82,.55)}
+.qd-legende i.v{background:rgba(47,107,79,.16); border:1px solid var(--trait)}
+
+/* Les relevés déjà en réserve pour cette zone. Un relevé coûte une minute : on doit voir
+   d'un coup d'œil ce qu'on possède, et le reprendre d'un clic. */
+.reserves{display:flex; flex-wrap:wrap; align-items:center; gap:9px; margin:0 0 16px;
+  padding:9px 11px; background:rgba(47,107,79,.06); border:1px solid rgba(47,107,79,.2);
+  border-radius:var(--r)}
+/* Vide, la rangée reste là mais s'efface : elle annonce ce qu'elle contiendra. */
+.reserves.vide{background:transparent; border-style:dashed; border-color:var(--trait)}
+.reserves.vide .tit{color:var(--encre-3)}
+.reserves .rien{font-size:13px; color:var(--encre-3)}
+.reserves .tit{margin:0; color:var(--vert)}
+.jeton-res{display:inline-flex; flex-direction:column; align-items:flex-start; gap:1px;
+  background:var(--papier); border:1px solid var(--trait); border-radius:var(--r);
+  padding:5px 10px; cursor:pointer; font:inherit; text-align:left; line-height:1.25}
+.jeton-res:hover{border-color:var(--vert)}
+.jeton-res.actif{border-color:var(--vert); background:#DCE6DB}
+.jeton-res b{font-size:13px; font-weight:600; color:var(--encre)}
+.jeton-res span{font-size:12px; color:var(--encre-2)}
+.jeton-res i{font-family:'IBM Plex Mono',monospace; font-size:10px; font-style:normal;
+  color:var(--encre-3)}
+.jeton-res.actif b{color:var(--vert)}
+
+/* Un carton d'information posé au-dessus d'une vue qui reste affichée : plus bas et moins
+   solennel que le carton qui remplace une vue entière. */
+.vide.court{padding:16px 20px; margin-bottom:14px; text-align:left}
+.vide.court strong{font-size:16px; margin-bottom:3px}
+
+/* Le point vert d'un jeu de données déjà collecté, dans un bouton. Les menus déroulants
+   n'acceptent pas de balise : ils portent le même signe en caractère. */
+.pastille-ok{display:inline-block; width:7px; height:7px; border-radius:50%;
+  background:var(--vert); margin-right:7px; vertical-align:middle}
+button.discret.actif{background:var(--vert); border-color:var(--vert); color:#fff}
+button.discret.actif .pastille-ok{background:#fff}
+
+/* Le statut de conservation, posé sur l'image plutôt que sous le texte : c'est une propriété
+   de l'espèce et non un chiffre de la zone, et il se repère mieux là. L'ombre le détache des
+   photos claires. */
+.fiche .img .statut{position:absolute; bottom:6px; right:6px; z-index:2}
+.fiche .img .statut .iucn{box-shadow:0 1px 4px rgba(20,35,28,.28)}
+
+/* Le bouton « Maintenant » de l'onglet Quand : à droite de la barre, et dans sa propre
+   teinte — il ne filtre pas comme les menus voisins, il change la période regardée. */
+button.maintenant{margin-left:auto; display:inline-flex; align-items:center;
+  background:var(--papier); color:var(--ocre); border:1px solid rgba(168,124,20,.5);
+  border-radius:var(--r); padding:6px 12px; font:inherit; font-size:13px; cursor:pointer;
+  white-space:nowrap}
+button.maintenant:hover:not(:disabled){border-color:var(--ocre); background:rgba(168,124,20,.08)}
+button.maintenant.actif{background:var(--ocre); border-color:var(--ocre); color:#fff}
+button.maintenant:disabled{opacity:.45; cursor:default}
+button.maintenant .pastille-ok{background:var(--ocre)}
+button.maintenant.actif .pastille-ok{background:#fff}
+
+/* Les trois meilleurs carreaux, rappelés dans la légende de la carte. */
+#g-legende .podium{display:flex; align-items:center; gap:4px; margin-top:5px;
+  font-size:10.5px; color:var(--encre-3)}
+#g-legende .podium i{width:10px; height:10px; border-radius:2px; display:block;
+  border:2px solid}
+#g-legende .podium i.or{border-color:#D9A441}
+#g-legende .podium i.argent{border-color:#AFB6BC}
+#g-legende .podium i.bronze{border-color:#B07A4A}
+#g-legende .podium{margin-left:0}
+
+/* Le classement des contributeurs. Les trois premiers portent leur médaille, la ligne de la
+   personne connectée est mise en avant où qu'elle soit. */
+.classement{margin-top:4px}
+.classement.suite{margin-top:14px; padding-top:10px; border-top:1px dashed var(--trait)}
+.cl-ligne{display:grid; grid-template-columns:38px 1fr auto auto; gap:14px; align-items:center;
+  padding:8px 6px; border-bottom:1px solid #EEF1EC}
+.cl-ligne:hover{background:#EDF2EC}
+.cl-ligne .rang{font-family:'Fraunces',serif; font-size:20px; color:var(--encre-3);
+  text-align:center}
+.cl-ligne.or .rang{color:#D9A441}
+.cl-ligne.argent .rang{color:#8E979E}
+.cl-ligne.bronze .rang{color:#B07A4A}
+.cl-ligne.moi{background:#DCE6DB; border-radius:var(--r)}
+.cl-ligne .qui{display:flex; align-items:center; gap:9px; text-decoration:none; color:inherit;
+  min-width:0}
+.cl-ligne .qui img,.cl-ligne .qui .sans{width:30px; height:30px; border-radius:50%;
+  object-fit:cover; background:#E4EBE1; flex:none; display:block}
+.cl-ligne .qui b{font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.cl-ligne .qui:hover b{color:var(--vert)}
+.cl-ligne .esp{font-family:'IBM Plex Mono',monospace; font-size:15px; color:var(--encre);
+  white-space:nowrap}
+.cl-ligne .esp small{font-size:10px; color:var(--encre-3); letter-spacing:.06em;
+  text-transform:uppercase}
+.cl-ligne .num{font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--encre-3);
+  white-space:nowrap}
+@media(max-width:640px){.cl-ligne{grid-template-columns:30px 1fr auto} .cl-ligne .num{display:none}}
+
+/* La carte de terrain : plus haute que les autres, on la regarde debout. */
+#carte-terrain{height:min(68vh,620px); border-radius:var(--r); z-index:0}
+
+/* Les photos des espèces retenues, sous la carte. Une bande par espèce, dans la couleur de
+   son point : c'est ce lien de couleur qui fait tout le travail entre la carte et l'image. */
+.t-espece{margin-top:18px}
+.t-espece h3{display:flex; align-items:center; gap:9px; font-size:17px; margin-bottom:8px}
+.t-espece h3 i{width:12px; height:12px; border-radius:50%; background:var(--teinte);
+  border:2px solid #fff; box-shadow:0 0 0 1px var(--trait); flex:none}
+.t-espece .bande{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:8px}
+.t-espece .bande img{width:100%; aspect-ratio:1; object-fit:cover; border-radius:var(--r);
+  border:1px solid var(--trait); display:block; background:#E4EBE1}
+
+/* La réglette des périodes. Les mois forment une suite, et c'est pourquoi on les aligne —
+   mais un curseur qui s'accroche à chaque cran est pénible à faire glisser, et impossible à
+   viser au doigt. Un cran se choisit d'un appui. */
+.outils.periode-barre{align-items:center; margin:-6px 0 14px; gap:14px}
+.periode{flex:1; min-width:320px}
+.crans{display:grid; grid-template-columns:1.6fr repeat(12,1fr); gap:2px;
+  background:var(--carte); border:1px solid var(--trait); border-radius:var(--r); padding:3px}
+.crans button{border:0; background:transparent; cursor:pointer; border-radius:2px;
+  padding:7px 2px 6px; font-family:'IBM Plex Mono',monospace; font-size:11px;
+  color:var(--encre-2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  position:relative; transition:background .12s, color .12s}
+.crans button:hover{background:#EDF2EC; color:var(--vert)}
+.crans button.actif{background:var(--vert); color:#fff; font-weight:600}
+/* Un point vert sous les périodes déjà collectées : les choisir ne coûte rien. */
+.crans button.pret::after{content:''; position:absolute; left:50%; bottom:3px;
+  transform:translateX(-50%); width:4px; height:4px; border-radius:50%; background:var(--vert)}
+.crans button.actif.pret::after{background:#fff}
+@media(max-width:760px){.crans button{font-size:9.5px; padding:6px 1px 5px}}
+
+/* ---- « Ce que c'est » : départ depuis une observation ---- */
+.depart-obs{margin:14px 0 4px; border:1px solid var(--trait); border-radius:var(--r); background:var(--carte)}
+.depart-obs > summary{cursor:pointer; padding:9px 12px; font-size:14px; color:var(--vert); font-weight:500}
+.depart-obs[open] > summary{border-bottom:1px solid var(--trait)}
+.do-corps{padding:12px}
+.do-ligne{display:flex; flex-wrap:wrap; align-items:center; gap:9px; margin-bottom:10px}
+.do-ligne input[type=text]{flex:1 1 260px; width:auto}
+.do-ligne input[type=date]{padding:7px 9px; border:1px solid var(--trait); border-radius:var(--r); font:inherit}
+#do-carte{height:300px; border-radius:var(--r); margin:4px 0 10px; z-index:0}
+.do-obs{display:flex; gap:14px; align-items:flex-start; margin-top:6px}
+.do-obs img{width:120px; height:120px; object-fit:cover; border-radius:var(--r); display:block}
+
+/* ---- Candidats : présence attendue ---- */
+.fiche .geo:empty{display:none}
+.marque.hors-geo{background:rgba(180,85,58,.13); color:var(--brique); cursor:help}
+.marque.attendue{background:rgba(58,99,184,.13); color:#3A63B8}
+.attendues{margin-top:28px; padding-top:14px; border-top:1px dashed var(--trait)}
+.fiche.attendue{border-style:dashed}
+
+/* ---- Confusions : source annoncée ---- */
+.source-conf{font-size:13.5px; line-height:1.45; color:var(--encre-2); margin:6px 0 14px; padding:9px 12px;
+  border-radius:var(--r); background:rgba(47,107,79,.08); max-width:78ch}
+.source-conf.repli{background:rgba(168,124,20,.1)}
+.source-conf strong{color:var(--encre)}
+
+/* ---- Critères qui départagent ---- */
+.note-id.distingue{border-left:3px solid var(--vert); padding-left:10px}
+.note-id mark{background:rgba(201,162,39,.35); color:inherit; padding:0 2px; border-radius:2px}
+.note-id .cite{font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.05em;
+  text-transform:uppercase; color:var(--vert); margin-bottom:3px}
+.note-id .langue{font-family:'IBM Plex Mono',monospace; font-size:11px}
+
+/* ---- Bilan ---- */
+.bilan-lignes{display:flex; flex-direction:column; gap:8px; max-width:980px}
+.bilan-ligne{display:grid; grid-template-columns:1fr minmax(240px,340px); gap:16px; align-items:start;
+  padding:10px 12px; background:var(--carte); border:1px solid var(--trait); border-radius:var(--r)}
+.bilan-ligne.ecartee{background:#F1F0EA}
+.bilan-ligne.ecartee .noms{text-decoration:line-through; color:var(--encre-3)}
+.bilan-ligne .indices{display:flex; flex-wrap:wrap; gap:6px; margin-top:6px}
+.bilan-ligne .indice{font-size:12px; padding:3px 8px; border:1px solid rgba(180,85,58,.35);
+  background:rgba(180,85,58,.08); color:var(--brique); border-radius:12px; cursor:pointer}
+.bilan-ligne .indice.faible{border-color:rgba(168,124,20,.35); background:rgba(168,124,20,.08); color:var(--ocre)}
+.bilan-ligne .indice:hover{background:rgba(180,85,58,.18)}
+.bilan-ligne .verdict{display:flex; flex-direction:column; gap:6px}
+#bi-texte{width:100%; max-width:980px; font-family:'IBM Plex Mono',monospace; font-size:12.5px;
+  padding:10px; border:1px solid var(--trait); border-radius:var(--r); background:#fff; resize:vertical}
+.retenue.ecartee span{text-decoration:line-through; color:var(--encre-3)}
+@media(max-width:640px){.bilan-ligne{grid-template-columns:1fr}}
+.fiche .marque.attendue{white-space:normal; display:inline-block; line-height:1.35}
+
+.marque.geo-oui{background:rgba(47,107,79,.14); color:var(--vert); cursor:help}
+.marque.geo-muet{background:rgba(93,110,99,.12); color:var(--encre-2); cursor:help}
+
+/* ---- « Ce que c'est » : onglet Taxonomie ---- */
+.taxo-fil{display:flex; flex-wrap:wrap; align-items:center; gap:4px}
+.taxo-fil .discret{padding:4px 9px; font-size:13.5px}
+.taxo-fil .discret.actif{background:var(--vert); border-color:var(--vert); color:#fff}
+.taxo-fil .discret.actif .n-rang{color:rgba(255,255,255,.75)}
+.taxo-fil .sep{color:var(--encre-3)}
+.lat{font-style:italic}
+.n-rang{font-style:normal; font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--encre-3)}
+.taxo-groupes{display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:16px}
+.taxo-groupe{display:flex; flex-direction:column; width:100%; text-align:left; padding:0; overflow:hidden;
+  border:1px solid var(--trait); border-radius:var(--r); background:var(--carte); font:inherit; color:inherit; cursor:pointer}
+.taxo-groupe:hover{border-color:var(--vert)}
+.taxo-groupe:hover .t-photo img{transform:scale(1.04)}
+.taxo-groupe.propose,.taxo-espece.propose{border-color:#3A63B8; box-shadow:0 0 0 2px rgba(58,99,184,.18)}
+.t-photos{display:grid; grid-template-columns:repeat(2,1fr); gap:2px; background:var(--trait)}
+.t-photos.n1{grid-template-columns:1fr}
+.t-photos.n1 .t-photo{aspect-ratio:2/1}
+.t-photos.n2 .t-photo{aspect-ratio:1}
+.t-photos.n3 .t-photo:first-child{grid-column:1/3; aspect-ratio:2/1}
+.t-photo{display:block; aspect-ratio:4/3; overflow:hidden; background:#DDE4D9}
+.t-photo img{width:100%; height:100%; object-fit:cover; display:block; transition:transform .3s}
+.t-nom{display:flex; flex-direction:column; gap:3px; min-width:0; font-size:16px; padding:10px 12px 12px}
+.t-inter{font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--encre-3)}
+.t-principales{font-size:12.5px; color:var(--encre-2)}
+.t-nom .marque{align-self:flex-start}
+.t-detail{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--encre-2); margin-top:2px}
+.taxo-especes{display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:16px}
+.taxo-espece{position:relative; display:flex; flex-direction:column; overflow:hidden;
+  border:1px solid var(--trait); border-radius:var(--r); background:var(--carte)}
+.taxo-espece .img{display:block; aspect-ratio:1; overflow:hidden; background:#DDE4D9}
+.taxo-espece .img img{width:100%; height:100%; object-fit:cover; display:block}
+.t-badges{display:flex; flex-wrap:wrap; gap:5px}
+.t-badges span:empty{display:none}
+.marque.propose{font-style:normal; background:rgba(58,99,184,.13); color:#3A63B8}
+@media(max-width:640px){.taxo-groupes{grid-template-columns:1fr} .taxo-especes{grid-template-columns:repeat(2,1fr)}}
+.taxo-fil .t-bascule{margin-left:auto}
+.taxo-fil .t-bascule button{padding:5px 12px; font-size:13.5px}
+
+/* ============================================================
+   Direction artistique : la plateforme Cequivitici et ses trois outils
+   ============================================================ */
+
+/* Chaque outil a sa teinte, reprise partout où l'on doit savoir où l'on est : la barre de
+   la plateforme, le titre, l'onglet actif. Exploration en vert, Coche en ocre, Identification
+   en prune — les trois couleurs que le site employait déjà pour les distinguer. */
+:root{--accent:var(--vert)}
+body[data-outil="coche"]{--accent:var(--ocre)}
+body[data-outil="quoi"]{--accent:var(--prune)}
+
+.marque-site{background:var(--encre); color:#E4EAE2}
+.marque-barre{display:flex; align-items:center; justify-content:space-between; gap:14px 24px;
+  flex-wrap:wrap; padding-top:11px; padding-bottom:11px}
+.marque-nom{font-family:'Fraunces',Georgia,serif; font-weight:600; font-size:23px; letter-spacing:-.01em;
+  color:#F4F6F1; text-decoration:none; line-height:1}
+.marque-nom em{font-style:italic; color:#9CCBA9}
+a.marque-nom:hover em{color:#C3E2CB}
+.marque-outils{display:flex; flex-wrap:wrap; gap:4px}
+.marque-outils a,.marque-outils span{display:inline-flex; align-items:center; gap:8px; padding:6px 13px;
+  border-radius:999px; font-family:'IBM Plex Mono',monospace; font-size:11.5px; letter-spacing:.1em;
+  text-transform:uppercase; text-decoration:none; color:#BCC7BC; transition:background .2s, color .2s}
+.marque-outils a:hover{background:rgba(255,255,255,.09); color:#fff}
+.marque-outils i{width:8px; height:8px; border-radius:50%; display:block; flex:none}
+.o-ici i{background:#6DB184} .o-coche i{background:#D8A838} .o-quoi i{background:#C27A97}
+.marque-outils .actif{background:#F4F6F1; color:var(--encre); font-weight:500}
+
+header{background:var(--carte); border-bottom:1px solid var(--trait); padding:30px 0 26px; margin-bottom:28px;
+  box-shadow:inset 0 4px 0 var(--accent)}
+.entete-outil{display:flex; justify-content:space-between; align-items:flex-start; gap:18px}
+.entete-outil h1{font-size:clamp(32px,4.6vw,50px); letter-spacing:-.02em}
+.question{font-family:'Fraunces',Georgia,serif; font-size:clamp(19px,2.2vw,24px); color:var(--encre-2);
+  margin:2px 0 0; line-height:1.25}
+.question em{font-style:italic; color:var(--accent)}
+.entete-outil .sub{margin-top:10px}
+@media(max-width:640px){.entete-outil{flex-direction:column-reverse; align-items:stretch}
+  .entete-outil select{align-self:flex-end}}
+
+nav.onglets button.actif{border-bottom-color:var(--accent)}
+nav.onglets button.pret .pt{background:var(--accent)}
+
+/* Accueil */
+header.accueil{box-shadow:none; padding:46px 0 34px; background:transparent; border-bottom:0; margin-bottom:0}
+.marque-titre{font-size:clamp(46px,8vw,86px); letter-spacing:-.03em; line-height:.95}
+.marque-titre em{font-style:italic; color:var(--vert)}
+header.accueil .sub{font-size:17px; max-width:62ch; margin-top:16px}
+.portes{margin:8px 0 34px; gap:20px}
+.porte{position:relative; display:flex; flex-direction:column; gap:4px; padding:26px 24px 22px;
+  border-top:5px solid var(--accent)}
+.porte.o-ici{--accent:var(--vert)} .porte.o-coche{--accent:var(--ocre)} .porte.o-quoi{--accent:var(--prune)}
+.porte h2{font-size:30px; margin:0; letter-spacing:-.015em}
+.porte .question{font-size:20px; margin:0 0 10px}
+.porte .question em{color:var(--accent)}
+.porte p:not(.question){flex:1}
+.porte .ouvrir{margin-top:16px; font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:.08em;
+  text-transform:uppercase; color:var(--accent)}
+.porte:hover,.porte:nth-child(2):hover,.porte:nth-child(3):hover{border-color:var(--trait);
+  border-top-color:var(--accent); box-shadow:0 8px 24px rgba(20,35,28,.09); transform:translateY(-2px)}
+.porte{transition:box-shadow .25s, transform .25s}
+@media(max-width:640px){
+  .marque-barre{gap:8px}
+  .marque-outils{gap:2px}
+  .marque-outils a,.marque-outils span{padding:5px 9px; font-size:10.5px; letter-spacing:.05em; gap:6px}
+}
+
+/* En-tête d'outil : le nom de la plateforme en titre, l'outil en sous-titre, dans sa teinte. */
+.marque-titre-outil{font-size:clamp(34px,5vw,54px); letter-spacing:-.025em}
+.marque-titre-outil em{font-style:italic; color:var(--vert)}
+.outil-nom{font-family:'IBM Plex Mono',monospace; font-size:clamp(13px,1.4vw,15px); letter-spacing:.16em;
+  text-transform:uppercase; color:var(--accent); margin:6px 0 0; display:flex; align-items:center; gap:9px}
+.outil-nom::before{content:''; width:10px; height:10px; border-radius:50%; background:var(--accent); display:block}
+.porte h2{margin-bottom:8px}
+
+/* ---- Identification : photos de l'observation, aides d'ID, photos filtrées ---- */
+.do-photos{flex:none}
+.do-photos button{position:relative; display:block; padding:0; border:0; background:none; cursor:zoom-in; border-radius:var(--r); overflow:hidden}
+.do-obs .do-photos img{width:140px; height:140px; object-fit:cover; display:block; transition:transform .15s}
+.do-photos button:hover img{transform:scale(1.05)}
+.do-nb{position:absolute; right:6px; bottom:6px; padding:2px 7px; border-radius:999px; background:rgba(20,35,28,.72);
+  color:#fff; font-family:'IBM Plex Mono',monospace; font-size:10.5px}
+#do-flottant{position:fixed; left:16px; bottom:16px; z-index:900; display:flex; align-items:center; gap:8px;
+  padding:4px 12px 4px 4px; border:1px solid var(--trait); border-radius:999px; background:var(--carte);
+  box-shadow:0 4px 14px rgba(20,35,28,.18); cursor:zoom-in; font-size:12.5px; color:var(--encre)}
+#do-flottant[hidden]{display:none}
+#do-flottant img{width:44px; height:44px; border-radius:50%; object-fit:cover; display:block}
+@media(max-width:640px){#do-flottant span{display:none} #do-flottant{padding:4px}}
+.colonne.reference{border-color:var(--accent); box-shadow:0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent)}
+.colonne.reference .defile img{cursor:zoom-in}
+.cp-plus{padding:6px 8px; text-align:center}
+.cp-plus:empty{display:none}
+.note-id.aide{border-left:3px solid var(--ocre); background:color-mix(in srgb, var(--ocre) 6%, var(--carte))}
+.note-id .cite.aide{color:var(--ocre)}
+img.t-attente{opacity:.55}
+img.t-defaut{opacity:.4; filter:grayscale(.6)}
+.t-nom .accord{align-self:flex-start}
