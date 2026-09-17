@@ -1028,3 +1028,6 @@ header.accueil .sub{font-size:17px; max-width:62ch; margin-top:16px}
 img.t-attente{opacity:.55}
 img.t-defaut{opacity:.4; filter:grayscale(.6)}
 .t-nom .accord{align-self:flex-start}
+.cr-recherche{margin:0 0 12px}
+.cr-recherche input[type="search"]{flex:1 1 320px; max-width:480px}
+.note-id mark.mot{background:color-mix(in srgb, var(--accent) 22%, transparent); outline:1px solid color-mix(in srgb, var(--accent) 45%, transparent)}

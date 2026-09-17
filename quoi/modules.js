@@ -1556,10 +1556,12 @@ function classerNotes(notes, autres, tout = false) {
            motifs };
 }
 
-function noteHTML(n, motifs = []) {
-  const extrait = n.texte.length > 900 ? n.texte.slice(0, 900) + '…' : n.texte;
+function noteHTML(n, motifs = [], mots = []) {
+  /* Une recherche en cours montre la note entière : le mot peut être au-delà de l'extrait. */
+  const extrait = n.texte.length > 900 && !mots.length ? n.texte.slice(0, 900) + '…' : n.texte;
   let html = echap(extrait);
   for (const m of motifs) { m.re.lastIndex = 0; html = html.replace(m.re, x => `<mark>${x}</mark>`); }
+  html = surligner(html, mots);
   return `<div class="note-id${n.cites && n.cites.length ? ' distingue' : ''}${n.aide ? ' aide' : ''}">
     ${n.aide ? `<div class="cite aide">${t('crAideNominee')}${n.votes ? ' · ' + t('crVotes', nb(n.votes)) : ''}</div>` : ''}
     ${n.cites && n.cites.length ? `<div class="cite">${t('crCite',
@@ -1574,6 +1576,22 @@ function noteHTML(n, motifs = []) {
 }
 
 let critChoix = null;      // espèce du panier dont on lit les notes
+let critMot = '';          // mots cherchés dans les notes, gardés d'une espèce à l'autre
+
+/* La recherche : chaque mot tapé doit figurer dans la note, sans égard à la casse ; un début
+   de mot suffit (« wing » trouve aussi « wings »). */
+function motifsRecherche() {
+  return critMot.trim().split(/\s+/).filter(m => m.length >= 2)
+    .map(m => new RegExp(echapRegex(m), 'giu'));
+}
+
+function surligner(html, motifs) {
+  if (!motifs.length) return html;
+  // Seul le texte est touché, jamais l'intérieur des balises déjà posées.
+  return html.replace(/(<[^>]+>)|([^<]+)/g, (x, balise, texte) => balise || motifs.reduce(
+    (acc, re) => { re.lastIndex = 0; return acc.replace(re, m => `\u0001${m}\u0002`); }, texte))
+    .replace(/\u0001/g, '<mark class="mot">').replace(/\u0002/g, '</mark>');
+}
 
 async function dessinerCriteres() {
   const v = $('#v-criteres');
@@ -1596,35 +1614,67 @@ async function dessinerCriteres() {
   const choix = critChoix;
   const notes = await chargerCriteres(choix);
   if (critChoix !== choix) return;
-  const autres = etat.panier.filter(id => id !== choix).map(especeConnue).filter(Boolean);
-  const { citent, aides, autres:reste, masquees, motifs } = classerNotes(notes, autres, critTout);
-  const noms = autres.map(x => echap(nomCourt(x.nom, x.nomFr))).join(', ');
-
-  const blocDistinguent = !autres.length
-    ? `<p class="note">${t('crUneSeule')}</p>`
-    : `<div class="groupe-conf presentes">
-        <h4>${t('crDistingue', noms)} <span class="compte">${nb(citent.length)}</span></h4>
-        <p class="note">${t(citent.length ? 'crDistingueD' : 'crDistingueRien')}</p>
-        ${citent.map(n => noteHTML(n, motifs)).join('')}
-      </div>`;
 
   v.innerHTML = cadre(`
     <h3 class="titre-conf">${echap(nomCourt(e.nom, e.nomFr))}
       <span class="compte">${notes.length ? t('crNotes', nb(notes.length)) : t('crAucune')}</span></h3>
-    ${notes.length ? blocDistinguent + (aides.length ? `
+    ${notes.length ? `<div class="outils cr-recherche">
+      <input type="search" id="cr-mot" value="${echap(critMot)}" placeholder="${echap(t('crPhMot'))}"
+        aria-label="${echap(t('crPhMot'))}" autocomplete="off">
+      <span class="compte" id="cr-trouves"></span>
+    </div>` : ''}
+    <div id="cr-corps"></div>`);
+  brancherMenuCrit();
+  majCorpsCriteres(notes, e);
+
+  const champ = $('#cr-mot');
+  let minuteur = null;
+  if (champ) champ.addEventListener('input', () => {
+    clearTimeout(minuteur);
+    minuteur = setTimeout(() => { critMot = champ.value; majCorpsCriteres(notes, e); }, 180);
+  });
+}
+
+/* Le corps seul se redessine pendant la frappe : le champ garde le focus et le curseur. */
+function majCorpsCriteres(notes, e) {
+  const corps = $('#cr-corps');
+  if (!corps) return;
+  const mots = motifsRecherche();
+  const retenues = mots.length
+    ? notes.filter(n => mots.every(re => { re.lastIndex = 0; return re.test(n.texte); }))
+    : notes;
+  const trouves = $('#cr-trouves');
+  if (trouves) trouves.textContent = mots.length ? t('crTrouves', nb(retenues.length)) : '';
+
+  if (!notes.length) { corps.innerHTML = `<p class="note">${t('crAucuneD')}</p>`; return; }
+  if (!retenues.length) { corps.innerHTML = `<p class="note">${t('crRienMot', echap(critMot.trim()))}</p>`; return; }
+
+  const autres = etat.panier.filter(id => id !== e.id).map(especeConnue).filter(Boolean);
+  const { citent, aides, autres:reste, masquees, motifs } = classerNotes(retenues, autres, critTout || mots.length > 0);
+  const noms = autres.map(x => echap(nomCourt(x.nom, x.nomFr))).join(', ');
+  const note = n => noteHTML(n, motifs, mots);
+
+  const blocDistinguent = !autres.length
+    ? (mots.length ? '' : `<p class="note">${t('crUneSeule')}</p>`)
+    : (mots.length && !citent.length) ? '' : `<div class="groupe-conf presentes">
+        <h4>${t('crDistingue', noms)} <span class="compte">${nb(citent.length)}</span></h4>
+        ${mots.length ? '' : `<p class="note">${t(citent.length ? 'crDistingueD' : 'crDistingueRien')}</p>`}
+        ${citent.map(note).join('')}
+      </div>`;
+
+  corps.innerHTML = blocDistinguent + (aides.length ? `
       <div class="groupe-conf aides">
         <h4>${t('crAides')} <span class="compte">${nb(aides.length)}</span></h4>
-        ${aides.map(n => noteHTML(n, motifs)).join('')}
-      </div>` : '') + `
+        ${aides.map(note).join('')}
+      </div>` : '') + ((reste.length || masquees) ? `
       <div class="groupe-conf absentes">
         <h4>${t('crAutres')} <span class="compte">${nb(reste.length + masquees)}</span></h4>
-        <p class="note">${t('crAutresD')}</p>
-        ${reste.map(n => noteHTML(n, motifs)).join('')}
+        ${mots.length ? '' : `<p class="note">${t('crAutresD')}</p>`}
+        ${reste.map(note).join('')}
         ${masquees ? `<button class="discret" id="cr-tout">${t('crPlus', nb(masquees))}</button>` : ''}
-      </div>` : `<p class="note">${t('crAucuneD')}</p>`}`);
-  brancherMenuCrit();
+      </div>` : '');
   const plus = $('#cr-tout');
-  if (plus) plus.addEventListener('click', () => { critTout = true; dessinerCriteres(); });
+  if (plus) plus.addEventListener('click', () => { critTout = true; majCorpsCriteres(notes, e); });
 }
 
 function brancherMenuCrit() {
@@ -1894,6 +1944,14 @@ async function tracerRepartition() {
   repCalques.forEach(c => carteRep.removeLayer(c));
   repCalques = [];
 
+  /* Les couches se superposent : à opacité fixe, trois aires qui se recouvrent donnaient une
+     tache opaque où plus rien ne se lisait. L'opacité baisse avec le nombre d'espèces
+     affichées, en racine carrée — deux espèces restent bien lisibles, huit laissent encore
+     voir le fond et les recouvrements. */
+  const visibles = etat.panier.slice(0, MAX_COULEURS).filter(id => !repMasquees.has(id)).length;
+  const attenuation = 1 / Math.sqrt(Math.max(visibles, 1));
+  const OPACITE = { attendue: Math.max(0.18, 0.6 * attenuation), observations: Math.max(0.35, 0.9 * attenuation) };
+
   etat.panier.slice(0, MAX_COULEURS).forEach((id, i) => {
     if (repMasquees.has(id)) return;
     const couleur = rvb(PALETTE_ESP[i % MAX_COULEURS]);
@@ -1902,7 +1960,7 @@ async function tracerRepartition() {
       const calque = CoucheTeinte({
         url: urlCouche(c, id), rvb: couleur, pane: 'rep-' + c,
         plein: c !== 'observations',
-        opacity: c === 'attendue' ? 0.6 : 0.9,
+        opacity: OPACITE[c],
         attribution: 'iNaturalist', maxNativeZoom: c === 'attendue' ? 8 : 12
       }).addTo(carteRep);
       repCalques.push(calque);
