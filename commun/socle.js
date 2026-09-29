@@ -760,7 +760,10 @@ function lienINat(id, mois, vue) {
   if (etat.lieux.length) p.set('place_id', etat.lieux.map(l => l.id).join(','));
   if (etat.zone) for (const [k, v] of Object.entries(etat.zone)) p.set(k, v);
   if (etat.qualite === 'research') p.set('quality_grade', 'research');
-  if (mois) p.set('month', mois);
+  /* Seuls les douze mois réels partent dans l'adresse. Le cran « Maintenant » vaut -1, valeur
+     interne qui désigne les quatre semaines autour d'aujourd'hui ; « month=-1 » ne veut rien
+     dire pour iNaturalist, dont la page s'ouvrait alors vide. */
+  if (mois > 0) p.set('month', mois);
   return 'https://www.inaturalist.org/observations?' + p.toString();
 }
 

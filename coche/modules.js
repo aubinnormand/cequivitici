@@ -166,7 +166,12 @@ function ficheCoche(e) {
     <div class="corps">
       ${blocNoms(e.nom, e.nomFr)}
       <div class="bas">
-        <a class="n" href="${lienINat(e.id, vue.mois, 'map')}" target="_blank" rel="noopener"
+        <!-- Le lien ouvre toutes les observations de l'espèce dans la zone, la période mise à
+             part : le filtre de mois sert à choisir quoi chercher, et l'on veut ensuite voir
+             l'espèce en entier — sa répartition, ses photos, ses autres saisons. Un lien
+             replié sur le mois courant n'aurait montré qu'une poignée de points, parfois
+             aucun quand le cran « Maintenant » était actif. -->
+        <a class="n" href="${lienINat(e.id, 0, 'map')}" target="_blank" rel="noopener"
           >${cocheTri === 'resp' && e.nMonde
             ? pourcent(e.nZone / e.nMonde * 100) + ' ' + t('duMonde')
             : nb(e.nAffiche ?? e.nZone) + ' ' + t('obs')
@@ -348,7 +353,10 @@ function brancherChoix(racine) {
 
 /* La barre des espèces retenues, affichée dès qu'il y en a une. Elle sert de légende à la
    carte : la couleur y est celle des points. */
-function barreChoisies(versCarte) {
+/* La période passe en argument plutôt que d'être lue au passage. Seule la carte de « Où ? »
+   la reporte dans ses liens, parce que c'est là qu'on la choisit et qu'elle est affichée ;
+   partout ailleurs le lien ouvre l'espèce entière dans la zone. */
+function barreChoisies(versCarte, mois = grilleMois) {
   if (!choisies.length) return '';
   return `<div class="choix-carte">
     <span class="tit">${t('gChoisies')}</span>
@@ -357,7 +365,7 @@ function barreChoisies(versCarte) {
       /* Le nom renvoie aux observations de l'espèce sur iNaturalist, en carte et sous les
          mêmes filtres que la vue : c'est la suite naturelle du repérage sur la carte. */
       return `<span class="jeton-esp"><i style="background:${PALETTE_ESP[i]}"></i><a
-        href="${lienINat(id, grilleMois, 'map')}" target="_blank" rel="noopener">${
+        href="${lienINat(id, mois, 'map')}" target="_blank" rel="noopener">${
         echap(e ? nomCourt(e.nom, e.nomFr) : '#' + id)
       }</a><button data-oter="${id}" aria-label="${echap(t('oter'))}">×</button></span>`;
     }).join('')}
@@ -444,7 +452,7 @@ function dessinerManquants() {
 
   v.innerHTML = bandeauChiffres() + barreOutils(liste.length) + `
     ${legendeStatuts()}
-    ${barreChoisies(true)}
+    ${barreChoisies(true, 0)}
     <div class="expl">${panneauArbre()}<div>${planche}</div></div>`;
 
   brancherOutils(redessinerManquants);
@@ -1276,7 +1284,7 @@ function noterPoints(ids, lots, cible) {
   ].join('');
   const b = boite.querySelector('[data-reessayer]');
   if (b) b.addEventListener('click', () => {
-    for (const id of ids) pointsEchec.delete(id);
+    for (const id of ids) pointsEchec.delete(clePoints(id));
     tracerTerrain();
   });
 }
@@ -1284,22 +1292,35 @@ function noterPoints(ids, lots, cible) {
 /* Les observations d'une espèce retenue. L'agrégation par carreau ne donne pas de
    coordonnées : on va les chercher pour cette seule espèce, une requête ou deux, quand on
    la coche. C'est plus honnête que de les servir depuis un échantillon, et cela ne coûte
-   que pour les espèces qu'on regarde vraiment. */
+   que pour les espèces qu'on regarde vraiment.
+
+   Cette carte-ci ne suit plus la période choisie dans « Où ? ». Sa question est « où cette
+   espèce a-t-elle été vue », à laquelle un mois ne répond pas mieux, et ce filtre venait d'un
+   autre onglet, invisible depuis celui-ci : on cochait une espèce, la carte restait vide, et
+   rien ne disait pourquoi. Pire, le cran « Maintenant » vaut -1 et partait tel quel dans la
+   requête, où « month=-1 » ne désigne aucun mois : l'API répondait zéro observation pour
+   toutes les espèces sans distinction, et l'outil concluait qu'aucune n'avait de position.
+   La saison se lit désormais à côté du nom, dans le graphe des douze mois. */
 const pointsEchec = new Map();       // espèce → instant du dernier échec
 const POINTS_REPOS = 20000;          // pas de reprise automatique avant vingt secondes
 
+/* La provision porte le niveau de validation : passer de « validées » à « toutes » change ce
+   que la requête ramène, et resservir l'ancienne réponse aurait figé une carte vide. */
+const clePoints = id => id + '|' + etat.qualite;
+
 async function chargerPointsEspece(id) {
-  if (pointsEspece.has(id)) return pointsEspece.get(id);
+  const cle = clePoints(id);
+  if (pointsEspece.has(cle)) return pointsEspece.get(cle);
   /* Un échec récent ne se rejoue pas à chaque redessin : hors ligne, chaque sélection aurait
      relancé la même requête vouée à échouer. */
-  if (Date.now() - (pointsEchec.get(id) || 0) < POINTS_REPOS) return null;
+  if (Date.now() - (pointsEchec.get(cle) || 0) < POINTS_REPOS) return null;
   /* La collecte a rapatrié les points des espèces manquantes : pour elles, rien à demander.
-     Seules les espèces écartées — celles que tu as déjà vues — coûtent une requête. */
-  if (grillePts) {
-    const locaux = grillePts
-      .filter(p => p.t === id && (!grilleMois || p.m === grilleMois))
-      .map(p => ({ x:p.x, y:p.y }));
-    if (locaux.length) { pointsEspece.set(id, locaux); return locaux; }
+     Seules les espèces écartées — celles que tu as déjà vues — coûtent une requête. Encore
+     faut-il que ce relevé couvre l'année : collecté pour un seul mois, il ne montrerait
+     qu'une part des points sans le dire, et l'on préfère alors la requête. */
+  if (grillePts && !grillePtsMois) {
+    const locaux = grillePts.filter(p => p.t === id).map(p => ({ x:p.x, y:p.y }));
+    if (locaux.length) { pointsEspece.set(cle, locaux); return locaux; }
   }
   /* Les positions floutées ne sont plus écartées. iNaturalist brouille la position des
      espèces sensibles — rapaces, orchidées, reptiles —, c'est-à-dire précisément celles qu'on
@@ -1307,7 +1328,6 @@ async function chargerPointsEspece(id) {
      garde donc, marquées comme telles : leur point est celui d'une maille d'une vingtaine de
      kilomètres, et la carte le dit plutôt que de faire croire à une position exacte. */
   const f = { ...filtres(), taxon_id:id, per_page:200, order_by:'id', order:'desc' };
-  if (grilleMois) f.month = grilleMois;
 
   const lire = async params => {
     const pts = [];
@@ -1335,12 +1355,12 @@ async function chargerPointsEspece(id) {
       delete large.quality_grade;
       pts = await lire(large);
     }
-    pointsEspece.set(id, pts);
+    pointsEspece.set(cle, pts);
     return pts;
   } catch (e) {
     /* Un échec ne se met pas en mémoire : sans cela, une coupure passagère condamnait
        l'espèce à rester sans point jusqu'au rechargement de la page. */
-    pointsEchec.set(id, Date.now());
+    pointsEchec.set(cle, Date.now());
     console.warn('Points de ' + id + ' :', e);
     return null;
   }
@@ -1526,7 +1546,7 @@ function dessinerQuand() {
       t('qdDetail', quandMois === FENETRE ? t('qdFenetreNom', fa, fb)
         : capitaliser(MOIS[quandMois]), nb(liste.length))}</div>
     ${outilsGrille}
-    ${barreChoisies(true)}
+    ${barreChoisies(true, 0)}
     ${liste.length
       ? `<div class="planche">${liste.slice(0, 200).map(ficheCoche).join('')}</div>`
       : `<p class="note">${t('qdVide')}</p>`}`;
@@ -1865,7 +1885,7 @@ function dessinerTerrain() {
       <span class="compte">${choisies.length
         ? t('tRetenues', nb(choisies.length)) : t('tAucune')}</span>
     </div>
-    ${barreChoisies(false)}
+    ${barreChoisies(false, 0)}
     <div class="carte-boite"><div id="carte-terrain"></div>
       <button id="t-fond" class="sur-carte${fondT !== 'plan' ? ' actif' : ''}"
         title="${echap(t('cFond'))}">
@@ -1953,7 +1973,7 @@ let cadreT = null;                 // état de la sélection auquel correspond l
 function cadrerTerrain(surPoints = false) {
   if (!carteT) return;
   const cadrerPoints = () => {
-    const tous = choisies.flatMap(id => pointsEspece.get(id) || []);
+    const tous = choisies.flatMap(id => pointsEspece.get(clePoints(id)) || []);
     if (!tous.length) return false;
     const xs = tous.map(p => p.x), ys = tous.map(p => p.y);
     carteT.fitBounds([[Math.min(...ys), Math.min(...xs)], [Math.max(...ys), Math.max(...xs)]],
@@ -2052,7 +2072,7 @@ async function dessinerPhotos() {
     const e = especeParId(id);
     return `<section class="t-espece" data-esp="${id}"
       style="--teinte:${PALETTE_ESP[i % MAX_COULEURS]}">
-      <h3><i></i><a href="${lienINat(id, grilleMois, 'map')}" target="_blank" rel="noopener"
+      <h3><i></i><a href="${lienINat(id, 0, 'map')}" target="_blank" rel="noopener"
         >${echap(e ? nomCourt(e.nom, e.nomFr) : '#' + id)}</a>${graphSaison(id)}</h3>
       <div class="bande">${e && e.photo
         ? `<img src="${echap(e.photo)}" loading="lazy" alt="">` : ''}</div>
