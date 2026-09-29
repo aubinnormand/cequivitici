@@ -471,17 +471,29 @@ function panneauArbre() {
   </aside>`;
 }
 
-/* Cliquer un nom sélectionne la branche et referme les autres ; cliquer la flèche ne fait
-   qu'ouvrir ou replier. C'est la seule règle de navigation de l'arbre, et elle tient à ce
-   que vue.deplies contient exactement le chemin de la racine au nœud courant. */
+/* Cliquer un nom sélectionne la branche et referme les autres ; recliquer celle qui est
+   ouverte la referme et remonte d'un cran ; cliquer la flèche ne fait qu'ouvrir ou replier.
+   C'est la seule règle de navigation de l'arbre, et elle tient à ce que vue.deplies contient
+   exactement le chemin de la racine au nœud courant. */
 function brancherArbre(racine, redessiner) {
   const hote = $(racine);
   if (!hote) return;
   hote.querySelectorAll('.n-nom').forEach(b => {
     b.addEventListener('click', () => {
       const id = b.dataset.noeud ? +b.dataset.noeud : null;
-      vue.noeud = id;
-      vue.deplies = new Set(id === null ? [] : cheminNoeud(id));
+      /* Le même clic ouvre et referme. Descendre dans l'arbre se faisait d'un clic sur le nom,
+         mais remonter demandait de viser la petite flèche du niveau au-dessus : le geste
+         n'était pas réversible. Recliquer la branche ouverte la replie donc et sélectionne son
+         parent — refermer un niveau, c'est revenir à celui qui le contient. La racine n'a rien
+         au-dessus d'elle et ne bouge pas. */
+      if (id !== null && vue.noeud === id) {
+        const chemin = cheminNoeud(id);
+        vue.noeud = chemin.length > 1 ? chemin[chemin.length - 2] : null;
+        vue.deplies = new Set(chemin.slice(0, -1));
+      } else {
+        vue.noeud = id;
+        vue.deplies = new Set(id === null ? [] : cheminNoeud(id));
+      }
       redessiner();
     });
   });

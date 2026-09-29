@@ -18,7 +18,7 @@
    — les tuiles de carte sont gardées au fil de la navigation, dans la limite d'un plafond,
      de sorte que les zones déjà regardées restent visibles hors ligne. */
 
-const VERSION = 'v10';
+const VERSION = 'v11';
 const COQUILLE = 'coquille-' + VERSION;
 const DONNEES = 'donnees-' + VERSION;
 const TUILES = 'tuiles-' + VERSION;
