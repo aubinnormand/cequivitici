@@ -511,6 +511,8 @@ footer{border-top:1px solid var(--trait); margin-top:60px; padding:22px 0 44px;
   padding:3px 4px 3px 7px}
 .jeton-esp i{width:11px; height:11px; border-radius:50%; display:block;
   border:1px solid rgba(20,35,28,.2)}
+.jeton-esp a{color:inherit; text-decoration:none; border-bottom:1px dotted var(--encre-3)}
+.jeton-esp a:hover{border-bottom-style:solid; color:var(--vert)}
 .jeton-esp button{border:0; background:transparent; cursor:pointer; font-size:15px;
   line-height:1; color:var(--encre-3); padding:0 3px}
 .jeton-esp button:hover{color:var(--brique)}
@@ -817,8 +819,15 @@ button.maintenant.actif .pastille-ok{background:#fff}
    son point : c'est ce lien de couleur qui fait tout le travail entre la carte et l'image. */
 .t-espece{margin-top:18px}
 .t-espece h3{display:flex; align-items:center; gap:9px; font-size:17px; margin-bottom:8px}
+.t-espece h3 a{color:inherit; text-decoration:none; border-bottom:1px dotted var(--encre-3)}
+.t-espece h3 a:hover{border-bottom-style:solid; color:var(--vert)}
 .t-espece h3 i{width:12px; height:12px; border-radius:50%; background:var(--teinte);
   border:2px solid #fff; box-shadow:0 0 0 1px var(--trait); flex:none}
+/* La saisonnalité à côté du nom : douze barres dans la couleur de l'espèce, le mois courant
+   à pleine teinte et les autres estompés. Une silhouette, pas un graphe à lire au chiffre. */
+.t-espece h3 .saison{flex:none; fill:var(--teinte); align-self:center;
+  margin-left:2px; overflow:visible}
+.t-espece h3 .saison .socle{fill:var(--trait)}
 .t-espece .bande{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
   gap:8px}
 .t-espece .bande img{width:100%; aspect-ratio:1; object-fit:cover; border-radius:var(--r);

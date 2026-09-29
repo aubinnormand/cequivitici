@@ -354,9 +354,12 @@ function barreChoisies(versCarte) {
     <span class="tit">${t('gChoisies')}</span>
     ${choisies.map((id, i) => {
       const e = especeParId(id);
-      return `<span class="jeton-esp"><i style="background:${PALETTE_ESP[i]}"></i>${
+      /* Le nom renvoie aux observations de l'espèce sur iNaturalist, en carte et sous les
+         mêmes filtres que la vue : c'est la suite naturelle du repérage sur la carte. */
+      return `<span class="jeton-esp"><i style="background:${PALETTE_ESP[i]}"></i><a
+        href="${lienINat(id, grilleMois, 'map')}" target="_blank" rel="noopener">${
         echap(e ? nomCourt(e.nom, e.nomFr) : '#' + id)
-      }<button data-oter="${id}" aria-label="${echap(t('oter'))}">×</button></span>`;
+      }</a><button data-oter="${id}" aria-label="${echap(t('oter'))}">×</button></span>`;
     }).join('')}
     <button class="discret vider-choix">${t('gViderChoix')}</button>
     <span class="compte">${versCarte ? t('gVoirCarte') : t('gSurCarte')}</span>
@@ -1231,12 +1234,65 @@ function detailCellule(c) {
   brancherLignage('#g-detail');
 }
 
+/* Un point d'observation. Une position floutée est creuse et cerclée en pointillés : elle
+   dit « quelque part dans ce secteur », pas « ici ». */
+function poserPoint(p, couleur, couche, rayon = 5) {
+  const m = L.circleMarker([p.y, p.x], p.floute
+    ? { radius:rayon + 2, weight:1.6, color:couleur, opacity:0.9, dashArray:'3 3',
+        fillColor:couleur, fillOpacity:0.18 }
+    : { radius:rayon, weight:1.6, color:'#fff', opacity:0.95,
+        fillColor:couleur, fillOpacity:0.95 }).addTo(couche);
+  if (p.floute) m.bindTooltip(t('gFloute'));
+  if (m.bringToFront) m.bringToFront();
+  return m;
+}
+
+/* Sous la carte : ce que les points ne montrent pas. Une espèce sans aucun point, et le
+   nombre de positions floutées — deux silences qu'il vaut mieux nommer. */
+function nomEspece(id) {
+  const e = especeParId(id);
+  return e ? nomCourt(e.nom, e.nomFr) : '#' + id;
+}
+
+/* Pendant la lecture : une ligne d'attente, plutôt qu'une carte vide sans explication. Les
+   requêtes sont espacées d'une seconde, si bien que huit espèces demandent une dizaine de
+   secondes — assez pour croire que rien ne vient. */
+function attentePoints(ids, cible) {
+  const boite = $(cible);
+  if (boite && ids.length) boite.innerHTML = `<p class="note">${t('gPointsAttente')}</p>`;
+}
+
+function noterPoints(ids, lots, cible) {
+  const boite = $(cible);
+  if (!boite) return;
+  const rate = ids.filter((id, i) => lots[i] === null).map(nomEspece);
+  const sans = ids.filter((id, i) => Array.isArray(lots[i]) && !lots[i].length).map(nomEspece);
+  const floutes = lots.reduce((a, pts) => a + (pts || []).filter(p => p.floute).length, 0);
+  boite.innerHTML = [
+    rate.length ? `<p class="note">${t('gPointsEchec', echap(rate.join(', ')))}
+      <button class="discret" data-reessayer>${t('gReessayer')}</button></p>` : '',
+    sans.length ? `<p class="note">${t('gSansPoints', echap(sans.join(', ')))}</p>` : '',
+    floutes ? `<p class="note">${t('gFloutes', nb(floutes))}</p>` : ''
+  ].join('');
+  const b = boite.querySelector('[data-reessayer]');
+  if (b) b.addEventListener('click', () => {
+    for (const id of ids) pointsEchec.delete(id);
+    tracerTerrain();
+  });
+}
+
 /* Les observations d'une espèce retenue. L'agrégation par carreau ne donne pas de
    coordonnées : on va les chercher pour cette seule espèce, une requête ou deux, quand on
    la coche. C'est plus honnête que de les servir depuis un échantillon, et cela ne coûte
    que pour les espèces qu'on regarde vraiment. */
+const pointsEchec = new Map();       // espèce → instant du dernier échec
+const POINTS_REPOS = 20000;          // pas de reprise automatique avant vingt secondes
+
 async function chargerPointsEspece(id) {
   if (pointsEspece.has(id)) return pointsEspece.get(id);
+  /* Un échec récent ne se rejoue pas à chaque redessin : hors ligne, chaque sélection aurait
+     relancé la même requête vouée à échouer. */
+  if (Date.now() - (pointsEchec.get(id) || 0) < POINTS_REPOS) return null;
   /* La collecte a rapatrié les points des espèces manquantes : pour elles, rien à demander.
      Seules les espèces écartées — celles que tu as déjà vues — coûtent une requête. */
   if (grillePts) {
@@ -1245,22 +1301,49 @@ async function chargerPointsEspece(id) {
       .map(p => ({ x:p.x, y:p.y }));
     if (locaux.length) { pointsEspece.set(id, locaux); return locaux; }
   }
-  const f = { ...filtres(), taxon_id:id, geoprivacy:'open', taxon_geoprivacy:'open',
-              per_page:200, order_by:'id', order:'desc' };
+  /* Les positions floutées ne sont plus écartées. iNaturalist brouille la position des
+     espèces sensibles — rapaces, orchidées, reptiles —, c'est-à-dire précisément celles qu'on
+     cherche ici : les exclure vidait la carte des espèces les plus intéressantes. On les
+     garde donc, marquées comme telles : leur point est celui d'une maille d'une vingtaine de
+     kilomètres, et la carte le dit plutôt que de faire croire à une position exacte. */
+  const f = { ...filtres(), taxon_id:id, per_page:200, order_by:'id', order:'desc' };
   if (grilleMois) f.month = grilleMois;
-  const pts = [];
-  try {
+
+  const lire = async params => {
+    const pts = [];
     for (let page = 1; page <= 2; page++) {
-      const d = await appel('/observations', { ...f, page }, false, true);
+      const d = await appel('/observations', { ...params, page }, false, true);
       for (const o of (d.results || [])) {
         const g = o.geojson && o.geojson.coordinates;
-        if (g) pts.push({ x:g[0], y:g[1] });
+        if (!g) continue;
+        const floute = !!(o.obscured || o.geoprivacy === 'obscured'
+                          || o.taxon_geoprivacy === 'obscured');
+        pts.push({ x:g[0], y:g[1], floute });
       }
       if ((d.results || []).length < 200) break;
     }
-  } catch (e) { /* hors ligne : l'espèce restera sans points */ }
-  pointsEspece.set(id, pts);
-  return pts;
+    return pts;
+  };
+
+  try {
+    let pts = await lire(f);
+    /* Rien en qualité recherche ? On desserre. Une espèce qui manque est souvent une espèce
+       peu déterminée : exiger la validation revenait à effacer de la carte celles qu'on
+       cherche le plus. */
+    if (!pts.length && f.quality_grade) {
+      const large = { ...f };
+      delete large.quality_grade;
+      pts = await lire(large);
+    }
+    pointsEspece.set(id, pts);
+    return pts;
+  } catch (e) {
+    /* Un échec ne se met pas en mémoire : sans cela, une coupure passagère condamnait
+       l'espèce à rester sans point jusqu'au rechargement de la page. */
+    pointsEchec.set(id, Date.now());
+    console.warn('Points de ' + id + ' :', e);
+    return null;
+  }
 }
 
 
@@ -1794,6 +1877,7 @@ function dessinerTerrain() {
         </svg>
       </button>
     </div>
+    <div id="t-points"></div>
     <div id="t-photos"></div>
 `;
 
@@ -1806,7 +1890,7 @@ function dessinerTerrain() {
 function brancherTerrain() {
   const b = (sel, ev, fn) => { const e = $(sel); if (e) e.addEventListener(ev, fn); };
   b('#t-suivre', 'click', () => { suivre ? arreterVeille() : demarrerVeille(); });
-  b('#t-recadrer', 'click', () => { vueT = null; cadrerTerrain(); });
+  b('#t-recadrer', 'click', () => { vueT = null; cadreT = null; cadrerTerrain(); });
   b('#t-fond', 'click', () => {
     fondT = ORDRE_FONDS[(ORDRE_FONDS.indexOf(fondT) + 1) % ORDRE_FONDS.length];
     $('#t-fond').classList.toggle('actif', fondT !== 'plan');
@@ -1857,16 +1941,28 @@ function tracerPosition(recentrer) {
     Math.max(carteT.getZoom(), 15));
 }
 
-function cadrerTerrain() {
+/* Le cadrage suit la sélection : changer d'espèce recadre sur ses points, et l'arrivée tardive
+   des points d'une espèce qui n'en avait pas encore recadre aussi. Tant que la sélection ne
+   bouge pas, en revanche, la vue appartient à celui qui regarde — déplacer la carte pour voir
+   ce qu'il y a autour ne doit pas être défait au premier rafraîchissement venu. */
+let cadreT = null;                 // état de la sélection auquel correspond le cadrage courant
+
+/* Les points priment quand c'est un changement de sélection qui recadre : sinon, la position
+   en main, on serait ramené sur soi-même à chaque espèce choisie et l'on ne verrait jamais où
+   elle a été vue. Hors de ce cas la position prime — sur le terrain, c'est elle qu'on cherche. */
+function cadrerTerrain(surPoints = false) {
   if (!carteT) return;
-  if (maPosition) { carteT.setView([maPosition.lat, maPosition.lng], 15); return; }
-  const tous = choisies.flatMap(id => pointsEspece.get(id) || []);
-  if (tous.length) {
+  const cadrerPoints = () => {
+    const tous = choisies.flatMap(id => pointsEspece.get(id) || []);
+    if (!tous.length) return false;
     const xs = tous.map(p => p.x), ys = tous.map(p => p.y);
     carteT.fitBounds([[Math.min(...ys), Math.min(...xs)], [Math.max(...ys), Math.max(...xs)]],
       { padding:[20, 20] });
-    return;
-  }
+    return true;
+  };
+  if (surPoints && cadrerPoints()) return;
+  if (maPosition) { carteT.setView([maPosition.lat, maPosition.lng], 15); return; }
+  if (cadrerPoints()) return;
   const b = bornesLocales();
   if (b) carteT.fitBounds(b, { padding:[18, 18] });
 }
@@ -1890,19 +1986,59 @@ async function tracerTerrain() {
   if (coucheT) coucheT.remove();
   coucheT = L.layerGroup().addTo(carteT);
 
-  const lots = await Promise.all(choisies.map(chargerPointsEspece));
-  if (!carteT || !$('#carte-terrain')) return;
+  /* Deux tracés peuvent se chevaucher — un changement de sélection pendant le chargement des
+     points. Sans ce repère, le tracé le plus ancien reposait ses points sur la couche du plus
+     récent, et la carte montrait tout en double. */
+  const couche = coucheT;
+  const retenues = [...choisies];
+  attentePoints(retenues, '#t-points');
+  const lots = await Promise.all(retenues.map(id => chargerPointsEspece(id)));
+  if (!carteT || !$('#carte-terrain') || coucheT !== couche) return;
   lots.forEach((pts, i) => {
-    for (const p of pts) {
-      const m = L.circleMarker([p.y, p.x], {
-        radius:6, weight:1.8, color:'#fff', opacity:0.95,
-        fillColor:PALETTE_ESP[i % MAX_COULEURS], fillOpacity:0.95
-      }).addTo(coucheT);
-      if (m.bringToFront) m.bringToFront();
-    }
+    for (const p of (pts || [])) poserPoint(p, PALETTE_ESP[i % MAX_COULEURS], coucheT, 6);
   });
+  noterPoints(retenues, lots, '#t-points');
   tracerPosition(false);
-  if (!vueT) cadrerTerrain();
+
+  /* Le nombre de points entre dans le repère : un lot qui arrive en retard, ou une seconde
+     tentative qui aboutit, change la clé et recadre, alors que la sélection n'a pas bougé. */
+  const cle = retenues.join(',') + '|' + lots.reduce((s, l) => s + ((l || []).length), 0);
+  if (!vueT || cadreT !== cle) { cadrerTerrain(true); cadreT = cle; }
+}
+
+/* La saisonnalité de l'espèce en douze barres, posée à côté de son nom. Dehors, la question
+   qui suit « à quoi ça ressemble » est « est-ce la saison ». Ce n'est pas un graphe à lire au
+   chiffre près : c'est une silhouette, qui dit d'un coup d'œil si l'espèce se voit toute
+   l'année ou quelques semaines seulement, et si l'on tombe au bon moment. Le mois courant est
+   à pleine teinte, les onze autres s'effacent derrière lui.
+
+   Les hauteurs sont rapportées au mois le plus fourni, non au total : sur douze barres hautes
+   de seize pixels, une échelle absolue écraserait toute espèce un peu rare contre le sol. Ce
+   que la barre dit est donc « par rapport à son meilleur mois », ce qui est bien la question. */
+const SAISON_L = 5, SAISON_E = 1, SAISON_H = 16;
+
+function graphSaison(id) {
+  const p = etat.phenologie && etat.phenologie.get(id);
+  if (!p) return '';
+  const max = Math.max(...p);
+  if (!max) return '';
+  const courant = new Date().getMonth();
+  const pas = SAISON_L + SAISON_E, large = pas * 12 - SAISON_E;
+  const total = p.reduce((a, b) => a + b, 0);
+  const part = total ? Math.round((p[courant] / total) * 100) : 0;
+  const titre = t('tSaison', MOIS[courant], pourcent(part));
+  /* Un mois sans observation ne reçoit pas de barre : le trait de sol suffit à marquer sa
+     place, et c'est le creux qui porte l'information. Les autres montent d'au moins deux
+     pixels, pour rester distincts de ce trait. */
+  const barres = p.map((v, i) => {
+    if (!v) return '';
+    const h = Math.max(2, Math.round((v / max) * (SAISON_H - 3)));
+    return `<rect x="${i * pas}" y="${SAISON_H - 1 - h}" width="${SAISON_L}" height="${h}"${
+      i === courant ? '' : ' opacity=".38"'}/>`;
+  }).join('');
+  return `<svg class="saison" viewBox="0 0 ${large} ${SAISON_H}" width="${large}"
+    height="${SAISON_H}" role="img" aria-label="${echap(titre)}"><title>${echap(titre)}</title>
+    <rect class="socle" x="0" y="${SAISON_H - 1}" width="${large}" height="1"/>${barres}</svg>`;
 }
 
 /* Les photos, sous la carte. Dehors, la question n'est plus où chercher mais à quoi ça
@@ -1916,7 +2052,8 @@ async function dessinerPhotos() {
     const e = especeParId(id);
     return `<section class="t-espece" data-esp="${id}"
       style="--teinte:${PALETTE_ESP[i % MAX_COULEURS]}">
-      <h3><i></i>${echap(e ? nomCourt(e.nom, e.nomFr) : '#' + id)}</h3>
+      <h3><i></i><a href="${lienINat(id, grilleMois, 'map')}" target="_blank" rel="noopener"
+        >${echap(e ? nomCourt(e.nom, e.nomFr) : '#' + id)}</a>${graphSaison(id)}</h3>
       <div class="bande">${e && e.photo
         ? `<img src="${echap(e.photo)}" loading="lazy" alt="">` : ''}</div>
     </section>`;
@@ -1943,15 +2080,17 @@ module({
   dessiner: dessinerManquants,
   vider(carton) { perso = null; cochePage = 0; $('#v-manquants').innerHTML = carton; },
   manque: () => !perso,
-  /* La liste personnelle se charge en premier : sans elle, aucune des quatre vues n'a de
-     contenu. Deux requêtes le plus souvent, quelques-unes pour une longue liste. */
-  async fond(gen) {
+  /* La liste personnelle passe avant la taxonomie : sans elle la planche reste vide, et la
+     lecture des noms de branches dure bien plus longtemps que ces deux ou trois requêtes.
+     L'arbre est rebâti au passage — il avait été monté sur l'inventaire entier, donc sans la
+     soustraction, et ses décomptes annonçaient des espèces déjà cochées. */
+  async amorce(gen) {
     await chargerPerso(gen);
-    /* L'arbre a été bâti avant que la liste n'arrive, donc sur l'inventaire entier. Une fois
-       la soustraction possible, il doit être refait : sinon ses décomptes annonceraient des
-       espèces déjà cochées. */
     construireArbre();
     dessiner();
+  },
+  async fond(gen) {
+    if (!perso) { await chargerPerso(gen); construireArbre(); dessiner(); }
 
     /* Les effectifs mondiaux ensuite : ils débloquent le tri par responsabilité, qui répond
        à « laquelle de ces espèces manquantes ne verrai-je nulle part ailleurs ». Une requête
@@ -1973,7 +2112,7 @@ module({
   ouvrir() { assurerGrille(); },
   vider(carton) {
     grille = null; grillePts = null; grillePtsMois = 0; grilleCellule = null;
-    choisies = []; pointsEspece = new Map();
+    choisies = []; pointsEspece = new Map(); pointsEchec.clear();
     grilleReleveePour = null; grilleEchec = null; vueOu = null;
     if (carteOu) carteOu.remove();
     carteOu = null; coucheOu = null;
@@ -2007,11 +2146,15 @@ module({
 module({
   id: 'terrain',
   ouvrir: dessinerTerrain,
+  /* Seules les photos se refont sur un redessin général : le graphe de saisonnalité attend le
+     relevé mensuel, qui arrive bien après l'ouverture de l'onglet, et il ne faut pas pour
+     autant retracer la carte — ce serait défaire le cadrage et redemander les points. */
+  dessiner() { if ($('#t-photos')) dessinerPhotos(); },
   /* La veille de position s'arrête en quittant l'onglet : elle consomme le GPS. */
   arreter: arreterVeille,
   vider(carton) {
     carteT = null; coucheT = null; coucheMoi = null; coucheLimT = null;
-    vueT = null; maPosition = null; photosCache.clear();
+    vueT = null; cadreT = null; maPosition = null; photosCache.clear();
     arreterVeille();
     $('#v-terrain').innerHTML = carton;
   }

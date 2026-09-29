@@ -67,6 +67,16 @@ async function chargerMaintenant(neuf = false) {
     construireArbre();          // arbre provisoire : genres seuls, disponibles sans requête
     dessiner({ tot:true });     // les vues prêtes sans taxonomie paraissent tout de suite
 
+    /* Ce dont la première vue a besoin passe avant la taxonomie. Dans Coche, la planche ne
+       montre rien tant que la liste personnelle n'est pas là : l'attendre après les noms de
+       branches, c'est regarder un carton d'attente pendant toute la lecture de la taxonomie,
+       qui est de loin l'étape la plus longue. Deux ou trois requêtes suffisent ici. */
+    for (const m of MODULES) {
+      if (!m.amorce) continue;
+      try { await m.amorce(gen); } catch (e) { if (e instanceof Annule) throw e; }
+      verifier(gen);
+    }
+
     // Un échec sur les noms ne doit pas emporter l'inventaire entier.
     try {
       await chargerAncetres();            verifier(gen);
@@ -240,19 +250,35 @@ async function chargerAncetres() {
 
   const ids = idsANommer().filter(id => !etat.ancetres.has(id));
 
-  // Le multi-get /taxa/{ids} n'accepte pas plus de 30 identifiants : au-delà il répond 422.
-  let i = 0, taille = 30;
+  /* Deux façons de demander des taxons par identifiant. La recherche « /taxa?id=… » en
+     accepte deux cents d'un coup — c'est déjà la taille de lot du rafraîchissement des noms
+     vernaculaires, qui l'emploie sans heurt ; le multi-get « /taxa/{ids} » plafonne à trente
+     et répond 422 au-delà. La première divise donc par près de sept le nombre de requêtes — et
+     la taxonomie est l'étape la plus longue du chargement. Si la réponse ne rend pas exactement
+     les taxons demandés, on n'insiste pas : on repasse au multi-get pour tout le reste. */
+  const lireLarge = async lot => {
+    const d = await appel('/taxa', { id:lot.join(','), per_page:lot.length, locale:langue });
+    const rendus = (d.results || []).filter(t => lot.includes(t.id));
+    if (!rendus.length || rendus.length !== (d.results || []).length) return null;
+    return rendus;
+  };
+
+  let i = 0, taille = 200, large = true;
   while (i < ids.length) {
     progression(t('mTaxo', Math.round((i / ids.length) * 100)), (i / ids.length) * 100);
     const lot = ids.slice(i, i + taille);
     try {
-      const d = await appel('/taxa/' + lot.join(','), { locale:langue });
+      const rendus = large ? await lireLarge(lot)
+                           : (await appel('/taxa/' + lot.join(','), { locale:langue })).results;
       verifier(gen);
-      d.results.forEach(t => etat.ancetres.set(t.id,
-        { nom:t.name, nomFr:t.preferred_common_name || '', rang:t.rank }));
+      if (rendus === null) { large = false; taille = 30; continue; }
+      rendus.forEach(t => etat.ancetres.set(t.id,
+        { nom:t.name, nomFr:t.preferred_common_name || '', rang:t.rang || t.rank }));
       // Réponse tronquée : on repasse sur le même segment en plus petits lots.
-      if (d.results.length < lot.length && taille > 10) { taille = 10; continue; }
+      if (rendus.length < lot.length && taille > 10) { large = false; taille = 10; continue; }
     } catch (e) {
+      if (e instanceof Annule) throw e;
+      if (large) { large = false; taille = 30; continue; }
       if (taille > 10) { taille = 10; continue; }
       // Ce lot reste sans nom : la branche s'affichera en attente plutôt que de tout interrompre.
     }
